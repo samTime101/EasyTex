@@ -677,6 +677,42 @@ kbd {
   margin-left: 5px;
 }
 
+.hover-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hover-description {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.hover-values {
+  margin: 7px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.hover-values-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+  margin-right: 2px;
+}
+
+.hover-values code {
+  font-family: var(--mono);
+  font-size: 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 6px;
+}
+
 .hover-example {
   margin-top: 10px;
   border-top: 1px solid var(--line);

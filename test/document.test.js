@@ -6,11 +6,24 @@ import {
   COMPONENT_DOCS,
   DOCUMENT_NOTES,
   TEMPLATES,
+  PAGE_SIZES,
   HANDLED_COMPONENTS,
   NAMED_ARGUMENTS,
   renderStandaloneHTML
 } from "../src/document/index.js";
+import {
+  KNOWN_METADATA,
+  PAGE_OPTIONS,
+  MARGIN_SIDES,
+  BIBLIOGRAPHY_TYPES
+} from "../src/document/build.js";
+import {
+  FIELD_DOCS,
+  FIELD_SCOPE_ORDER,
+  groupFieldsByScope
+} from "../src/docs/index.js";
 import { DOCUMENT_EXAMPLES, DEFAULT_DOCUMENT_SOURCE } from "../web/document-examples.js";
+import { prepareSnippet, lineIndent } from "../web/snippets.js";
 
 function messages(result) {
   return result.diagnostics.map((entry) => `${entry.severity} ${entry.category}: ${entry.message}`);
@@ -459,4 +472,112 @@ test("document writer examples compile as advertised", () => {
   const fallback = compileDocument(DEFAULT_DOCUMENT_SOURCE);
   assert.deepEqual(errors(fallback), [], "the default document is valid");
   assert.ok(fallback.html && fallback.latex);
+});
+
+// ------------------------------------------------------------------ snippets
+
+const SNIPPET_WRAPPERS = {
+  subsection: (source) => `section("Outer", [\n${source}\n])`,
+  subsubsection: (source) => `section("Outer", [\n  subsection("Inner", [\n${source}\n  ])\n])`
+};
+
+function wrapSnippet(name, source) {
+  const inner = SNIPPET_WRAPPERS[name] ? SNIPPET_WRAPPERS[name](source) : source;
+  if (name === "document") return inner;
+  return `document({ type: "article", title: "Snippet", author: "Docs", content: [\n${inner}\n] })`;
+}
+
+test("component snippets are valid starter documents", () => {
+  const snippets = COMPONENT_DOCS.filter((doc) => doc.snippet);
+  assert.ok(snippets.length >= 10, "several components offer a starter snippet");
+
+  for (const doc of snippets) {
+    const markers = doc.snippet.match(/\$0/g) ?? [];
+    assert.ok(markers.length <= 1, `${doc.name} snippet has more than one caret marker`);
+    assert.ok(
+      doc.snippet.trimStart().startsWith(`${doc.name}(`),
+      `${doc.name} snippet should start with '${doc.name}('`
+    );
+
+    const prepared = prepareSnippet(doc.snippet);
+    assert.ok(!prepared.text.includes("$0"), `${doc.name} snippet still contains the caret marker`);
+
+    const result = compileDocument(wrapSnippet(doc.name, prepared.text));
+    assert.deepEqual(
+      errors(result).map((entry) => `${entry.category}: ${entry.message}`),
+      [],
+      `snippet for '${doc.name}' failed: ${prepared.text}`
+    );
+    assert.ok(result.html, `snippet for '${doc.name}' did not render`);
+  }
+});
+
+test("the document snippet scaffolds a complete default document", () => {
+  const prepared = prepareSnippet(COMPONENTS.document.snippet);
+  assert.equal(
+    prepared.text.slice(prepared.caret - 1, prepared.caret + 1),
+    '""',
+    'the caret lands inside text("")'
+  );
+
+  const result = compileDocument(prepared.text);
+  assert.deepEqual(messages(result), [], "the scaffold compiles without diagnostics");
+});
+
+test("snippet insertion indents continuation lines and places the caret", () => {
+  const prepared = prepareSnippet(COMPONENTS.section.snippet, "  ");
+  assert.equal(prepared.text, 'section("", [\n    text("")\n  ])');
+  assert.equal(prepared.text.slice(prepared.caret - 1, prepared.caret + 1), '""');
+
+  const plain = prepareSnippet("page_break()");
+  assert.equal(plain.text, "page_break()");
+  assert.equal(plain.caret, plain.text.length);
+
+  assert.equal(lineIndent("  section(", 10), "  ");
+  assert.equal(lineIndent('text("a"), ', 11), "");
+  assert.equal(lineIndent("\n  x", 4), "  ");
+});
+
+// -------------------------------------------------------------------- fields
+
+test("every document field has hover documentation", () => {
+  const documented = new Set(FIELD_DOCS.map((field) => field.name));
+  assert.equal(documented.size, FIELD_DOCS.length, "field names are unique");
+
+  const expected = new Set([
+    ...KNOWN_METADATA,
+    ...PAGE_OPTIONS,
+    ...MARGIN_SIDES,
+    ...Object.values(NAMED_ARGUMENTS).flatMap((names) => [...names]),
+    ...Object.values(BIBLIOGRAPHY_TYPES).flatMap((type) => type.fields),
+    "key"
+  ]);
+  for (const name of expected) {
+    assert.ok(documented.has(name), `field '${name}' has no documentation`);
+  }
+
+  for (const field of FIELD_DOCS) {
+    assert.ok(expected.has(field.name), `field '${field.name}' is not a real field name`);
+    assert.ok(field.summary.length > 0, `field '${field.name}' needs a summary`);
+    assert.ok(field.type, `field '${field.name}' needs a value type`);
+    assert.ok(FIELD_SCOPE_ORDER.includes(field.scope), `field '${field.name}' has an unknown scope`);
+  }
+
+  const size = FIELD_DOCS.find((field) => field.name === "size");
+  assert.deepEqual(
+    size.values.map((value) => value.toUpperCase()).sort(),
+    Object.keys(PAGE_SIZES).sort(),
+    "page sizes are listed in their source spelling"
+  );
+});
+
+test("field scopes group the catalog without losing entries", () => {
+  const groups = groupFieldsByScope();
+  assert.deepEqual(
+    groups.map((group) => group.scope),
+    FIELD_SCOPE_ORDER.filter((scope) => groups.some((group) => group.scope === scope))
+  );
+  const grouped = groups.flatMap((group) => group.items.map((field) => field.name));
+  assert.deepEqual(grouped, FIELD_DOCS.map((field) => field.name));
+  for (const group of groups) assert.ok(group.label, `${group.scope} needs a display label`);
 });

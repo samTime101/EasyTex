@@ -5,7 +5,8 @@ import {
   groupFunctionsByCategory,
   groupConstantsByCategory,
   groupOperatorsByCategory,
-  groupComponentsByCategory
+  groupComponentsByCategory,
+  groupFieldsByScope
 } from "../src/docs/index.js";
 import { DOCUMENT_NOTES, TEMPLATES, TEMPLATE_NAMES, PAGE_SIZES } from "../src/document/index.js";
 import { initTheme } from "./theme.js";
@@ -313,7 +314,8 @@ function renderDocumentAuthoring() {
   addNavSection("Documents", [
     { label: "Authoring", id: "document-authoring" },
     { label: "Templates", id: "document-templates" },
-    { label: "Page layout", id: "document-page" }
+    { label: "Page layout", id: "document-page" },
+    { label: "Fields", id: "document-fields" }
   ]);
 
   const intro = section("document-authoring", "Document authoring");
@@ -458,6 +460,50 @@ function renderDocumentPage() {
   content.append(node);
 }
 
+function fieldsTable(fields) {
+  const table = el("table", "args-table");
+  const body = el("tbody");
+  for (const field of fields) {
+    const row = el("tr");
+    const nameCell = el("td");
+    nameCell.append(el("code", null, field.name));
+    row.append(nameCell);
+    row.append(el("td", "arg-type", field.type ?? ""));
+    const description = el("td");
+    description.append(document.createTextNode(field.summary));
+    if (field.description) description.append(document.createTextNode(` ${field.description}`));
+    if (field.values?.length) {
+      description.append(document.createTextNode(` Values: ${field.values.join(", ")}.`));
+    }
+    if (field.example) description.append(el("code", "field-example", field.example));
+    row.append(description);
+    body.append(row);
+  }
+  table.append(body);
+  return table;
+}
+
+function renderDocumentFields() {
+  const groups = groupFieldsByScope();
+  const total = groups.reduce((sum, group) => sum + group.items.length, 0);
+
+  const node = section("document-fields", "Metadata and option fields", total);
+  node.append(
+    el(
+      "p",
+      "docs-lede",
+      "The names that appear inside objects and named arguments: document metadata, page(...) options, per-side margins, component named arguments, and bibliography entry fields. Hovering one of these names in the writer shows the same notes."
+    )
+  );
+
+  for (const group of groups) {
+    node.append(el("h3", "docs-subhead", group.label));
+    node.append(fieldsTable(group.items));
+  }
+
+  content.append(node);
+}
+
 function renderDocumentExample(example) {
   const wrapper = el("div", "example");
 
@@ -591,6 +637,7 @@ renderSyntax();
 renderDocumentAuthoring();
 renderDocumentTemplates();
 renderDocumentPage();
+renderDocumentFields();
 renderComponents();
 setupSearch();
 setupNavHighlight();

@@ -1,4 +1,5 @@
 import { matchDocumentation } from "../src/docs/index.js";
+import { prepareSnippet, lineIndent } from "./snippets.js";
 import { TextareaMirror } from "./textarea-geometry.js";
 
 const WORD_BEFORE_CARET = /[A-Za-z][A-Za-z0-9_]*$/;
@@ -108,7 +109,7 @@ export function createAutocomplete({ textarea, container, maxItems = 12, kinds =
       item.id = `autocomplete-item-${index}`;
       item.setAttribute("aria-selected", String(index === selected));
       if (index === selected) item.classList.add("selected");
-      item.title = doc.summary;
+      item.title = doc.snippet ? `${doc.summary} (inserts a starter snippet)` : doc.summary;
 
       const name = document.createElement("span");
       name.className = "ac-name";
@@ -188,9 +189,18 @@ export function createAutocomplete({ textarea, container, maxItems = 12, kinds =
       return;
     }
     const isFunction = doc.kind !== "constant";
-    const inserted = isFunction ? `${doc.name}()` : doc.name;
+    let inserted;
+    let caretOffset;
+    if (doc.snippet) {
+      const prepared = prepareSnippet(doc.snippet, lineIndent(textarea.value, tokenStart));
+      inserted = prepared.text;
+      caretOffset = prepared.caret;
+    } else {
+      inserted = isFunction ? `${doc.name}()` : doc.name;
+      caretOffset = isFunction ? doc.name.length + 1 : inserted.length;
+    }
     textarea.setRangeText(inserted, tokenStart, tokenEnd, "end");
-    const caret = tokenStart + (isFunction ? doc.name.length + 1 : inserted.length);
+    const caret = tokenStart + caretOffset;
     textarea.setSelectionRange(caret, caret);
     close();
     textarea.focus();

@@ -9,6 +9,7 @@ import { DEFAULT_DOCUMENT_SOURCE, DOCUMENT_EXAMPLES } from "./document-examples.
 
 const STORAGE_KEY = "easytex.document";
 const WRITER_KINDS = ["component", "function", "constant"];
+const HOVER_KINDS = [...WRITER_KINDS, "field"];
 const DEFAULT_SUBTITLE = "Rendered document, LaTeX, and standalone HTML";
 
 const editor = document.getElementById("editor");
@@ -452,7 +453,7 @@ const hoverDocs = createHoverDocs({
   textarea: editor,
   container: editorShell,
   isSuppressed: () => autocomplete.isOpen(),
-  kinds: WRITER_KINDS
+  kinds: HOVER_KINDS
 });
 
 editor.value = loadSource();

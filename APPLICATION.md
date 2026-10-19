@@ -77,6 +77,11 @@ parsed into data and validated before rendering.
 - Seven built-in examples, including a deliberately broken document that demonstrates diagnostics.
 - Missing images degrade to a readable placeholder instead of a broken icon.
 - Autocomplete and hover documentation cover document components as well as functions and constants.
+- Starter snippets: accepting `document` expands a complete, valid article scaffold; `section`,
+  `table`, `figure`, `theorem`, `bibliography`, and friends expand to matching templates. Multi-line
+  snippets are indented to the insertion point and the caret lands in the first empty placeholder.
+- Field hover help: metadata keys, page options, margin sides, named arguments (`label=`, `number=`,
+  `caption=`, …), and bibliography fields show their scope, value type, allowed values, and an example.
 
 ### Reference page
 
@@ -85,7 +90,8 @@ parsed into data and validated before rendering.
 - Search across functions, constants, components, and argument names; each component lists positional
   and named arguments.
 - New **Document authoring** section with a rendered document preview, authoring notes, the template
-  table, page geometry, and the full component catalog.
+  table, page geometry, component catalog, and a field reference for metadata, page options, named
+  arguments, and bibliography entries.
 
 ### Shared implementation
 
@@ -94,8 +100,8 @@ parsed into data and validated before rendering.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
   help, including document components.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 45 conformance tests cover the language, the expression pipeline, the document layer, the
-  documentation catalog, and the writer examples.
+- 50 conformance tests cover the language, the expression pipeline, the document layer, the
+  documentation catalog, the writer examples, and the authoring snippets.
 
 ## Architecture
 
@@ -118,7 +124,7 @@ web/
   document.html, document.js, css        document writer
   document-examples.js                   writer examples (tested in CI)
   docs.html, docs.js, docs.css           reference page
-  autocomplete.js, hover-docs.js         editor assistance (filterable by kind)
+  autocomplete.js, snippets.js, hover-docs.js   editor assistance (filterable by kind)
 ```
 
 Design rules:
@@ -144,6 +150,20 @@ Node 18 or newer is required; there are no runtime dependencies. The dev server 
 static file server (`tools/serve.mjs`).
 
 ## Updates
+
+### 2026-10-19 — authoring snippets and field help
+
+- Autocomplete now inserts starter snippets for 16 structured components, including a complete
+  default `document({ ... })` scaffold. Multi-line snippets are indented to the insertion point and
+  the caret lands inside the first empty placeholder.
+- Added `src/docs/fields.js`: documentation for the 40 document metadata keys, page options, margin
+  sides, named arguments, and bibliography fields.
+- The writer's hover help distinguishes call sites from field uses (the `label` component versus
+  `label=` in a section) and explains scope, value type, allowed values, and an example.
+- The reference page gained a **Fields** section rendering the same catalog.
+- New tests check that every snippet is a valid fragment, that insertion geometry is exact, and that
+  the field catalog covers the builder's metadata, page, named-argument, and bibliography tables.
+  The suite grew from 45 to 50 tests.
 
 ### 2026-10-19 — document layer and writer
 

@@ -4,6 +4,11 @@
 // documentation page, hover help, and editor completion. Every entry in
 // COMPONENTS must be interpreted by src/document/build.js; the test suite
 // enforces that they do not drift apart.
+//
+// Entries may carry a `snippet`: the starter source inserted when the
+// component is accepted from autocomplete. A snippet may contain one "$0"
+// marker; the editor removes it and places the caret there. Every snippet is
+// a valid fragment of a document, checked by the test suite.
 
 export const COMPONENT_CATEGORY_ORDER = [
   "Document",
@@ -32,6 +37,8 @@ export const COMPONENTS = {
       }
     ],
     named: [],
+    snippet:
+      'document({\n  type: "article",\n  title: "Untitled document",\n  author: "Author",\n  content: [\n    section("Introduction", [\n      text("$0")\n    ])\n  ]\n})',
     examples: [
       {
         note: "Smallest complete document",
@@ -79,6 +86,7 @@ export const COMPONENTS = {
     named: [
       { name: "label", type: "string", description: "A label such as \"sec:introduction\" for cross-references." }
     ],
+    snippet: 'section("$0", [\n  text("")\n])',
     examples: [
       {
         note: "A section with a paragraph and an equation",
@@ -102,6 +110,7 @@ export const COMPONENTS = {
     named: [
       { name: "label", type: "string", description: "A label for cross-references." }
     ],
+    snippet: 'subsection("$0", [\n  text("")\n])',
     examples: [
       {
         note: "A subsection nested in a section",
@@ -124,6 +133,7 @@ export const COMPONENTS = {
     named: [
       { name: "label", type: "string", description: "A label for cross-references." }
     ],
+    snippet: 'subsubsection("$0", [\n  text("")\n])',
     examples: [
       {
         note: "Three heading levels",
@@ -185,6 +195,7 @@ export const COMPONENTS = {
       { name: "content", type: "string, inline component, or expression", description: "The paragraph content, in order." }
     ],
     named: [],
+    snippet: 'text("$0")',
     examples: [
       {
         note: "Prose with inline mathematics",
@@ -332,6 +343,7 @@ export const COMPONENTS = {
     description: "Items may be strings or block components. Nested lists are written as nested items.",
     args: [{ name: "items", type: "list", description: "The list items." }],
     named: [],
+    snippet: 'bullets([\n  "$0",\n  ""\n])',
     examples: [
       {
         note: "A list with a nested list",
@@ -350,6 +362,7 @@ export const COMPONENTS = {
     description: "Numbering is automatic. Items may be strings or block components.",
     args: [{ name: "items", type: "list", description: "The list items, in order." }],
     named: [],
+    snippet: 'numbered([\n  "$0",\n  ""\n])',
     examples: [
       {
         note: "A numbered list",
@@ -420,6 +433,7 @@ export const COMPONENTS = {
       { name: "label", type: "string", description: "A label for cross-references." },
       { name: "align", type: "string or list", description: "Column alignment: \"left\", \"center\", or \"right\", for one column or a list per column." }
     ],
+    snippet: 'table(\n  ["Column 1", "Column 2"],\n  [\n    ["", ""]\n  ]\n)',
     examples: [
       {
         note: "A table with a caption",
@@ -440,6 +454,7 @@ export const COMPONENTS = {
       { name: "caption", type: "string or inline content", description: "The caption shown below the figure." },
       { name: "label", type: "string", description: "A label for cross-references." }
     ],
+    snippet: 'figure(\n  image("figure.png", width="70%", alt=""),\n  caption="Caption"\n)',
     examples: [
       {
         note: "A captioned figure",
@@ -486,6 +501,7 @@ export const COMPONENTS = {
       { name: "caption", type: "string or inline content", description: "The caption for the listing." },
       { name: "label", type: "string", description: "A label for cross-references." }
     ],
+    snippet: 'listing("$0", language="text")',
     examples: [
       {
         note: "A short listing",
@@ -507,6 +523,7 @@ export const COMPONENTS = {
       { name: "content", type: "blocks or string", description: "The statement." }
     ],
     named: [{ name: "label", type: "string", description: "A label for cross-references." }],
+    snippet: 'theorem("$0", [\n  text("")\n])',
     examples: [
       {
         note: "A labelled theorem",
@@ -527,6 +544,7 @@ export const COMPONENTS = {
       { name: "content", type: "blocks or string", description: "The statement." }
     ],
     named: [{ name: "label", type: "string", description: "A label for cross-references." }],
+    snippet: 'lemma("$0", [\n  text("")\n])',
     examples: [
       { note: "A lemma", source: 'lemma("Monotonicity", [text("The sequence is non-decreasing.")])' }
     ],
@@ -544,6 +562,7 @@ export const COMPONENTS = {
       { name: "content", type: "blocks or string", description: "The definition." }
     ],
     named: [{ name: "label", type: "string", description: "A label for cross-references." }],
+    snippet: 'definition("$0", [\n  text("")\n])',
     examples: [
       {
         note: "A definition",
@@ -564,6 +583,7 @@ export const COMPONENTS = {
       { name: "content", type: "blocks or string", description: "The statement." }
     ],
     named: [{ name: "label", type: "string", description: "A label for cross-references." }],
+    snippet: 'corollary("$0", [\n  text("")\n])',
     examples: [{ note: "A corollary", source: 'corollary("A consequence", [text("The bound follows immediately.")])' }],
     status: "implemented"
   },
@@ -576,6 +596,7 @@ export const COMPONENTS = {
     summary: "A proof, closed with the end-of-proof symbol.",
     args: [{ name: "content", type: "blocks or string", description: "The proof body." }],
     named: [{ name: "title", type: "string", description: "Alternative title, for example a reference to the result proved." }],
+    snippet: 'proof([\n  text("$0")\n])',
     examples: [
       {
         note: "A proof",
@@ -601,6 +622,8 @@ export const COMPONENTS = {
       }
     ],
     named: [],
+    snippet:
+      'bibliography([\n  {\n    key: "ref1",\n    type: "article",\n    author: "Author",\n    title: "Title",\n    journal: "Journal",\n    year: 2026\n  }\n])',
     examples: [
       {
         note: "One entry and a citation",

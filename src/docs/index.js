@@ -1,9 +1,11 @@
 import { FUNCTION_DOCS } from "./functions.js";
 import { CONSTANT_DOCS } from "./constants.js";
 import { OPERATOR_DOCS, SYNTAX_NOTES, PRECEDENCE_EXAMPLES } from "./operators.js";
+import { FIELD_DOCS, FIELD_SCOPE_ORDER, FIELD_SCOPE_LABELS } from "./fields.js";
 import { COMPONENT_DOCS, COMPONENT_CATEGORY_ORDER } from "../document/components.js";
 
 export { FUNCTION_DOCS, CONSTANT_DOCS, OPERATOR_DOCS, SYNTAX_NOTES, PRECEDENCE_EXAMPLES };
+export { FIELD_DOCS, FIELD_SCOPE_ORDER, FIELD_SCOPE_LABELS };
 export { COMPONENT_DOCS, COMPONENT_CATEGORY_ORDER };
 
 export const FUNCTION_CATEGORY_ORDER = [
@@ -27,6 +29,13 @@ for (const doc of COMPONENT_DOCS) byName.set(doc.name, { ...doc, kind: "componen
 
 export function docsFor(name) {
   return byName.get(name) ?? null;
+}
+
+const fieldByName = new Map();
+for (const doc of FIELD_DOCS) fieldByName.set(doc.name, doc);
+
+export function fieldDocsFor(name) {
+  return fieldByName.get(name) ?? null;
 }
 
 export function hasDocs(name) {
@@ -62,6 +71,17 @@ export function groupConstantsByCategory() {
 
 export function groupComponentsByCategory() {
   return groupByCategory(COMPONENT_DOCS, COMPONENT_CATEGORY_ORDER);
+}
+
+export function groupFieldsByScope() {
+  const groups = new Map(FIELD_SCOPE_ORDER.map((scope) => [scope, []]));
+  for (const doc of FIELD_DOCS) {
+    if (!groups.has(doc.scope)) groups.set(doc.scope, []);
+    groups.get(doc.scope).push(doc);
+  }
+  return [...groups.entries()]
+    .map(([scope, items]) => ({ scope, label: FIELD_SCOPE_LABELS[scope] ?? scope, items }))
+    .filter((group) => group.items.length > 0);
 }
 
 export function matchDocumentation(prefix, options = {}) {

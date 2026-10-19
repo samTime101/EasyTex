@@ -43,9 +43,9 @@ npm test
 - **Structured parser** with a full lexer, recursive-descent parser, and AST.
 - **Validation** for arity, unknown functions, bound variables, matrix shapes, relation nesting, list placement, document structure, labels, references, and bibliography entries.
 - **Diagnostics** with source positions and categories. Click a diagnostic to select the offending range in the editor.
-- **Function suggestions** while typing: an autocomplete list with signatures, keyboard navigation, and correct insertion of calls and constants. In the writer, document components are suggested too.
-- **Hover documentation** in the editor: signatures, argument descriptions, and a rendered example for the function under the pointer, with scope-aware handling of bound variables. The writer shows component help.
-- **Documentation page** at `/web/docs.html` covering every function, constant, operator, syntax rule, component, template, and worked example, with live previews, search, and links into both editors.
+- **Function suggestions** while typing: an autocomplete list with signatures, keyboard navigation, and correct insertion of calls and constants. In the writer, document components are suggested too, and structured components insert starter snippets — `document` expands to a complete scaffold.
+- **Hover documentation** in the editor: signatures, argument descriptions, and a rendered example for the function under the pointer, with scope-aware handling of bound variables. The writer also explains components and fields (metadata keys, named arguments, and bibliography entries).
+- **Documentation page** at `/web/docs.html` covering every function, constant, operator, syntax rule, component, template, and field, with live previews, search, and links into both editors.
 - **Export** to LaTeX, MathML, or the raw AST. Download a complete `.tex` document with one click.
 - **Examples** for sums, products, fractions, integrals, limits, derivatives, matrices, vectors, and documents.
 - **Complex mode** toggle for the imaginary unit `i`.
@@ -78,6 +78,7 @@ easytex/
     ├── styles.css
     ├── app.js
     ├── autocomplete.js
+    ├── snippets.js
     ├── hover-docs.js
     ├── textarea-geometry.js
     ├── theme.js

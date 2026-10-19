@@ -109,6 +109,10 @@ const THEOREM_ENVIRONMENTS = new Map([
   ["corollary", "Corollary"]
 ]);
 
+export const PAGE_OPTIONS = new Set(["size", "orientation", "margins", "columns"]);
+
+export const MARGIN_SIDES = new Set(["top", "right", "bottom", "left"]);
+
 const REF_NOUNS = {
   figure: "Figure",
   table: "Table",
@@ -119,7 +123,7 @@ const REF_NOUNS = {
   corollary: "Corollary"
 };
 
-const KNOWN_METADATA = new Set([
+export const KNOWN_METADATA = new Set([
   "type",
   "title",
   "subtitle",
@@ -133,7 +137,7 @@ const KNOWN_METADATA = new Set([
   "content"
 ]);
 
-const BIBLIOGRAPHY_TYPES = {
+export const BIBLIOGRAPHY_TYPES = {
   article: {
     required: ["author", "title", "year", "journal"],
     fields: ["author", "title", "year", "journal", "volume", "issue", "pages", "doi", "url"]
@@ -1000,7 +1004,7 @@ export function buildDocument(ast, options = {}) {
       warn(CATEGORY.DOCUMENT, "page() should be the first content block", call);
     }
 
-    const known = new Set(["size", "orientation", "margins", "columns"]);
+    const known = PAGE_OPTIONS;
     const page = JSON.parse(JSON.stringify(state.page));
     for (const entry of object.entries) {
       if (!known.has(entry.key)) {
@@ -1046,7 +1050,7 @@ export function buildDocument(ast, options = {}) {
             fail(CATEGORY.TYPE, "Page margins expect an object such as { top: \"25mm\", bottom: \"25mm\" }", entry.value);
             break;
           }
-          const sides = new Set(["top", "right", "bottom", "left"]);
+          const sides = MARGIN_SIDES;
           for (const margin of entry.value.entries) {
             if (!sides.has(margin.key)) {
               fail(CATEGORY.NAME, `Unknown margin '${margin.key}'. Expected top, right, bottom, or left`, { span: margin.keySpan });

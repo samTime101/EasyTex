@@ -1,5 +1,5 @@
-import { compile, parse, validate } from "../src/index.js";
-import { docsFor } from "../src/docs/index.js";
+import { compile, parse, validate, NAMED_ARGUMENTS } from "../src/index.js";
+import { docsFor, fieldDocsFor, FIELD_SCOPE_LABELS } from "../src/docs/index.js";
 import { TextareaMirror } from "./textarea-geometry.js";
 
 const WORD_CHAR = /[A-Za-z0-9_]/;
@@ -26,16 +26,34 @@ function analyze(source) {
 
   const values = [];
   const calls = [];
+  const fields = [];
 
-  function walk(node) {
+  function walk(node, component) {
     if (!node || typeof node !== "object") return;
     if (Array.isArray(node)) {
-      for (const item of node) walk(item);
+      for (const item of node) walk(item, component);
       return;
     }
     if (node.kind === "Call") {
       calls.push({ name: node.callee.name, span: node.callee.span });
-      for (const arg of node.args) walk(arg);
+      for (const arg of node.args) walk(arg, node.callee.name);
+      return;
+    }
+    if (node.kind === "Object") {
+      for (const entry of node.entries) {
+        fields.push({ name: entry.key, span: entry.keySpan });
+        walk(entry.value, component);
+      }
+      return;
+    }
+    if (
+      node.kind === "Relation" &&
+      node.operator === "=" &&
+      node.left.kind === "Identifier" &&
+      NAMED_ARGUMENTS[component]?.has(node.left.name)
+    ) {
+      fields.push({ name: node.left.name, span: node.left.span });
+      walk(node.right, component);
       return;
     }
     if (node.kind === "Identifier") {
@@ -44,12 +62,12 @@ function analyze(source) {
     }
     for (const [key, value] of Object.entries(node)) {
       if (key === "span") continue;
-      if (value && typeof value === "object") walk(value);
+      if (value && typeof value === "object") walk(value, component);
     }
   }
 
-  walk(parsed.ast);
-  cachedAnalysis = { values, calls };
+  walk(parsed.ast, null);
+  cachedAnalysis = { values, calls, fields };
   return cachedAnalysis;
 }
 
@@ -62,8 +80,23 @@ function wordAt(value, offset) {
   let end = offset;
   while (start > 0 && isWordChar(value[start - 1])) start -= 1;
   while (end < value.length && isWordChar(value[end])) end += 1;
-  const word = value.slice(start, end);
-  return IDENTIFIER.test(word) ? word : null;
+  const name = value.slice(start, end);
+  return IDENTIFIER.test(name) ? { name, start, end } : null;
+}
+
+// Fallback for sources that do not parse: a field is a word directly followed
+// by ":" or "=", outside any string literal.
+function looksLikeField(value, word) {
+  if (!/^\s*[:=]/.test(value.slice(word.end, word.end + 80))) return false;
+  let quotes = 0;
+  for (let index = value.lastIndexOf("\n", word.start - 1) + 1; index < word.start; index += 1) {
+    if (value[index] === "\\") {
+      index += 1;
+      continue;
+    }
+    if (value[index] === '"') quotes += 1;
+  }
+  return quotes % 2 === 0;
 }
 
 function buildContent(doc) {
@@ -136,6 +169,72 @@ function buildContent(doc) {
   return wrapper;
 }
 
+function buildFieldContent(doc) {
+  const cacheKey = `field:${doc.name}`;
+  if (contentCache.has(cacheKey)) return contentCache.get(cacheKey);
+
+  const wrapper = document.createElement("div");
+
+  const head = document.createElement("div");
+  head.className = "hover-head";
+  const title = document.createElement("span");
+  title.className = "hover-title";
+  const signature = document.createElement("code");
+  signature.className = "hover-signature";
+  signature.textContent = doc.name;
+  title.append(signature);
+  if (doc.type) {
+    const type = document.createElement("span");
+    type.className = "hover-type";
+    type.textContent = doc.type;
+    title.append(type);
+  }
+  const kind = document.createElement("span");
+  kind.className = "hover-kind";
+  kind.textContent = FIELD_SCOPE_LABELS[doc.scope] ?? doc.scope ?? "field";
+  head.append(title, kind);
+  wrapper.append(head);
+
+  const summary = document.createElement("p");
+  summary.className = "hover-summary";
+  summary.textContent = doc.summary;
+  wrapper.append(summary);
+
+  if (doc.description) {
+    const description = document.createElement("p");
+    description.className = "hover-description";
+    description.textContent = doc.description;
+    wrapper.append(description);
+  }
+
+  if (doc.values?.length) {
+    const values = document.createElement("p");
+    values.className = "hover-values";
+    const label = document.createElement("span");
+    label.className = "hover-values-label";
+    label.textContent = "Values";
+    values.append(label);
+    for (const value of doc.values) {
+      const code = document.createElement("code");
+      code.textContent = value;
+      values.append(code);
+    }
+    wrapper.append(values);
+  }
+
+  if (doc.example) {
+    const block = document.createElement("div");
+    block.className = "hover-example";
+    const source = document.createElement("code");
+    source.textContent = doc.example;
+    block.append(source);
+    wrapper.append(block);
+  }
+
+  contentCache.set(cacheKey, wrapper);
+  return wrapper;
+}
+
 export function createHoverDocs({ textarea, container, isSuppressed = () => false, kinds = ["function", "constant"] }) {
   const mirror = new TextareaMirror(textarea);
   const tooltip = document.createElement("div");
@@ -183,34 +282,55 @@ export function createHoverDocs({ textarea, container, isSuppressed = () => fals
       hide();
       return;
     }
-    const doc = docsFor(word);
-    if (!doc) {
-      hide();
-      return;
-    }
-    if (kinds && !kinds.includes(doc.kind)) {
+    const callable = docsFor(word.name);
+    const field = fieldDocsFor(word.name);
+    if (!callable && !field) {
       hide();
       return;
     }
 
     const analysis = analyze(textarea.value);
+    let kind = null;
     if (analysis) {
-      const valueNode = analysis.values.find(
-        (entry) => entry.name === word && contains(entry.span, offset)
+      const callHit = analysis.calls.some(
+        (entry) => entry.name === word.name && contains(entry.span, offset)
       );
-      const callNode = analysis.calls.find(
-        (entry) => entry.name === word && contains(entry.span, offset)
+      const fieldHit = analysis.fields.some(
+        (entry) => entry.name === word.name && contains(entry.span, offset)
       );
-      const allowed = valueNode ? valueNode.binding === "constant" : Boolean(callNode);
-      if (!allowed) {
+      const valueHit = analysis.values.find(
+        (entry) => entry.name === word.name && contains(entry.span, offset)
+      );
+      if (callHit) kind = "callable";
+      else if (fieldHit) kind = "field";
+      else if (valueHit && valueHit.binding === "constant") kind = "callable";
+    } else {
+      const callish = textarea.value.slice(word.end, word.end + 80).trimStart().startsWith("(");
+      if (field && !callish && looksLikeField(textarea.value, word)) {
+        kind = "field";
+      } else if (callable) {
+        kind = "callable";
+      }
+    }
+    if (!kind) {
+      hide();
+      return;
+    }
+
+    if (kind === "field") {
+      if (kinds && !kinds.includes("field")) {
         hide();
         return;
       }
+    } else if (kinds && !kinds.includes(callable.kind)) {
+      hide();
+      return;
     }
 
-    if (lastWord !== word) {
-      tooltip.replaceChildren(buildContent(doc));
-      lastWord = word;
+    const key = `${kind}:${word.name}`;
+    if (lastWord !== key) {
+      tooltip.replaceChildren(kind === "field" ? buildFieldContent(field) : buildContent(callable));
+      lastWord = key;
     }
     tooltip.classList.remove("hidden");
     position(event.clientX, event.clientY);
