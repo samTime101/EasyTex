@@ -20,7 +20,7 @@ No dependencies are required. Node 18 or newer is enough.
 npm run dev
 ```
 
-Then open <http://localhost:5173>.
+Then open <http://localhost:5173>. The full language reference lives at <http://localhost:5173/web/docs.html>.
 
 Run the conformance tests with:
 
@@ -34,6 +34,9 @@ npm test
 - **Structured parser** with a full lexer, recursive-descent parser, and AST.
 - **Validation** for arity, unknown functions, bound variables, matrix shapes, relation nesting, list placement, and `infinity` contexts.
 - **Diagnostics** with source positions. Click a diagnostic to select the offending range in the editor.
+- **Function suggestions** while typing: an autocomplete list with signatures, keyboard navigation, and correct insertion of calls and constants.
+- **Hover documentation** in the editor: signatures, argument descriptions, and a rendered example for the function under the pointer, with scope-aware handling of bound variables.
+- **Documentation page** at `/web/docs.html` covering every function, constant, operator, syntax rule, and worked example with live previews, search, and "Try it" links into the editor.
 - **Export** to LaTeX, MathML, or the raw AST. Download a complete `.tex` document with one click.
 - **Examples** for sums, products, fractions, integrals, limits, derivatives, matrices, vectors, and more.
 - **Complex mode** toggle for the imaginary unit `i`.
@@ -47,6 +50,7 @@ easytex/
 ├── SPECIFICATION.md      Language specification (v0.1-draft)
 ├── package.json
 ├── src/                  Parser, validator, and renderers
+│   ├── docs/             Function, constant, and operator documentation data
 │   ├── lexer.js
 │   ├── parser.js
 │   ├── validate.js
@@ -61,8 +65,26 @@ easytex/
 └── web/                  EasyTeX web app
     ├── index.html
     ├── styles.css
-    └── app.js
+    ├── app.js
+    ├── autocomplete.js
+    ├── hover-docs.js
+    ├── textarea-geometry.js
+    ├── theme.js
+    ├── docs.html
+    ├── docs.css
+    └── docs.js
 ```
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| `Ctrl` + `Space` | Show all function and constant suggestions |
+| `↑` / `↓` | Move through suggestions |
+| `Enter` or `Tab` | Accept the selected suggestion |
+| `Esc` | Dismiss suggestions |
+| `Ctrl` + `Enter` | Re-render immediately |
+| `Tab` | Insert two spaces |
 
 ## Library usage
 

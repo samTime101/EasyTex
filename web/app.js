@@ -1,5 +1,7 @@
 import { compile } from "../src/index.js";
 import { initTheme } from "./theme.js";
+import { createAutocomplete } from "./autocomplete.js";
+import { createHoverDocs } from "./hover-docs.js";
 
 const EXAMPLES = [
   { label: "Sum of squares", source: "sum(i, 1, n, i^2)" },
@@ -22,6 +24,7 @@ const EXAMPLES = [
 const DEFAULT_SOURCE = "sum(i, 1, n, i^2)";
 
 const editor = document.getElementById("editor");
+const editorShell = document.querySelector(".editor-shell");
 const diagnosticsEl = document.getElementById("diagnostics");
 const statusEl = document.getElementById("status");
 const previewEl = document.getElementById("preview");
@@ -48,6 +51,16 @@ const EMPTY_HTML = `
 `;
 
 function loadSource() {
+  const hash = window.location.hash;
+  if (hash.startsWith("#src=")) {
+    try {
+      const source = decodeURIComponent(hash.slice(5));
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+      if (source.trim()) return source;
+    } catch {
+      // Fall through to stored source on malformed hash.
+    }
+  }
   try {
     return localStorage.getItem("easytex.source") || DEFAULT_SOURCE;
   } catch {
@@ -287,21 +300,39 @@ function populateExamples() {
   }
 }
 
+const autocomplete = createAutocomplete({ textarea: editor, container: editorShell });
+const hoverDocs = createHoverDocs({
+  textarea: editor,
+  container: editorShell,
+  isSuppressed: () => autocomplete.isOpen()
+});
+
 editor.value = loadSource();
 populateExamples();
 initTheme(themeToggle);
 renderNow();
 
-editor.addEventListener("input", scheduleRender);
-editor.addEventListener("scroll", () => {
-  // Kept for future syntax highlighting; the plain textarea needs no sync.
+editor.addEventListener("input", () => {
+  scheduleRender();
+  autocomplete.handleInput();
 });
+
+document.addEventListener("selectionchange", () => {
+  if (document.activeElement === editor) autocomplete.handleSelectionChange();
+});
+
 editor.addEventListener("keydown", (event) => {
+  if ((event.ctrlKey || event.metaKey) && (event.key === " " || event.code === "Space")) {
+    event.preventDefault();
+    autocomplete.openAll();
+    return;
+  }
   if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
     event.preventDefault();
     renderNow();
     return;
   }
+  if (autocomplete.handleKey(event)) return;
   if (event.key === "Tab" && !event.shiftKey) {
     event.preventDefault();
     const start = editor.selectionStart;
