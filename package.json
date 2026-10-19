@@ -1,0 +1,12 @@
+{
+  "name": "easytex",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "EasyTeX: a MathScript editor and previewer. Write math, not LaTeX.",
+  "scripts": {
+    "dev": "node tools/serve.mjs",
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
