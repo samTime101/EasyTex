@@ -359,6 +359,16 @@ a:hover {
   color: var(--tok-punct);
 }
 
+@media print {
+  .editor-highlight {
+    display: none;
+  }
+
+  #editor.has-highlight {
+    color: var(--ink);
+  }
+}
+
 /* Editor panel buttons: Format and Maximize sit next to the status line. */
 .panel-head-actions {
   display: flex;

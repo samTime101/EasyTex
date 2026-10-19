@@ -93,8 +93,8 @@ parsed into data and validated before rendering.
 
 - Every function, constant, Greek letter name, operator, syntax rule, template, page size, and document component.
 - Live MathML previews for expression examples; document examples link into the writer.
-- Search across functions, constants, components, and argument names; each component lists positional
-  and named arguments.
+- Search across functions, constants, Greek letters, fields, argument names, and document components;
+  each component lists positional and named arguments.
 - New **Document authoring** section with a rendered document preview, authoring notes, the template
   table, page geometry, component catalog, and a field reference for metadata, page options, named
   arguments, and bibliography entries.

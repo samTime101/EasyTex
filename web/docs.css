@@ -168,6 +168,13 @@ html[data-theme="dark"] {
   scroll-margin-top: 96px;
 }
 
+/* The search sets `hidden` on sections, cards, and table rows; author display
+   rules must not override it. */
+.docs-section[hidden],
+[data-haystack][hidden] {
+  display: none;
+}
+
 .docs-section h2 {
   margin: 4px 0 0;
   font-size: 20px;

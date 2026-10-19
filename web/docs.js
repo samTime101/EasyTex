@@ -45,7 +45,6 @@ const DOCUMENT_SAMPLE = `document({
   ]
 })`;
 
-const cards = [];
 let toastTimer = null;
 
 function slugify(text) {
@@ -170,7 +169,6 @@ function functionCard(doc) {
   card.dataset.haystack = [doc.name, doc.signature, doc.summary, doc.category]
     .join(" ")
     .toLowerCase();
-  cards.push(card);
   return card;
 }
 
@@ -272,6 +270,7 @@ function renderGreek() {
   const body = el("tbody");
   for (const doc of GREEK_DOCS) {
     const row = el("tr");
+    row.dataset.haystack = `${doc.name} greek letter ${doc.symbol} ${doc.latex}`.toLowerCase();
     row.append(el("td", "operator-example", doc.name));
     row.append(el("td", "greek-symbol", doc.symbol));
     row.append(el("td", "operator-example", doc.latex));
@@ -505,6 +504,18 @@ function fieldsTable(fields) {
   const body = el("tbody");
   for (const field of fields) {
     const row = el("tr");
+    row.dataset.haystack = [
+      field.name,
+      field.scope,
+      field.type,
+      field.summary,
+      field.description,
+      ...(field.values ?? []),
+      ...(field.valueGroups ?? []).flatMap((group) => [group.label, ...group.values])
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
     const nameCell = el("td");
     nameCell.append(el("code", null, field.name));
     row.append(nameCell);
@@ -539,6 +550,7 @@ function referenceTypesTable() {
   const body = el("tbody");
   for (const [name, spec] of Object.entries(BIBLIOGRAPHY_TYPES)) {
     const row = el("tr");
+    row.dataset.haystack = [name, spec.required.join(" "), spec.fields.join(" ")].join(" ").toLowerCase();
     row.append(el("td", "operator-example", name));
     row.append(el("td", "operator-example", spec.required.join(", ")));
     const optional = spec.fields.filter((field) => !spec.required.includes(field));
@@ -639,7 +651,6 @@ function componentCard(doc) {
   ]
     .join(" ")
     .toLowerCase();
-  cards.push(card);
   return card;
 }
 
@@ -659,7 +670,8 @@ function renderComponents() {
 
 function setupSearch() {
   const empty = el("div", "search-empty");
-  empty.textContent = "No functions, constants, or document components match that search.";
+  empty.textContent =
+    "No functions, constants, Greek letters, fields, or document components match that search.";
   empty.hidden = true;
   const anchor = content.children[0];
   if (anchor) anchor.after(empty);
@@ -668,14 +680,16 @@ function setupSearch() {
   searchInput.addEventListener("input", () => {
     const query = searchInput.value.trim().toLowerCase();
     let visible = 0;
-    for (const card of cards) {
-      const matches = query === "" || card.dataset.haystack.includes(query);
-      card.hidden = !matches;
+    for (const unit of content.querySelectorAll("[data-haystack]")) {
+      const matches = query === "" || unit.dataset.haystack.includes(query);
+      unit.hidden = !matches;
       if (matches) visible += 1;
     }
     for (const node of content.querySelectorAll("[data-card-section]")) {
-      const anyVisible = [...node.querySelectorAll(".function-card")].some((card) => !card.hidden);
-      node.hidden = !anyVisible;
+      const anyVisible = [...node.querySelectorAll("[data-haystack]")].some((unit) => !unit.hidden);
+      // Sections that hold only tables (syntax, templates, page layout) have no
+      // searchable units; keep them visible until a query narrows the page.
+      node.hidden = query !== "" && !anyVisible;
     }
     empty.hidden = visible > 0;
   });
