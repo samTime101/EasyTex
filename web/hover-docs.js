@@ -78,7 +78,16 @@ function buildContent(doc) {
   signature.textContent = doc.signature;
   const kind = document.createElement("span");
   kind.className = "hover-kind";
-  kind.textContent = doc.kind === "constant" ? "constant" : "function";
+  kind.textContent =
+    doc.kind === "constant"
+      ? "constant"
+      : doc.kind === "component"
+        ? doc.role === "inline"
+          ? "inline"
+          : doc.role === "document"
+            ? "document"
+            : "block"
+        : "function";
   head.append(signature, kind);
   wrapper.append(head);
 
@@ -113,11 +122,13 @@ function buildContent(doc) {
     source.textContent = example.source;
     block.append(source);
 
-    const preview = document.createElement("div");
-    preview.className = "hover-preview";
-    const result = compile(example.source);
-    if (result.mathml) preview.innerHTML = result.mathml;
-    block.append(preview);
+    if (doc.kind !== "component") {
+      const preview = document.createElement("div");
+      preview.className = "hover-preview";
+      const result = compile(example.source);
+      if (result.mathml) preview.innerHTML = result.mathml;
+      block.append(preview);
+    }
     wrapper.append(block);
   }
 
@@ -125,7 +136,7 @@ function buildContent(doc) {
   return wrapper;
 }
 
-export function createHoverDocs({ textarea, container, isSuppressed = () => false }) {
+export function createHoverDocs({ textarea, container, isSuppressed = () => false, kinds = ["function", "constant"] }) {
   const mirror = new TextareaMirror(textarea);
   const tooltip = document.createElement("div");
   tooltip.className = "hover-docs hidden";
@@ -174,6 +185,10 @@ export function createHoverDocs({ textarea, container, isSuppressed = () => fals
     }
     const doc = docsFor(word);
     if (!doc) {
+      hide();
+      return;
+    }
+    if (kinds && !kinds.includes(doc.kind)) {
       hide();
       return;
     }

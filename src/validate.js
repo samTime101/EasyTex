@@ -8,6 +8,12 @@ function inferType(node) {
     case "Unary":
     case "Binary":
       return "scalar";
+    case "String":
+      return "string";
+    case "Boolean":
+      return "boolean";
+    case "Object":
+      return "object";
     case "Relation":
       return "relation";
     case "List":
@@ -32,6 +38,12 @@ function describeType(type) {
       return "a matrix";
     case "vector":
       return "a vector";
+    case "string":
+      return "a string";
+    case "boolean":
+      return "a boolean value";
+    case "object":
+      return "an object";
     case "unknown":
       return "an unknown value";
     default:
@@ -100,6 +112,27 @@ export function validate(ast, options = {}) {
     switch (node.kind) {
       case "Number":
         node.type = "scalar";
+        return;
+
+      case "String":
+        node.type = "string";
+        if (!node.reported) {
+          report(CATEGORY.TYPE, "String literals are only allowed inside document components", node);
+        }
+        return;
+
+      case "Boolean":
+        node.type = "boolean";
+        if (!node.reported) {
+          report(CATEGORY.TYPE, "Boolean literals are not valid in mathematical expressions", node);
+        }
+        return;
+
+      case "Object":
+        node.type = "object";
+        if (!node.reported) {
+          report(CATEGORY.TYPE, "Object literals are only allowed inside document components", node);
+        }
         return;
 
       case "Identifier":

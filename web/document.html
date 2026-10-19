@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="EasyTeX Document Writer — write complete MathScript documents with sections, equations, figures, and references, then export LaTeX or standalone HTML."
+    />
+    <title>EasyTeX — Document writer</title>
+    <link rel="stylesheet" href="/web/styles.css" />
+    <link rel="stylesheet" href="/web/document.css" />
+  </head>
+  <body class="writer-body">
+    <header class="app-header">
+      <a class="brand" href="./index.html">
+        <span class="brand-mark" aria-hidden="true">&#8721;</span>
+        <div>
+          <h1>EasyTeX</h1>
+          <p>Document writer</p>
+        </div>
+      </a>
+      <div class="header-actions">
+        <label class="example-picker">
+          <span>Examples</span>
+          <select id="examples">
+            <option value="">Choose an example…</option>
+          </select>
+        </label>
+        <a class="ghost-button" href="./index.html">Expression editor</a>
+        <a class="ghost-button" href="./docs.html">Docs</a>
+        <button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle theme">&#9788;</button>
+      </div>
+    </header>
+
+    <main class="workspace writer-workspace">
+      <section class="panel editor-panel" aria-labelledby="doc-editor-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="doc-editor-title">Document</h2>
+            <p class="panel-subtitle">document({ ... }) with sections, equations, and references</p>
+          </div>
+          <span id="status" class="status" aria-live="polite"></span>
+        </div>
+        <div class="editor-shell">
+          <textarea
+            id="editor"
+            spellcheck="false"
+            autocapitalize="off"
+            autocomplete="off"
+            autocorrect="off"
+            aria-label="MathScript document source"
+            placeholder='document({ type: "article", content: [ text("Hello") ] })'
+          ></textarea>
+        </div>
+        <div id="diagnostics" class="diagnostics" aria-live="polite"></div>
+      </section>
+
+      <section class="panel preview-panel" aria-labelledby="doc-preview-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="doc-preview-title">Output</h2>
+            <p class="panel-subtitle" id="template-label">Rendered document, LaTeX, and standalone HTML</p>
+          </div>
+          <div class="output-actions">
+            <button id="copy" class="ghost-button" type="button">Copy</button>
+            <button id="print" class="ghost-button" type="button">Print / PDF</button>
+            <button id="download-html" class="ghost-button" type="button">Download .html</button>
+            <button id="download" class="ghost-button" type="button">Download .tex</button>
+          </div>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Output format">
+          <button class="tab active" data-tab="document" role="tab" aria-selected="true">Document</button>
+          <button class="tab" data-tab="latex" role="tab" aria-selected="false">LaTeX</button>
+          <button class="tab" data-tab="html" role="tab" aria-selected="false">HTML</button>
+        </div>
+        <div class="output-shell writer-output">
+          <div id="doc-preview" class="doc-preview" role="tabpanel">
+            <div id="sheet" class="sheet-mount"></div>
+            <div id="stale-notice" class="stale-notice hidden" role="status"></div>
+          </div>
+          <pre id="code-output" class="code-output hidden" role="tabpanel"></pre>
+          <div class="empty-state hidden" id="empty-state">
+            <span class="empty-mark" aria-hidden="true">&#8721;</span>
+            <p>Start writing a document.</p>
+            <p class="muted">
+              Every document is one <code>document({ ... })</code> call. Try an example, or read the
+              <a href="./docs.html#document-authoring">document authoring guide</a>.
+            </p>
+          </div>
+        </div>
+        <div class="preview-foot">
+          <span id="timing"></span>
+          <span id="doc-stats"></span>
+          <span id="page-info"></span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>MathScript 0.1-draft</span>
+      <span class="dot" aria-hidden="true">&#183;</span>
+      <a href="../SPECIFICATION.md">Language specification</a>
+      <span class="dot" aria-hidden="true">&#183;</span>
+      <span><kbd>Ctrl</kbd> + <kbd>Space</kbd> for components</span>
+      <span class="dot" aria-hidden="true">&#183;</span>
+      <span><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to re-render</span>
+    </footer>
+
+    <script type="module" src="/web/document.js"></script>
+  </body>
+</html>

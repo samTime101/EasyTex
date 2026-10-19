@@ -10,6 +10,18 @@
   border: 0;
 }
 
+:root {
+  --component: #7c3aed;
+  --component-soft: #f5f3ff;
+  --component-line: #ddd6fe;
+}
+
+html[data-theme="dark"] {
+  --component: #c4b5fd;
+  --component-soft: #221c33;
+  --component-line: #3f335e;
+}
+
 .docs-header {
   border-bottom: 1px solid var(--line);
   background: color-mix(in srgb, var(--panel) 82%, transparent);
@@ -444,6 +456,82 @@
   background: var(--accent-soft);
   border-radius: 7px;
   padding: 4px 8px;
+}
+
+/* ------------------------------------------------- document authoring cards */
+
+.badge.kind-component {
+  color: var(--component);
+  border-color: var(--component-line);
+  background: var(--component-soft);
+  font-family: var(--mono);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 11px;
+}
+
+.badge.badge-role {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 11px;
+  font-family: var(--mono);
+}
+
+.docs-lede {
+  margin: 0;
+  color: var(--muted);
+  max-width: 78ch;
+}
+
+.docs-doc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.docs-sheet-frame {
+  position: relative;
+  max-height: 430px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg-strong);
+  padding: 18px;
+}
+
+.docs-sheet-frame .ms-sheet {
+  margin: 0 auto;
+}
+
+.docs-sheet-frame::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 90px;
+  background: linear-gradient(to bottom, transparent, var(--bg-strong));
+  pointer-events: none;
+}
+
+.docs-caption {
+  margin: 0;
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.document-example-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.document-example-body .example-source {
+  border-right: 0;
+}
+
+.docs-code-block {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
 }
 
 .search-empty {

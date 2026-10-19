@@ -190,10 +190,27 @@ class Parser {
       return numberNode(token);
     }
 
+    if (token.type === TOKEN.STRING) {
+      this.advance();
+      return {
+        kind: "String",
+        value: token.value,
+        raw: token.raw,
+        span: token.span
+      };
+    }
+
     if (token.type === TOKEN.IDENTIFIER) {
       this.advance();
       if (this.isPunct("(")) {
         return this.parseCall(token);
+      }
+      if (token.value === "true" || token.value === "false") {
+        return {
+          kind: "Boolean",
+          value: token.value === "true",
+          span: token.span
+        };
       }
       return identifierNode(token);
     }
@@ -208,6 +225,10 @@ class Parser {
 
     if (this.isPunct("[")) {
       return this.parseList();
+    }
+
+    if (this.isPunct("{")) {
+      return this.parseObject();
     }
 
     if (this.atEnd()) {
@@ -273,6 +294,44 @@ class Parser {
     }
     const close = this.expectPunct("]", "the list opened with '['");
     return { kind: "List", elements, span: mergeSpans(open.span, close.span) };
+  }
+
+  parseObject() {
+    const open = this.advance();
+    const entries = [];
+    if (this.isPunct("}")) {
+      const close = this.advance();
+      return { kind: "Object", entries, span: mergeSpans(open.span, close.span) };
+    }
+    while (true) {
+      const token = this.peek();
+      let key = null;
+      let keySpan = token.span;
+      if (token.type === TOKEN.IDENTIFIER) {
+        key = token.value;
+        this.advance();
+      } else if (token.type === TOKEN.STRING) {
+        key = token.value;
+        this.advance();
+      } else {
+        throw new ParseError(
+          `Expected a field name in the object, found '${token.value}'`,
+          token.span
+        );
+      }
+      this.expectPunct(":", `the object field '${key}'`);
+      const value = this.parseExpression();
+      entries.push({ key, keySpan, value });
+      if (this.matchPunct(",")) {
+        if (this.isPunct("}")) {
+          throw new ParseError("Trailing commas are not allowed in objects", this.peek().span);
+        }
+        continue;
+      }
+      break;
+    }
+    const close = this.expectPunct("}", "the object opened with '{'");
+    return { kind: "Object", entries, span: mergeSpans(open.span, close.span) };
   }
 }
 

@@ -6,7 +6,9 @@ export const CATEGORY = {
   STRUCTURE: "structure",
   TYPE: "type",
   DOMAIN: "domain",
-  RESERVED: "reserved"
+  RESERVED: "reserved",
+  DOCUMENT: "document",
+  REFERENCE: "reference"
 };
 
 export function position(offset, line, column) {

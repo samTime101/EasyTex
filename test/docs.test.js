@@ -72,15 +72,19 @@ test("every function category is represented and ordered", () => {
   assert.deepEqual(documented, expected);
 });
 
-test("documentation matching supports prefixes, functions, and constants", () => {
-  const sumMatches = matchDocumentation("su").map((doc) => doc.name);
+test("documentation matching supports prefixes, functions, constants, and components", () => {
+  const sumMatches = matchDocumentation("su", { kinds: ["function", "constant"] }).map((doc) => doc.name);
   assert.deepEqual(sumMatches, ["sum"]);
 
-  const pMatches = matchDocumentation("p").map((doc) => doc.name);
+  const pMatches = matchDocumentation("p", { kinds: ["function", "constant"] }).map((doc) => doc.name);
   assert.deepEqual(pMatches, ["partial", "pow", "product", "pi"]);
+
+  const withComponents = matchDocumentation("se", { kinds: ["component"] }).map((doc) => doc.name);
+  assert.deepEqual(withComponents, ["section"]);
 
   const all = matchDocumentation("", { all: true });
   assert.equal(all.length, documentationNames().length);
   assert.ok(all.some((doc) => doc.name === "sqrt" && doc.kind === "function"));
   assert.ok(all.some((doc) => doc.name === "pi" && doc.kind === "constant"));
+  assert.ok(all.some((doc) => doc.name === "section" && doc.kind === "component"));
 });

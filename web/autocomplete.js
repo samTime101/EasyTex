@@ -3,7 +3,7 @@ import { TextareaMirror } from "./textarea-geometry.js";
 
 const WORD_BEFORE_CARET = /[A-Za-z][A-Za-z0-9_]*$/;
 
-export function createAutocomplete({ textarea, container, maxItems = 12 }) {
+export function createAutocomplete({ textarea, container, maxItems = 12, kinds = ["function", "constant"] }) {
   const mirror = new TextareaMirror(textarea);
   const list = document.createElement("div");
   list.className = "autocomplete hidden";
@@ -61,7 +61,7 @@ export function createAutocomplete({ textarea, container, maxItems = 12 }) {
         tokenStart = caret;
         tokenEnd = caret;
         prefix = "";
-        items = matchDocumentation("").slice(0, maxItems);
+        items = matchDocumentation("", { kinds }).slice(0, maxItems);
         selected = 0;
         render();
         position();
@@ -78,7 +78,7 @@ export function createAutocomplete({ textarea, container, maxItems = 12 }) {
       return;
     }
 
-    const candidates = matchDocumentation(currentPrefix, { all: force && currentPrefix === "" });
+    const candidates = matchDocumentation(currentPrefix, { all: force && currentPrefix === "", kinds });
     const usable = candidates.filter((doc) => !(doc.name === currentPrefix && nextChar === "(" && !force));
     if (usable.length === 0) {
       close();
@@ -126,7 +126,7 @@ export function createAutocomplete({ textarea, container, maxItems = 12 }) {
 
       const kind = document.createElement("span");
       kind.className = "ac-kind";
-      kind.textContent = doc.kind === "constant" ? "const" : "fn";
+      kind.textContent = doc.kind === "constant" ? "const" : doc.kind === "component" ? "doc" : "fn";
 
       item.append(name, signature, kind);
       item.addEventListener("mousedown", (event) => {

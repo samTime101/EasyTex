@@ -52,7 +52,8 @@ export function renderMathML(ast, options = {}) {
     complex: options.complex !== false,
     scope: new Scope()
   };
-  return `<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">${renderNode(ast, ctx)}</math>`;
+  const display = options.display === "inline" ? "inline" : "block";
+  return `<math xmlns="http://www.w3.org/1998/Math/MathML" display="${display}">${renderNode(ast, ctx)}</math>`;
 }
 
 function renderNode(node, ctx) {

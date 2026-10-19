@@ -1,0 +1,214 @@
+/* Document writer: workspace layout, sheet preview, warnings, and print rules. */
+
+:root {
+  --warn: #b45309;
+  --warn-soft: #fffbeb;
+  --warn-line: #fcd9a4;
+}
+
+html[data-theme="dark"] {
+  --warn: #fbbf24;
+  --warn-soft: #2a2213;
+  --warn-line: #5c4a1f;
+}
+
+body.writer-body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+body.writer-body .app-header,
+body.writer-body .app-footer,
+body.writer-body .writer-workspace {
+  width: 100%;
+}
+
+body.writer-body .app-header,
+body.writer-body .app-footer {
+  flex: 0 0 auto;
+}
+
+.writer-workspace {
+  flex: 1 1 0;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.28fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+}
+
+.writer-workspace .panel {
+  min-height: 0;
+  max-height: 100%;
+}
+
+.writer-workspace .output-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.writer-workspace .output-actions .ghost-button {
+  white-space: nowrap;
+}
+
+.writer-workspace .editor-shell {
+  min-height: 0;
+}
+
+.writer-workspace #editor {
+  min-height: 0;
+}
+
+.writer-workspace .output-shell {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Warnings in the diagnostics list keep the error look clear. */
+.diagnostic.warning:hover {
+  background: var(--warn-soft);
+  border-color: var(--warn-line);
+}
+
+.diagnostic.warning .tag {
+  color: var(--warn);
+  background: var(--warn-soft);
+  border-color: var(--warn-line);
+}
+
+/* ------------------------------------------------------------- sheet preview */
+
+.doc-preview {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  position: relative;
+  padding: 26px 26px 44px;
+  background:
+    radial-gradient(circle at 50% -12%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 62%),
+    var(--panel-2);
+}
+
+.sheet-mount {
+  display: block;
+}
+
+.doc-preview.is-stale .sheet-mount {
+  opacity: 0.45;
+  filter: saturate(0.55);
+}
+
+.stale-notice {
+  width: fit-content;
+  margin: 0 auto 16px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--danger-line);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Missing images degrade to a readable placeholder instead of a broken icon. */
+.ms-image-missing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 10px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+/* -------------------------------------------------------------------- print */
+
+@media print {
+  .app-header,
+  .app-footer,
+  .editor-panel,
+  .panel-head,
+  .tabs,
+  .preview-foot,
+  .stale-notice,
+  .toast {
+    display: none !important;
+  }
+
+  html,
+  body.writer-body {
+    background: #fff !important;
+  }
+
+  .writer-workspace {
+    display: block !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    min-height: 0 !important;
+  }
+
+  .panel.preview-panel {
+    min-height: 0 !important;
+    max-height: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  .output-shell.writer-output {
+    display: block !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .doc-preview {
+    overflow: visible !important;
+    padding: 0 !important;
+    background: none !important;
+  }
+
+  .doc-preview.is-stale .sheet-mount {
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  .ms-sheet {
+    zoom: 1 !important;
+  }
+
+  .code-output {
+    display: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------- responsive */
+
+@media (max-width: 1000px) {
+  body.writer-body {
+    display: block;
+    height: auto;
+  }
+
+  .writer-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+
+  .writer-workspace .panel {
+    min-height: 520px;
+    max-height: none;
+  }
+
+  .writer-workspace .editor-shell {
+    min-height: 380px;
+  }
+
+  .writer-workspace #editor {
+    min-height: 420px;
+  }
+}

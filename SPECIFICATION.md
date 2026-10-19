@@ -28,7 +28,8 @@ This draft specifies:
 
 This draft does **not** specify:
 
-- A complete document markup language.
+- A complete document markup language. Section 10.6 describes an experimental extension that is
+  outside the core language.
 - Numeric evaluation or computer-algebra semantics.
 - User-defined functions or constants.
 - An interactive editor.
@@ -1007,20 +1008,92 @@ Accessibility is not optional in the long term. A production renderer SHOULD pro
 - A structural fallback when MathML is unavailable.
 - A way to copy the original MathScript source.
 
-### 10.6 Document layer
+### 10.6 Document layer (experimental extension)
 
-MathScript expressions are intended to become part of complete documents. A future document model may support:
+MathScript expressions are intended to become part of complete documents. This draft does not
+specify a document language, and section 0.1 lists a complete document markup language as a
+non-goal. The EasyTeX toolchain ships an **experimental extension** that fills that gap. The
+extension is documented here so implementations can share it, and it is explicitly outside the core
+language:
 
-- Headings and paragraphs.
-- Inline mathematics and display equations.
-- Numbered equations and references.
-- Matrices, tables, and figures.
-- Citations and bibliographies.
-- Sections, appendices, and cross-references.
+- It is **informative**: it is not required for parser, core-library, renderer, or full conformance.
+- It is **versioned with the implementation**, not with this specification. Its components, argument
+  names, and validation rules may change between 0.x drafts.
+- It MUST NOT change the meaning of any expression defined in sections 1–9.
 
-The mathematical source will be parsed into a syntax tree, which can be converted into an internal document model. Renderers and exporters then generate HTML, PDF, MathML, or LaTeX from that model.
+#### 10.6.1 Source model
 
-The document layer is not part of this version. In particular, this version does not define Markdown syntax, inline-math delimiters, equation numbering, or citation commands.
+A document source is UTF-8 text using the same call syntax as the language:
+
+```text
+document({
+  type: "article",
+  title: "Summing Squares",
+  author: "A. Author",
+  content: [
+    section("Result", [
+      equation(sum(i, 1, n, i^2) = frac(n*(n+1)*(2*n+1), 6), number=true, label="eq:series"),
+      text("Equation ", ref("eq:series"), " gives the closed form.")
+    ])
+  ]
+})
+```
+
+- A document is one `document({ ... })` call at the top level. A single block without the wrapper is
+  accepted and wrapped in a default `article` with a warning.
+- `//` line comments and `/* */` block comments are available in document sources.
+- Document sources extend the literal grammar with **strings** (with `\"`, `\\`, `\n`, `\t`, `\r`
+  escapes), **booleans** (`true`, `false`), and **object literals** (`{ key: value, ... }`).
+  Matrices and vectors are unchanged. These three literal forms MUST be rejected when they appear
+  inside a mathematical expression.
+- Metadata is an object. Content is a list of blocks. Blocks nest: sections contain blocks, list items
+  may contain blocks, and prose may contain inline components.
+- Component calls are ordinary calls: `section("Title", [blocks])`, `table(headers, rows)`,
+  `equation(expression, ...)`. Mathematical arguments are parsed by the expression grammar and
+  validated by the same validation rules as any other expression.
+- **Named arguments** (`number=true`, `caption="..."`, `label="eq:x"`, `width="80%"`) are an
+  extension of the call syntax used only by document components. A named argument is written
+  `name = value` after the positional arguments; it is recognised only for names declared by that
+  component. Positional arguments MUST precede named arguments. Elsewhere, `=` remains the relation
+  operator.
+
+#### 10.6.2 Numbering, labels, and references
+
+- Headings are numbered automatically by the template (letter, `1`, `1.1`, `1.1.1`); templates that
+  display unnumbered headings still record the heading path for references.
+- `equation(..., number=true)` numbers a display equation. A label without a number is an error.
+- Tables, figures, and listings are numbered when they carry a caption or a label. Theorems, lemmas,
+  definitions, and corollaries are numbered per type.
+- `label("eq:series")` registers a target; `ref("eq:series")` resolves it. Unresolved references and
+  duplicate labels are errors; reference text is derived from the target's number.
+- Bibliography entries are numbered in definition order. `cite("key")` renders a numbered, linked
+  citation and unknown keys are errors. When a document cites sources without a bibliography block,
+  a references section is appended. Required fields are validated per entry type.
+
+#### 10.6.3 Templates and page layout
+
+- `type` selects a template: `article`, `report`, `academic_report`, `thesis`, `book`,
+  `presentation`, `technical_document`, or `letter`. A template controls heading numbering, whether a
+  table of contents and abstract are shown, and the LaTeX document class.
+- `page({ size, orientation, margins, columns })` configures geometry: A3, A4, A5, Letter, or Legal;
+  portrait or landscape; per-side margins in `mm`, `cm`, `in`, `pt`, or `px`; one to three columns.
+  Documents without a `page({ ... })` block use A4, portrait, 25 mm margins, and one column.
+- Style resolution order is fixed: engine, then template, then document, then section, then
+  component.
+
+#### 10.6.4 Rendering, validation, and safety
+
+- Rendering produces a semantic HTML sheet that carries the document structure, and a complete,
+  compilable LaTeX file. The sheet stylesheet is shared by the writer preview and the standalone HTML
+  export. Print geometry is expressed as a page rule matching the configured size and margins.
+- Validation distinguishes error classes and never substitutes invalid content. When any
+  error-severity diagnostic is present, HTML and LaTeX output MUST NOT be produced. Warnings are
+  reported and do not suppress rendering. When an export cannot honour a template exactly (for
+  example, presentation slides or letter layout), the exporter emits a warning rather than silently
+  producing something different.
+- Source is data, never executable code. There is no `eval`, no generated JavaScript, and no network
+  access while building a document. Rendered text is HTML-escaped, and asset references are treated
+  as opaque paths or URLs that the renderer never resolves on the server.
 
 ## 11. Compatibility and versioning
 
@@ -1230,7 +1303,8 @@ The following names and concepts are reserved for future specification. They are
 - Indefinite integrals and antiderivatives.
 - User-defined functions and constants.
 - Set-builder notation, intervals, logic, and quantifiers.
-- Document structure, equation numbering, references, and citations.
+- Document structure, equation numbering, references, and citations. The extension in section 10.6
+  implements these concepts; it remains outside the core language and may change between 0.x drafts.
 
 Reserving a name does not define it. An implementation MUST NOT silently give a reserved name a meaning that conflicts with a future specification.
 

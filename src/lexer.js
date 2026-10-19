@@ -2,6 +2,7 @@ import { CATEGORY, diagnostic, makeSpan, position } from "./diagnostics.js";
 
 export const TOKEN = {
   NUMBER: "number",
+  STRING: "string",
   IDENTIFIER: "identifier",
   OPERATOR: "operator",
   PUNCT: "punct",
@@ -10,7 +11,8 @@ export const TOKEN = {
 
 const TWO_CHAR = new Set(["!=", "<=", ">="]);
 const ONE_CHAR_OPERATOR = new Set(["+", "-", "*", "/", "%", "^", "=", "<", ">"]);
-const PUNCT = new Set(["(", ")", "[", "]", ","]);
+const PUNCT = new Set(["(", ")", "[", "]", "{", "}", ":", ","]);
+const STRING_ESCAPES = { '"': '"', "\\": "\\", n: "\n", t: "\t", r: "\r" };
 
 function isDigit(ch) {
   return ch >= "0" && ch <= "9";
@@ -62,6 +64,75 @@ export function tokenize(source) {
 
     if (ch === "/" && source[offset + 1] === "/") {
       while (offset < source.length && source[offset] !== "\n" && source[offset] !== "\r") advance();
+      continue;
+    }
+
+    if (ch === "/" && source[offset + 1] === "*") {
+      const start = here();
+      advanceMany(2);
+      let closed = false;
+      while (offset < source.length) {
+        if (source[offset] === "*" && source[offset + 1] === "/") {
+          advanceMany(2);
+          closed = true;
+          break;
+        }
+        advance();
+      }
+      if (!closed) {
+        diagnostics.push(
+          diagnostic(CATEGORY.LEXICAL, "Unterminated block comment; expected '*/'", makeSpan(start, here()))
+        );
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      const start = here();
+      const startOffset = offset;
+      advance();
+      let value = "";
+      let closed = false;
+      while (offset < source.length) {
+        const current = source[offset];
+        if (current === '"') {
+          advance();
+          closed = true;
+          break;
+        }
+        if (current === "\n" || current === "\r") break;
+        if (current === "\\") {
+          const next = source[offset + 1];
+          if (next !== undefined && STRING_ESCAPES[next] !== undefined) {
+            value += STRING_ESCAPES[next];
+            advanceMany(2);
+            continue;
+          }
+          diagnostics.push(
+            diagnostic(
+              CATEGORY.LEXICAL,
+              `Unsupported escape sequence '\\${next ?? ""}' in a string literal`,
+              makeSpan(here())
+            )
+          );
+          if (next === undefined) advance();
+          else advanceMany(2);
+          continue;
+        }
+        value += current;
+        advance();
+      }
+      if (!closed) {
+        diagnostics.push(
+          diagnostic(CATEGORY.LEXICAL, "Unterminated string literal; expected a closing '\"'", makeSpan(start, here()))
+        );
+      }
+      tokens.push({
+        type: TOKEN.STRING,
+        value,
+        raw: source.slice(startOffset, offset),
+        span: makeSpan(start, here())
+      });
       continue;
     }
 
