@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
-import { extname, join, normalize, resolve } from "node:path";
+import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
@@ -20,7 +20,7 @@ async function resolveFile(urlPath) {
   let pathname = decodeURIComponent(urlPath.split("?")[0]);
   if (pathname === "/") pathname = "/web/index.html";
   const target = normalize(join(root, pathname));
-  if (!target.startsWith(root)) return null;
+  if (target !== root && !target.startsWith(root + sep)) return null;
   try {
     const info = await stat(target);
     if (info.isDirectory()) return join(target, "index.html");

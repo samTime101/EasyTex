@@ -184,7 +184,8 @@ function renderIntegral(node, ctx) {
 function renderDerivative(node, ctx, name) {
   const variable = node.args[0];
   const symbol = name === "partial" ? "\u2202" : "d";
-  const head = `<mfrac><mrow>${mi(symbol, false)}</mrow><mrow>${mi(symbol, false)}${boundMi(variable.name)}</mrow></mfrac>`;
+  const symbolMarkup = name === "partial" ? mo(symbol) : mi(symbol, true);
+  const head = `<mfrac><mrow>${symbolMarkup}</mrow><mrow>${symbolMarkup}${boundMi(variable.name)}</mrow></mfrac>`;
   ctx.scope.push(variable.name);
   const body = renderNode(node.args[1], ctx);
   ctx.scope.pop();
