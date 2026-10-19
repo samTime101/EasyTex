@@ -732,7 +732,7 @@ The renderer maps the argument order to conventional notation:
 | `product(i, 1, n, i)` | \(\displaystyle\prod_{i=1}^{n} i\) |
 | `integral(x, 0, 1, x^2)` | \(\displaystyle\int_{0}^{1} x^2\,dx\) |
 | `derivative(x, x^2 + 1)` | \(\displaystyle\frac{d}{dx}(x^2+1)\) |
-| `partial(x, f(x, y))` | \(\displaystyle\frac{\partial}{\partial x}f(x,y)\) |
+| `partial(x, x^2 + y^2)` | \(\displaystyle\frac{\partial}{\partial x}(x^2+y^2)\) |
 | `limit(x, 0, sin(x)/x)` | \(\displaystyle\lim_{x\to 0}\frac{\sin(x)}{x}\) |
 
 The source order is always `variable, bounds, expression`, regardless of how the notation is displayed.
@@ -973,7 +973,7 @@ The following table gives the intended LaTeX representation of core constructs. 
 | `product(i, 1, n, i)` | `\prod_{i=1}^{n} i` |
 | `integral(x, 0, 1, x^2)` | `\int_{0}^{1} x^{2}\,dx` |
 | `derivative(x, x^2 + 1)` | `\frac{d}{dx}\left(x^{2}+1\right)` |
-| `partial(x, f(x, y))` | `\frac{\partial}{\partial x}f(x,y)` |
+| `partial(x, x^2 + y^2)` | `\frac{\partial}{\partial x}(x^2+y^2)` |
 | `limit(x, 0, sin(x)/x)` | `\lim_{x\to 0}\frac{\sin(x)}{x}` |
 | `matrix([[1, 2], [3, 4]])` | `\begin{bmatrix}1&2\\3&4\end{bmatrix}` |
 | `vector([x, y, z])` | `\begin{bmatrix}x\\y\\z\end{bmatrix}` |

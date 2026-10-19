@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="EasyTeX — write mathematics in MathScript, preview it instantly, export LaTeX." />
+    <title>EasyTeX — MathScript editor</title>
+    <link rel="stylesheet" href="/web/styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">&#8721;</span>
+        <div>
+          <h1>EasyTeX</h1>
+          <p>Write math, not LaTeX.</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <label class="example-picker">
+          <span>Examples</span>
+          <select id="examples">
+            <option value="">Choose an example…</option>
+          </select>
+        </label>
+        <label class="mode-toggle" title="Enable complex-number semantics for i">
+          <input id="complex-mode" type="checkbox" checked />
+          <span>Complex mode</span>
+        </label>
+        <button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle theme">&#9788;</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="panel editor-panel" aria-labelledby="editor-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="editor-title">MathScript</h2>
+            <p class="panel-subtitle">Function-based notation with live validation</p>
+          </div>
+          <span id="status" class="status" aria-live="polite"></span>
+        </div>
+        <div class="editor-shell">
+          <textarea
+            id="editor"
+            spellcheck="false"
+            autocapitalize="off"
+            autocomplete="off"
+            autocorrect="off"
+            aria-label="MathScript source"
+            placeholder="sum(i, 1, n, i^2)"
+          ></textarea>
+        </div>
+        <div id="diagnostics" class="diagnostics" aria-live="polite"></div>
+      </section>
+
+      <section class="panel preview-panel" aria-labelledby="preview-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="preview-title">Output</h2>
+            <p class="panel-subtitle">Rendered with native MathML</p>
+          </div>
+          <div class="output-actions">
+            <button id="copy" class="ghost-button" type="button">Copy</button>
+            <button id="download" class="ghost-button" type="button">Download .tex</button>
+          </div>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Output format">
+          <button class="tab active" data-tab="preview" role="tab" aria-selected="true">Preview</button>
+          <button class="tab" data-tab="latex" role="tab" aria-selected="false">LaTeX</button>
+          <button class="tab" data-tab="mathml" role="tab" aria-selected="false">MathML</button>
+          <button class="tab" data-tab="ast" role="tab" aria-selected="false">AST</button>
+        </div>
+        <div class="output-shell">
+          <div id="preview" class="preview" role="tabpanel"></div>
+          <pre id="code-output" class="code-output hidden" role="tabpanel"></pre>
+          <div class="empty-state hidden" id="empty-state">
+            <span class="empty-mark" aria-hidden="true">&#8730;</span>
+            <p>Start typing a MathScript expression.</p>
+            <p class="muted">Try <code>sum(i, 1, n, i^2)</code> or choose an example above.</p>
+          </div>
+        </div>
+        <div class="preview-foot">
+          <span id="timing"></span>
+          <span id="node-count"></span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>MathScript 0.1-draft</span>
+      <span class="dot" aria-hidden="true">&#183;</span>
+      <a href="../SPECIFICATION.md">Language specification</a>
+      <span class="dot" aria-hidden="true">&#183;</span>
+      <span><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to re-render</span>
+    </footer>
+
+    <script type="module" src="/web/app.js"></script>
+  </body>
+</html>
