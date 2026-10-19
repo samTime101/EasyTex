@@ -5,6 +5,8 @@ import { compileDocument, renderStandaloneHTML, parseLength, SHEET_CSS } from ".
 import { initTheme } from "./theme.js";
 import { createAutocomplete } from "./autocomplete.js";
 import { createHoverDocs } from "./hover-docs.js";
+import { attachHighlighter } from "./highlight.js";
+import { attachEditing, formatTextarea } from "./editing.js";
 import { DEFAULT_DOCUMENT_SOURCE, DOCUMENT_EXAMPLES } from "./document-examples.js";
 
 const STORAGE_KEY = "easytex.document";
@@ -14,6 +16,7 @@ const DEFAULT_SUBTITLE = "Rendered document, LaTeX, and standalone HTML";
 
 const editor = document.getElementById("editor");
 const editorShell = document.querySelector(".editor-shell");
+const workspace = document.querySelector(".workspace");
 const diagnosticsEl = document.getElementById("diagnostics");
 const statusEl = document.getElementById("status");
 const examplesEl = document.getElementById("examples");
@@ -32,6 +35,8 @@ const copyButton = document.getElementById("copy");
 const printButton = document.getElementById("print");
 const downloadButton = document.getElementById("download");
 const downloadHtmlButton = document.getElementById("download-html");
+const formatButton = document.getElementById("format-source");
+const sizeButton = document.getElementById("editor-size");
 
 const EMPTY_STATE_HTML = emptyStateEl.innerHTML;
 
@@ -455,11 +460,13 @@ const hoverDocs = createHoverDocs({
   isSuppressed: () => autocomplete.isOpen(),
   kinds: HOVER_KINDS
 });
+const highlighter = attachHighlighter({ textarea: editor, components: true, fields: true });
 
 editor.value = loadSource();
 populateExamples();
 initTheme(themeToggle);
 renderNow();
+highlighter.refresh();
 
 editor.addEventListener("input", () => {
   scheduleRender();
@@ -481,14 +488,27 @@ editor.addEventListener("keydown", (event) => {
     renderNow();
     return;
   }
-  if (autocomplete.handleKey(event)) return;
-  if (event.key === "Tab" && !event.shiftKey) {
+  if (event.shiftKey && event.altKey && (event.key === "F" || event.key === "f")) {
     event.preventDefault();
-    const start = editor.selectionStart;
-    const end = editor.selectionEnd;
-    editor.setRangeText("  ", start, end, "end");
-    scheduleRender();
+    formatTextarea(editor);
+    return;
   }
+  autocomplete.handleKey(event);
+});
+
+attachEditing({ textarea: editor });
+
+formatButton.addEventListener("click", () => {
+  if (formatTextarea(editor)) editor.focus();
+});
+
+sizeButton.addEventListener("click", () => {
+  const expanded = workspace.classList.toggle("editor-expanded");
+  sizeButton.setAttribute("aria-pressed", String(expanded));
+  sizeButton.textContent = expanded ? "Restore" : "Maximize";
+  sizeButton.title = expanded ? "Show the output pane again" : "Let the editor use the full page width";
+  highlighter.refresh();
+  autocomplete.reposition();
 });
 
 examplesEl.addEventListener("change", () => {
@@ -500,6 +520,7 @@ examplesEl.addEventListener("change", () => {
   editor.setSelectionRange(0, 0);
   examplesEl.value = "";
   renderNow();
+  highlighter.refresh();
   editor.focus();
 });
 
@@ -528,5 +549,6 @@ window.addEventListener("hashchange", () => {
   editor.scrollTop = 0;
   editor.setSelectionRange(0, 0);
   renderNow();
+  highlighter.refresh();
   editor.focus();
 });

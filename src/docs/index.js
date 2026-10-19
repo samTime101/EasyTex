@@ -2,10 +2,12 @@ import { FUNCTION_DOCS } from "./functions.js";
 import { CONSTANT_DOCS } from "./constants.js";
 import { OPERATOR_DOCS, SYNTAX_NOTES, PRECEDENCE_EXAMPLES } from "./operators.js";
 import { FIELD_DOCS, FIELD_SCOPE_ORDER, FIELD_SCOPE_LABELS } from "./fields.js";
+import { GREEK_DOCS } from "./greek.js";
 import { COMPONENT_DOCS, COMPONENT_CATEGORY_ORDER } from "../document/components.js";
 
 export { FUNCTION_DOCS, CONSTANT_DOCS, OPERATOR_DOCS, SYNTAX_NOTES, PRECEDENCE_EXAMPLES };
 export { FIELD_DOCS, FIELD_SCOPE_ORDER, FIELD_SCOPE_LABELS };
+export { GREEK_DOCS };
 export { COMPONENT_DOCS, COMPONENT_CATEGORY_ORDER };
 
 export const FUNCTION_CATEGORY_ORDER = [

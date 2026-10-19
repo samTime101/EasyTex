@@ -26,7 +26,7 @@ export const SYNTAX_NOTES = [
   },
   {
     title: "Whitespace and comments",
-    body: "Whitespace is insignificant. A // comment runs to the end of the line.",
+    body: "Whitespace is insignificant. A // comment runs to the end of the line; a /* ... */ comment spans up to its closing marker.",
     example: "sum(i, 1, n, i^2) // first n squares"
   },
   {

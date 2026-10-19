@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { FUNCTIONS, CONSTANTS } from "../src/builtins.js";
+import { FUNCTIONS, CONSTANTS, GREEK } from "../src/builtins.js";
 import {
   FUNCTION_DOCS,
   CONSTANT_DOCS,
   OPERATOR_DOCS,
+  GREEK_DOCS,
   matchDocumentation,
   docsFor,
   documentationNames,
@@ -25,6 +26,19 @@ test("every built-in function and constant has documentation", () => {
       `documentation exists for unknown name '${doc.name}'`
     );
   }
+});
+
+test("every Greek letter name is documented with its symbol and LaTeX form", () => {
+  assert.equal(GREEK_DOCS.length, Object.keys(GREEK).length);
+  for (const [name, symbol] of Object.entries(GREEK)) {
+    const doc = GREEK_DOCS.find((entry) => entry.name === name);
+    assert.ok(doc, `missing documentation for Greek letter '${name}'`);
+    assert.equal(doc.symbol, symbol);
+    assert.equal(doc.latex, `\\${name}`);
+    assert.equal(doc.constant, CONSTANTS.has(name));
+  }
+  const withoutSymbol = GREEK_DOCS.filter((entry) => [...entry.symbol].length !== 1);
+  assert.deepEqual(withoutSymbol, [], "each Greek entry holds exactly one symbol");
 });
 
 test("every documented example compiles without diagnostics", () => {

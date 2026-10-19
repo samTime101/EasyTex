@@ -313,6 +313,11 @@ html[data-theme="dark"] {
   white-space: pre-wrap;
 }
 
+.greek-symbol {
+  font-size: 18px;
+  line-height: 1;
+}
+
 .example-list {
   display: flex;
   flex-direction: column;

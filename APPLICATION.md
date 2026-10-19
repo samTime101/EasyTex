@@ -46,6 +46,10 @@ parsed into data and validated before rendering.
 - Clickable diagnostics that select the offending source range.
 - Autocomplete (`Ctrl` + `Space`) with signatures and correct insertion of calls and constants.
 - Hover documentation for functions and constants, aware of bound-variable scope.
+- Syntax highlighting for comments, strings, numbers, booleans, functions, constants, and operators.
+- Auto-closing brackets and quotes, smart `Enter`, line indent/unindent, pair deletion, and a
+  **Format** action (`Shift` + `Alt` + `F`) that re-indents the source from bracket depth.
+- A **Maximize** toggle that hides the output pane so the source fills the workspace.
 - Examples library, complex-mode toggle for `i`, and light/dark themes persisted in `localStorage`.
 - Copy output and download a complete `.tex` document.
 - Source can be shared with `#src=<url-encoded source>`.
@@ -82,16 +86,20 @@ parsed into data and validated before rendering.
   snippets are indented to the insertion point and the caret lands in the first empty placeholder.
 - Field hover help: metadata keys, page options, margin sides, named arguments (`label=`, `number=`,
   `caption=`, …), and bibliography fields show their scope, value type, allowed values, and an example.
+- The same syntax highlighting, auto-closing, smart indentation, formatting, and maximize controls as
+  the expression editor, with document components and field names highlighted too.
 
 ### Reference page
 
-- Every function, constant, operator, syntax rule, template, page size, and document component.
+- Every function, constant, Greek letter name, operator, syntax rule, template, page size, and document component.
 - Live MathML previews for expression examples; document examples link into the writer.
 - Search across functions, constants, components, and argument names; each component lists positional
   and named arguments.
 - New **Document authoring** section with a rendered document preview, authoring notes, the template
   table, page geometry, component catalog, and a field reference for metadata, page options, named
   arguments, and bibliography entries.
+- The field reference lists each field's allowed values, and a **Reference types** table names the
+  required and optional fields for every bibliography entry type.
 
 ### Shared implementation
 
@@ -100,8 +108,9 @@ parsed into data and validated before rendering.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
   help, including document components.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 50 conformance tests cover the language, the expression pipeline, the document layer, the
-  documentation catalog, the writer examples, and the authoring snippets.
+- 71 conformance tests cover the language, the expression pipeline, the document layer, the
+  documentation catalog, the writer examples, the authoring snippets, the field catalog, the syntax
+  highlighter, and the editing/formatting helpers.
 
 ## Architecture
 
@@ -110,7 +119,7 @@ src/
   lexer.js, parser.js, validate.js      shared front end
   builtins.js, diagnostics.js            language surface and error model
   render-mathml.js, render-latex.js      expression renderers
-  docs/                                  shared documentation metadata
+  docs/                                  function, constant, Greek, operator, field metadata
   document/
     components.js                        component catalog and authoring notes
     templates.js                         templates, page sizes, length parsing
@@ -125,6 +134,7 @@ web/
   document-examples.js                   writer examples (tested in CI)
   docs.html, docs.js, docs.css           reference page
   autocomplete.js, snippets.js, hover-docs.js   editor assistance (filterable by kind)
+  highlight.js, editing.js               syntax highlighting and editing helpers
 ```
 
 Design rules:
@@ -150,6 +160,25 @@ Node 18 or newer is required; there are no runtime dependencies. The dev server 
 static file server (`tools/serve.mjs`).
 
 ## Updates
+
+### 2026-10-19 — syntax highlighting, editing assistance, and complete reference
+
+- Added `web/highlight.js`: a tolerant, single-pass MathScript scanner and a highlight layer painted
+  under a transparent textarea. Comments, strings, numbers, booleans, functions, constants, operators,
+  document components, and field names are colored; the writer highlights components and fields too.
+- Added `web/editing.js`: auto-closing `(` `[` `{` and `"` (wrapping a selection, stepping over the
+  partner), Backspace pair deletion, smart Enter that keeps indentation and expands bracket pairs,
+  Tab / Shift+Tab line indentation, and bracket-depth re-indentation with `Shift` + `Alt` + `F`.
+  Edits go through `execCommand("insertText")` so undo/redo keeps working.
+- Both editors gained **Format** and **Maximize** controls; maximizing hides the output pane and
+  resizes the source to the full workspace width. Default workspace split now gives the source more room.
+- The reference page gained a 24-entry **Greek letters** section, allowed-value groups for field
+  entries, and a **Reference types** table listing the required and optional fields of every
+  bibliography type. Field values now cover `columns` (1–3), `number` (true/false), `type`
+  (templates and reference types), page sizes, orientation, and alignment.
+- New tests cover the scanner, highlighting output, auto-closing, smart Enter, indentation, formatting
+  (including idempotency against every shipped example), selection mapping, Greek coverage, and field
+  value/reference-type completeness. The suite grew from 50 to 71 tests.
 
 ### 2026-10-19 — authoring snippets and field help
 

@@ -45,7 +45,10 @@ npm test
 - **Diagnostics** with source positions and categories. Click a diagnostic to select the offending range in the editor.
 - **Function suggestions** while typing: an autocomplete list with signatures, keyboard navigation, and correct insertion of calls and constants. In the writer, document components are suggested too, and structured components insert starter snippets — `document` expands to a complete scaffold.
 - **Hover documentation** in the editor: signatures, argument descriptions, and a rendered example for the function under the pointer, with scope-aware handling of bound variables. The writer also explains components and fields (metadata keys, named arguments, and bibliography entries).
-- **Documentation page** at `/web/docs.html` covering every function, constant, operator, syntax rule, component, template, and field, with live previews, search, and links into both editors.
+- **Syntax highlighting** in both editors: comments, strings, numbers, booleans, functions, constants, operators, document components, and field names each get their own color, in light and dark themes.
+- **Editing assistance**: brackets and quotes auto-close around a selection or step over their partner, `Backspace` removes an empty pair, `Enter` keeps indentation and expands bracket pairs into a block, and `Tab` / `Shift` + `Tab` indent lines. `Shift` + `Alt` + `F` or the **Format** button re-indents source from bracket depth.
+- **Maximize** button in both editors hides the output pane so the source gets the full page width.
+- **Documentation page** at `/web/docs.html` covering every function, constant, Greek letter name, operator, syntax rule, component, template, and document field — with allowed values, bibliography reference types, live previews, search, and links into both editors.
 - **Export** to LaTeX, MathML, or the raw AST. Download a complete `.tex` document with one click.
 - **Examples** for sums, products, fractions, integrals, limits, derivatives, matrices, vectors, and documents.
 - **Complex mode** toggle for the imaginary unit `i`.
@@ -80,6 +83,8 @@ easytex/
     ├── autocomplete.js
     ├── snippets.js
     ├── hover-docs.js
+    ├── highlight.js
+    ├── editing.js
     ├── textarea-geometry.js
     ├── theme.js
     ├── document.html     Document writer
@@ -103,7 +108,8 @@ These work in both editors; in the document writer, `Ctrl` + `Space` also lists 
 | `Enter` or `Tab` | Accept the selected suggestion |
 | `Esc` | Dismiss suggestions |
 | `Ctrl` + `Enter` | Re-render immediately |
-| `Tab` | Insert two spaces |
+| `Tab` / `Shift` + `Tab` | Indent / unindent the selected lines |
+| `Shift` + `Alt` + `F` | Re-indent the source |
 
 ## Library usage
 

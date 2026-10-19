@@ -2,13 +2,20 @@ import { compile, compileDocument, SHEET_CSS } from "../src/index.js";
 import {
   SYNTAX_NOTES,
   PRECEDENCE_EXAMPLES,
+  GREEK_DOCS,
   groupFunctionsByCategory,
   groupConstantsByCategory,
   groupOperatorsByCategory,
   groupComponentsByCategory,
   groupFieldsByScope
 } from "../src/docs/index.js";
-import { DOCUMENT_NOTES, TEMPLATES, TEMPLATE_NAMES, PAGE_SIZES } from "../src/document/index.js";
+import {
+  BIBLIOGRAPHY_TYPES,
+  DOCUMENT_NOTES,
+  TEMPLATES,
+  TEMPLATE_NAMES,
+  PAGE_SIZES
+} from "../src/document/index.js";
 import { initTheme } from "./theme.js";
 
 const content = document.getElementById("docs-content");
@@ -198,7 +205,7 @@ function renderHero() {
     el(
       "p",
       null,
-      "Every function, its arguments, and a worked example, plus the experimental document layer: templates, page layout, and every block and inline component. MathScript is a function-based mathematical language: calls are name(arg1, arg2, …), ordinary arithmetic stays ordinary, and source is separate from rendering."
+      "Every function, constant, Greek letter name, and operator — with arguments and worked examples — plus the experimental document layer: templates, page layout, every block and inline component, and every document(...) metadata and option field. MathScript is a function-based mathematical language: calls are name(arg1, arg2, …), ordinary arithmetic stays ordinary, and source is separate from rendering."
     )
   );
 
@@ -241,6 +248,39 @@ function renderConstants() {
     for (const doc of group.items) node.append(functionCard(doc));
     content.append(node);
   }
+}
+
+function renderGreek() {
+  addNavSection("Greek letters", [{ label: "Greek letters", id: "greek-letters" }]);
+
+  const node = section("greek-letters", "Greek letters", GREEK_DOCS.length);
+  node.append(
+    el(
+      "p",
+      "docs-lede",
+      "Greek names are ordinary identifiers: write alpha, beta, sigma, and friends and they render as the matching Greek letter in the preview and in the LaTeX export. They stay free variables, so they can be bound by sum(...), integral(...), and the other binder functions."
+    )
+  );
+
+  const table = el("table", "operator-table");
+  const head = el("thead");
+  const headRow = el("tr");
+  for (const label of ["Name", "Symbol", "LaTeX", "Notes"]) headRow.append(el("th", null, label));
+  head.append(headRow);
+  table.append(head);
+
+  const body = el("tbody");
+  for (const doc of GREEK_DOCS) {
+    const row = el("tr");
+    row.append(el("td", "operator-example", doc.name));
+    row.append(el("td", "greek-symbol", doc.symbol));
+    row.append(el("td", "operator-example", doc.latex));
+    row.append(el("td", null, doc.constant ? "Also the numeric constant \u03c0." : ""));
+    body.append(row);
+  }
+  table.append(body);
+  node.append(table);
+  content.append(node);
 }
 
 function renderOperators() {
@@ -472,11 +512,37 @@ function fieldsTable(fields) {
     const description = el("td");
     description.append(document.createTextNode(field.summary));
     if (field.description) description.append(document.createTextNode(` ${field.description}`));
-    if (field.values?.length) {
-      description.append(document.createTextNode(` Values: ${field.values.join(", ")}.`));
+    const groups = field.valueGroups?.length
+      ? field.valueGroups
+      : field.values?.length
+        ? [{ label: "Values", values: field.values }]
+        : [];
+    for (const group of groups) {
+      description.append(document.createTextNode(` ${group.label}: ${group.values.join(", ")}.`));
     }
     if (field.example) description.append(el("code", "field-example", field.example));
     row.append(description);
+    body.append(row);
+  }
+  table.append(body);
+  return table;
+}
+
+function referenceTypesTable() {
+  const table = el("table", "operator-table");
+  const head = el("thead");
+  const headRow = el("tr");
+  for (const label of ["type", "Required fields", "Optional fields"]) headRow.append(el("th", null, label));
+  head.append(headRow);
+  table.append(head);
+
+  const body = el("tbody");
+  for (const [name, spec] of Object.entries(BIBLIOGRAPHY_TYPES)) {
+    const row = el("tr");
+    row.append(el("td", "operator-example", name));
+    row.append(el("td", "operator-example", spec.required.join(", ")));
+    const optional = spec.fields.filter((field) => !spec.required.includes(field));
+    row.append(el("td", "operator-example", optional.length > 0 ? optional.join(", ") : "—"));
     body.append(row);
   }
   table.append(body);
@@ -500,6 +566,16 @@ function renderDocumentFields() {
     node.append(el("h3", "docs-subhead", group.label));
     node.append(fieldsTable(group.items));
   }
+
+  node.append(el("h3", "docs-subhead", "Reference types"));
+  node.append(
+    el(
+      "p",
+      "docs-lede",
+      'Every bibliography entry needs a unique key, an author, a title, and a year. type (default "misc") selects the reference type; the table shows the extra required field and the optional fields for each type.'
+    )
+  );
+  node.append(referenceTypesTable());
 
   content.append(node);
 }
@@ -632,6 +708,7 @@ function setupNavHighlight() {
 renderHero();
 renderFunctions();
 renderConstants();
+renderGreek();
 renderOperators();
 renderSyntax();
 renderDocumentAuthoring();

@@ -40,7 +40,26 @@
             <h2 id="editor-title">MathScript</h2>
             <p class="panel-subtitle">Function-based notation with live validation</p>
           </div>
-          <span id="status" class="status" aria-live="polite"></span>
+          <div class="panel-head-actions">
+            <span id="status" class="status" aria-live="polite"></span>
+            <button
+              id="format-source"
+              class="panel-button"
+              type="button"
+              title="Re-indent the source (Shift + Alt + F)"
+            >
+              Format
+            </button>
+            <button
+              id="editor-size"
+              class="panel-button"
+              type="button"
+              aria-pressed="false"
+              title="Let the editor use the full page width"
+            >
+              Maximize
+            </button>
+          </div>
         </div>
         <div class="editor-shell">
           <textarea
@@ -95,6 +114,8 @@
       <a href="../SPECIFICATION.md">Language specification</a>
       <span class="dot" aria-hidden="true">&#183;</span>
       <span><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to re-render</span>
+      <span class="dot" aria-hidden="true">&#183;</span>
+      <span><kbd>Shift</kbd> + <kbd>Alt</kbd> + <kbd>F</kbd> to format</span>
     </footer>
 
     <script type="module" src="/web/app.js"></script>

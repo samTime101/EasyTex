@@ -2,6 +2,8 @@ import { compile } from "../src/index.js";
 import { initTheme } from "./theme.js";
 import { createAutocomplete } from "./autocomplete.js";
 import { createHoverDocs } from "./hover-docs.js";
+import { attachHighlighter } from "./highlight.js";
+import { attachEditing, formatTextarea } from "./editing.js";
 
 const EXAMPLES = [
   { label: "Sum of squares", source: "sum(i, 1, n, i^2)" },
@@ -25,6 +27,7 @@ const DEFAULT_SOURCE = "sum(i, 1, n, i^2)";
 
 const editor = document.getElementById("editor");
 const editorShell = document.querySelector(".editor-shell");
+const workspace = document.querySelector(".workspace");
 const diagnosticsEl = document.getElementById("diagnostics");
 const statusEl = document.getElementById("status");
 const previewEl = document.getElementById("preview");
@@ -35,6 +38,8 @@ const complexEl = document.getElementById("complex-mode");
 const themeToggle = document.getElementById("theme-toggle");
 const copyButton = document.getElementById("copy");
 const downloadButton = document.getElementById("download");
+const formatButton = document.getElementById("format-source");
+const sizeButton = document.getElementById("editor-size");
 const timingEl = document.getElementById("timing");
 const nodeCountEl = document.getElementById("node-count");
 const tabs = [...document.querySelectorAll(".tab")];
@@ -307,11 +312,13 @@ const hoverDocs = createHoverDocs({
   container: editorShell,
   isSuppressed: () => autocomplete.isOpen()
 });
+const highlighter = attachHighlighter({ textarea: editor });
 
 editor.value = loadSource();
 populateExamples();
 initTheme(themeToggle);
 renderNow();
+highlighter.refresh();
 
 editor.addEventListener("input", () => {
   scheduleRender();
@@ -333,14 +340,27 @@ editor.addEventListener("keydown", (event) => {
     renderNow();
     return;
   }
-  if (autocomplete.handleKey(event)) return;
-  if (event.key === "Tab" && !event.shiftKey) {
+  if (event.shiftKey && event.altKey && (event.key === "F" || event.key === "f")) {
     event.preventDefault();
-    const start = editor.selectionStart;
-    const end = editor.selectionEnd;
-    editor.setRangeText("  ", start, end, "end");
-    scheduleRender();
+    formatTextarea(editor);
+    return;
   }
+  autocomplete.handleKey(event);
+});
+
+attachEditing({ textarea: editor });
+
+formatButton.addEventListener("click", () => {
+  if (formatTextarea(editor)) editor.focus();
+});
+
+sizeButton.addEventListener("click", () => {
+  const expanded = workspace.classList.toggle("editor-expanded");
+  sizeButton.setAttribute("aria-pressed", String(expanded));
+  sizeButton.textContent = expanded ? "Restore" : "Maximize";
+  sizeButton.title = expanded ? "Show the output pane again" : "Let the editor use the full page width";
+  highlighter.refresh();
+  autocomplete.reposition();
 });
 
 complexEl.addEventListener("change", renderNow);
@@ -350,6 +370,7 @@ examplesEl.addEventListener("change", () => {
   editor.value = examplesEl.value;
   examplesEl.value = "";
   renderNow();
+  highlighter.refresh();
   editor.focus();
 });
 

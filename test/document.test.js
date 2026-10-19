@@ -6,6 +6,7 @@ import {
   COMPONENT_DOCS,
   DOCUMENT_NOTES,
   TEMPLATES,
+  TEMPLATE_NAMES,
   PAGE_SIZES,
   HANDLED_COMPONENTS,
   NAMED_ARGUMENTS,
@@ -569,6 +570,54 @@ test("every document field has hover documentation", () => {
     Object.keys(PAGE_SIZES).sort(),
     "page sizes are listed in their source spelling"
   );
+});
+
+test("enumerated field values list every available option", () => {
+  const byName = new Map(FIELD_DOCS.map((field) => [field.name, field]));
+
+  for (const field of FIELD_DOCS) {
+    const groups = field.valueGroups ?? (field.values ? [{ label: "Values", values: field.values }] : []);
+    for (const group of groups) {
+      assert.ok(group.label, `'${field.name}' value group needs a label`);
+      assert.ok(group.values.length > 0, `'${field.name}' value group is empty`);
+      for (const value of group.values) {
+        assert.equal(typeof value, "string");
+        assert.ok(value.length > 0, `'${field.name}' has an empty option`);
+      }
+    }
+  }
+
+  const type = byName.get("type");
+  const groups = Object.fromEntries(type.valueGroups.map((group) => [group.label, group.values]));
+  assert.deepEqual(groups["Document templates"], TEMPLATE_NAMES);
+  assert.deepEqual(groups["Reference types"], Object.keys(BIBLIOGRAPHY_TYPES));
+
+  assert.deepEqual(byName.get("size").values.map((value) => value.toUpperCase()).sort(), Object.keys(PAGE_SIZES).sort());
+  assert.deepEqual(byName.get("orientation").values, ["portrait", "landscape"]);
+  assert.deepEqual(byName.get("align").values, ["left", "center", "right"]);
+  assert.deepEqual(byName.get("columns").values, ["1", "2", "3"]);
+  assert.deepEqual(byName.get("number").values, ["true", "false"]);
+});
+
+test("every bibliography type documents its required and optional fields", () => {
+  const documented = new Set(FIELD_DOCS.map((field) => field.name));
+  for (const [type, spec] of Object.entries(BIBLIOGRAPHY_TYPES)) {
+    assert.ok(spec.required.length > 0, `${type} needs required fields`);
+    for (const name of [...spec.required, ...spec.fields]) {
+      assert.ok(documented.has(name), `${type} field '${name}' is not documented`);
+    }
+    for (const name of spec.required) {
+      assert.ok(spec.fields.includes(name), `${type} required field '${name}' is not in its field list`);
+    }
+  }
+  assert.deepEqual(Object.keys(BIBLIOGRAPHY_TYPES).sort(), [
+    "article",
+    "book",
+    "inproceedings",
+    "misc",
+    "techreport",
+    "website"
+  ]);
 });
 
 test("field scopes group the catalog without losing entries", () => {

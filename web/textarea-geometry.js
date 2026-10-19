@@ -1,4 +1,6 @@
-const STYLE_PROPS = [
+// The style properties a mirror or highlight layer must copy from a textarea
+// so that text laid out in one wraps exactly like text laid out in the other.
+export const TEXTAREA_STYLE_PROPS = [
   "fontFamily",
   "fontSize",
   "fontWeight",
@@ -70,7 +72,7 @@ export class TextareaMirror {
       this.lastHeight = textarea.offsetHeight;
     }
 
-    for (const prop of STYLE_PROPS) {
+    for (const prop of TEXTAREA_STYLE_PROPS) {
       mirror.style[prop] = style[prop];
     }
 

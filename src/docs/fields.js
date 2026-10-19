@@ -9,12 +9,15 @@
 // field is documented here, and that no stale names remain.
 
 import { PAGE_SIZES, TEMPLATE_NAMES } from "../document/templates.js";
+import { BIBLIOGRAPHY_TYPES } from "../document/build.js";
 
 // PAGE_SIZES keys are normalized to upper case; sources write "Letter" and
 // "Legal" as title case.
 const PAGE_SIZE_VALUES = Object.keys(PAGE_SIZES).map(
   (name) => name.charAt(0) + name.slice(1).toLowerCase()
 );
+
+const BIBLIOGRAPHY_TYPE_NAMES = Object.keys(BIBLIOGRAPHY_TYPES);
 
 export const FIELD_SCOPE_ORDER = [
   "metadata",
@@ -40,8 +43,11 @@ export const FIELD_DOCS = [
     type: "string",
     summary: "Selects the document template.",
     description:
-      'In a bibliography entry, type instead selects the reference type: "article", "book", "inproceedings", "website", "techreport", or "misc".',
-    values: TEMPLATE_NAMES,
+      'In a bibliography entry, type instead selects the reference type (default "misc"): "article", "book", "inproceedings", "website", "techreport", or "misc".',
+    valueGroups: [
+      { label: "Document templates", values: TEMPLATE_NAMES },
+      { label: "Reference types", values: BIBLIOGRAPHY_TYPE_NAMES }
+    ],
     example: 'type: "article"'
   },
   {
@@ -114,7 +120,7 @@ export const FIELD_DOCS = [
     type: "list of objects",
     summary: "Declare bibliography entries in the metadata.",
     description:
-      "Accepts the same entry list as the bibliography(...) block; the two forms may be combined.",
+      "Accepts the same entry list as the bibliography(...) block; the two forms may be combined. The Reference types table in the field reference lists the fields each entry type requires.",
     example: 'bibliography: [\n  { key: "smith2024", type: "article", author: "J. Smith", title: "On series", journal: "J. Math.", year: 2024 }\n]'
   },
   {
@@ -152,7 +158,7 @@ export const FIELD_DOCS = [
     type: "object",
     summary: "Per-side page margins.",
     description:
-      'An object with top, right, bottom, and left lengths, for example { top: "25mm", right: "25mm", bottom: "25mm", left: "25mm" }. Units: mm, cm, in, pt, px. Default 25 mm on every side.',
+      'An object with any of top, right, bottom, and left lengths; omitted sides keep their default, for example { top: "25mm", right: "25mm", bottom: "25mm", left: "25mm" }. Units: mm, cm, in, pt, px. Default 25 mm on every side.',
     example: 'margins: { top: "20mm", bottom: "20mm" }'
   },
   {
@@ -161,6 +167,7 @@ export const FIELD_DOCS = [
     type: "number",
     summary: "Number of text columns.",
     description: "A whole number from 1 to 3. Default 1.",
+    values: ["1", "2", "3"],
     example: "columns: 2"
   },
 
@@ -211,6 +218,7 @@ export const FIELD_DOCS = [
     summary: "Number an equation or aligned block.",
     description:
       "true or false (default false). A label without number=true is an error, because an unnumbered target cannot be referenced. In a techreport bibliography entry, number is the report number instead.",
+    values: ["true", "false"],
     example: "number=true"
   },
   {

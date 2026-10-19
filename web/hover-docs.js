@@ -207,14 +207,19 @@ function buildFieldContent(doc) {
     wrapper.append(description);
   }
 
-  if (doc.values?.length) {
+  const valueGroups = doc.valueGroups?.length
+    ? doc.valueGroups
+    : doc.values?.length
+      ? [{ label: "Values", values: doc.values }]
+      : [];
+  for (const group of valueGroups) {
     const values = document.createElement("p");
     values.className = "hover-values";
     const label = document.createElement("span");
     label.className = "hover-values-label";
-    label.textContent = "Values";
+    label.textContent = group.label;
     values.append(label);
-    for (const value of doc.values) {
+    for (const value of group.values) {
       const code = document.createElement("code");
       code.textContent = value;
       values.append(code);

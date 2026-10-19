@@ -11,7 +11,7 @@ import { buildDocument } from "./build.js";
 import { renderDocumentHTML } from "./render-html.js";
 import { renderDocumentLaTeX } from "./render-latex.js";
 
-export { buildDocument, HANDLED_COMPONENTS, NAMED_ARGUMENTS } from "./build.js";
+export { buildDocument, HANDLED_COMPONENTS, NAMED_ARGUMENTS, BIBLIOGRAPHY_TYPES } from "./build.js";
 export { renderDocumentHTML, renderInline } from "./render-html.js";
 export { renderDocumentLaTeX } from "./render-latex.js";
 export { renderStandaloneHTML } from "./export-html.js";

@@ -84,7 +84,7 @@ sum(
 
 Whitespace is not permitted inside a numeric literal, an identifier, or a multi-character operator.
 
-Line comments begin with `//` and continue to the end of the line. Comments are treated as whitespace and do not appear in the syntax tree or the rendered output. There are no block comments in this version.
+Line comments begin with `//` and continue to the end of the line. Block comments begin with `/*` and end with `*/`; they may span lines. Comments are treated as whitespace and do not appear in the syntax tree or the rendered output.
 
 ### 2.2 Identifiers
 
@@ -1041,7 +1041,7 @@ document({
 
 - A document is one `document({ ... })` call at the top level. A single block without the wrapper is
   accepted and wrapped in a default `article` with a warning.
-- `//` line comments and `/* */` block comments are available in document sources.
+- `//` line comments and `/* */` block comments use the same syntax as expressions.
 - Document sources extend the literal grammar with **strings** (with `\"`, `\\`, `\n`, `\t`, `\r`
   escapes), **booleans** (`true`, `false`), and **object literals** (`{ key: value, ... }`).
   Matrices and vectors are unchanged. These three literal forms MUST be rejected when they appear
