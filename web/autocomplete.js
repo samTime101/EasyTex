@@ -223,11 +223,19 @@ export function createAutocomplete({ textarea, container, maxItems = 12 }) {
   }
 
   textarea.addEventListener("blur", () => close());
-  textarea.addEventListener("scroll", () => close());
+  textarea.addEventListener("scroll", () => {
+    if (isOpen) position();
+  });
+  window.addEventListener("resize", () => {
+    if (isOpen) position();
+  });
 
   return {
     isOpen: () => isOpen,
     close,
+    reposition: () => {
+      if (isOpen) position();
+    },
     handleKey,
     handleInput: () => update({ allowOpen: true }),
     handleSelectionChange: () => {

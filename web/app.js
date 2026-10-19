@@ -130,6 +130,7 @@ function renderNow() {
   }
 
   updateOutput();
+  autocomplete.reposition();
   saveSource(editor.value);
 }
 
