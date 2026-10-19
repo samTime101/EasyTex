@@ -1,4 +1,5 @@
 import { compile } from "../src/index.js";
+import { initTheme } from "./theme.js";
 
 const EXAMPLES = [
   { label: "Sum of squares", source: "sum(i, 1, n, i^2)" },
@@ -277,27 +278,6 @@ function scheduleRender() {
   renderTimer = setTimeout(renderNow, 160);
 }
 
-function setTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  themeToggle.textContent = theme === "dark" ? "\u263e" : "\u2600";
-  try {
-    localStorage.setItem("easytex.theme", theme);
-  } catch {
-    // Ignore storage failures.
-  }
-}
-
-function initTheme() {
-  let stored = null;
-  try {
-    stored = localStorage.getItem("easytex.theme");
-  } catch {
-    // Ignore.
-  }
-  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
-  setTheme(stored || (prefersDark ? "dark" : "light"));
-}
-
 function populateExamples() {
   for (const example of EXAMPLES) {
     const option = document.createElement("option");
@@ -309,7 +289,7 @@ function populateExamples() {
 
 editor.value = loadSource();
 populateExamples();
-initTheme();
+initTheme(themeToggle);
 renderNow();
 
 editor.addEventListener("input", scheduleRender);
@@ -339,10 +319,6 @@ examplesEl.addEventListener("change", () => {
   examplesEl.value = "";
   renderNow();
   editor.focus();
-});
-
-themeToggle.addEventListener("click", () => {
-  setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
 });
 
 copyButton.addEventListener("click", copyCurrent);
