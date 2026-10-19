@@ -117,6 +117,7 @@ export class TextareaMirror {
   }
 
   caretPoint(offset) {
+    this.sync();
     const rect = this.rectAt(offset);
     const shell = this.textarea.parentElement.getBoundingClientRect();
     return {

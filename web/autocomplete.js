@@ -156,17 +156,21 @@ export function createAutocomplete({ textarea, container, maxItems = 12 }) {
 
   function position() {
     const anchor = mirror.caretPoint(tokenStart);
+    const boundsWidth = container.clientWidth;
+    const boundsHeight = container.clientHeight;
     const width = list.offsetWidth;
     const height = list.offsetHeight;
-    let left = anchor.left;
-    let top = anchor.top + anchor.height + 4;
 
-    if (left + width > container.clientWidth - 8) {
-      left = Math.max(8, container.clientWidth - width - 8);
+    let left = anchor.left;
+    left = Math.min(left, boundsWidth - width - 8);
+    left = Math.max(8, left);
+
+    let top = anchor.top + anchor.height + 4;
+    if (top + height > boundsHeight - 8) {
+      top = anchor.top - height - 6;
     }
-    if (top + height > container.clientHeight - 8) {
-      top = Math.max(8, anchor.top - height - 6);
-    }
+    top = Math.max(8, Math.min(top, boundsHeight - height - 8));
+
     list.style.left = `${left}px`;
     list.style.top = `${top}px`;
   }
