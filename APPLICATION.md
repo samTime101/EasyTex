@@ -241,7 +241,9 @@ and standard output.
 - This is a **host** feature, not a change to the language. The engine grew
   `compileScratchpad()` beside `compile()`, and the language, the document layer, and the exports
   are untouched.
-- The suite grew from 144 to 152 tests, and the panel head was tightened so the mode switch, the
+- The editor now opens on a scratchpad of **two equations** — the sum of squares and the closed
+  form that goes with it — so the new behaviour is visible at a glance.
+- The suite grew from 144 to 153 tests, and the panel head was tightened so the mode switch, the
   status, and the panel actions still fit on one line.
 
 ### 2026-10-20 — a mode switch in the header

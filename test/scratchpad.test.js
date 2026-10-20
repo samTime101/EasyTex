@@ -55,6 +55,15 @@ test("the diagnostics of a scratchpad point at the right line", () => {
   assert.equal(diagnostic.span.start.offset, 7, "the offending character");
 });
 
+test("the default scratchpad holds two equations", async () => {
+  const { DEFAULT_EXPRESSION_SOURCE } = await import("../ui/expression-examples.js");
+  const result = compileScratchpad(DEFAULT_EXPRESSION_SOURCE, { complex: true });
+  assert.equal(result.expressions.length, 2);
+  assert.deepEqual(result.diagnostics, []);
+  assert.match(result.latex, /\\sum/);
+  assert.match(result.latex, /\\frac/);
+});
+
 test("the language itself still holds one expression", () => {
   const { expressions } = parseSequence("a + b");
   assert.equal(expressions.length, 1);

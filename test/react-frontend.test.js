@@ -91,7 +91,10 @@ test("the expression editor renders the preview of the source", async () => {
   const view = mount(EditorPage);
   await wait(COMPILE_DELAY);
   const editor = view.container.querySelector("#editor");
-  assert.equal(editor.value, "sum(i, 1, n, i^2)");
+  assert.equal(
+    editor.value,
+    "sum(i, 1, n, i^2)\nsum(i, 1, n, i^2) = frac(n*(n + 1)*(2*n + 1), 6)"
+  );
   assert.ok(view.container.querySelector(".preview math"), "the preview shows MathML");
   assert.equal(view.container.querySelector("#status").textContent, "Valid");
   view.unmount();

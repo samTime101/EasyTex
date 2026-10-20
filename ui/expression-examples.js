@@ -39,4 +39,7 @@ export const EXPRESSION_EXAMPLES = [
   { label: "Error: a string in an expression", source: 'text("oops', error: true }
 ];
 
-export const DEFAULT_EXPRESSION_SOURCE = "sum(i, 1, n, i^2)";
+// The editor opens on a scratchpad of two equations: the sum of squares and
+// the closed form that goes with it.
+export const DEFAULT_EXPRESSION_SOURCE =
+  "sum(i, 1, n, i^2)\nsum(i, 1, n, i^2) = frac(n*(n + 1)*(2*n + 1), 6)";

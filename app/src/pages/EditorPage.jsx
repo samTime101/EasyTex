@@ -43,7 +43,7 @@ function astForDisplay(ast) {
 }
 
 export function EditorPage() {
-  const [source, setSource] = useState(() => loadSource("easytex.source", DEFAULT_EXPRESSION_SOURCE));
+  const [source, setSource] = useState(() => loadSource("easytex.source.v2", DEFAULT_EXPRESSION_SOURCE));
   const [complex, setComplex] = useState(true);
   const [tab, setTab] = useState("preview");
   const [result, setResult] = useState(null);
@@ -71,7 +71,7 @@ export function EditorPage() {
   }, [compileNow]);
 
   useEffect(() => {
-    saveSource("easytex.source", source);
+    saveSource("easytex.source.v2", source);
   }, [source]);
 
   const diagnostics = result?.diagnostics ?? [];
