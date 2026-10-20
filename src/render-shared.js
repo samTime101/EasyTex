@@ -1,4 +1,5 @@
 import { CONSTANTS, GREEK } from "./builtins.js";
+import { SYMBOLS } from "./symbols.js";
 
 export function nodePrecedence(node) {
   if (node.kind === "Relation") return 1;
@@ -80,7 +81,8 @@ export function identifierDisplay(name, binding) {
     if (name === "infinity") return { text: "\u221e", italic: false };
     return { text: name, italic: name.length === 1 };
   }
-  if (GREEK[name]) return { text: GREEK[name], italic: true };
+  if (GREEK[name]) return { text: GREEK[name], italic: /^[a-z]/.test(name) };
+  if (SYMBOLS[name]) return { text: SYMBOLS[name], italic: false };
   return { text: name, italic: name.length === 1 };
 }
 

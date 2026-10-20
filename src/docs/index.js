@@ -3,11 +3,14 @@ import { CONSTANT_DOCS } from "./constants.js";
 import { OPERATOR_DOCS, SYNTAX_NOTES, PRECEDENCE_EXAMPLES } from "./operators.js";
 import { FIELD_DOCS, FIELD_SCOPE_ORDER, FIELD_SCOPE_LABELS } from "./fields.js";
 import { GREEK_DOCS } from "./greek.js";
+import { SYMBOL_DOCS } from "./symbols.js";
+import { LATEX_DOCS, LATEX_CATEGORY_ORDER, LATEX_SECTIONS, LATEX_TARGETS } from "./latex.js";
 import { COMPONENT_DOCS, COMPONENT_CATEGORY_ORDER } from "../document/components.js";
 
 export { FUNCTION_DOCS, CONSTANT_DOCS, OPERATOR_DOCS, SYNTAX_NOTES, PRECEDENCE_EXAMPLES };
 export { FIELD_DOCS, FIELD_SCOPE_ORDER, FIELD_SCOPE_LABELS };
-export { GREEK_DOCS };
+export { GREEK_DOCS, SYMBOL_DOCS };
+export { LATEX_DOCS, LATEX_CATEGORY_ORDER, LATEX_SECTIONS, LATEX_TARGETS };
 export { COMPONENT_DOCS, COMPONENT_CATEGORY_ORDER };
 
 export const FUNCTION_CATEGORY_ORDER = [
@@ -22,12 +25,34 @@ export const CONSTANT_CATEGORY_ORDER = ["Constants"];
 
 export const OPERATOR_CATEGORY_ORDER = ["Arithmetic operators", "Relations"];
 
-const KIND_ORDER = { function: 0, constant: 1, component: 2 };
+const KIND_ORDER = { function: 0, constant: 1, symbol: 2, component: 3 };
 
 const byName = new Map();
 for (const doc of FUNCTION_DOCS) byName.set(doc.name, { ...doc, kind: "function" });
 for (const doc of CONSTANT_DOCS) byName.set(doc.name, { ...doc, kind: "constant" });
 for (const doc of COMPONENT_DOCS) byName.set(doc.name, { ...doc, kind: "component" });
+// Greek and ordinary-symbol names stay free variables. They get hover entries
+// but are not offered by the default autocomplete, whose kinds are explicit.
+for (const doc of GREEK_DOCS) {
+  if (byName.has(doc.name)) continue;
+  byName.set(doc.name, {
+    ...doc,
+    kind: "symbol",
+    signature: doc.name,
+    summary: `Greek letter ${doc.symbol}.${doc.note ? ` ${doc.note}` : ""}`,
+    examples: [{ source: doc.name }]
+  });
+}
+for (const doc of SYMBOL_DOCS) {
+  if (byName.has(doc.name)) continue;
+  byName.set(doc.name, {
+    ...doc,
+    kind: "symbol",
+    signature: doc.name,
+    summary: `Named mathematical symbol ${doc.symbol}.${doc.note ? ` ${doc.note}` : ""}`,
+    examples: [{ source: doc.name }]
+  });
+}
 
 export function docsFor(name) {
   return byName.get(name) ?? null;
@@ -73,6 +98,22 @@ export function groupConstantsByCategory() {
 
 export function groupComponentsByCategory() {
   return groupByCategory(COMPONENT_DOCS, COMPONENT_CATEGORY_ORDER);
+}
+
+export function groupLatexBySection() {
+  return LATEX_SECTIONS.map((section) => {
+    const groups = section.categories
+      .map((category) => ({
+        category,
+        items: LATEX_DOCS.filter((doc) => doc.category === category)
+      }))
+      .filter((group) => group.items.length > 0);
+    return {
+      ...section,
+      groups,
+      items: groups.flatMap((group) => group.items)
+    };
+  }).filter((section) => section.items.length > 0);
 }
 
 export function groupFieldsByScope() {

@@ -98,7 +98,7 @@ Identifiers are case-sensitive: `x`, `X`, and `x_1` are different names. `sin` a
 
 Multi-letter identifiers are single names. For example, `velocity`, `total_cost`, and `xy` are each one identifier. `xy` is not the product of `x` and `y`; write `x*y` for that product.
 
-Greek letters are written with their English names, such as `alpha`, `beta`, `theta`, and `pi`. The renderer may display those names using Greek symbols. Actual Unicode Greek letters are not identifiers in this version.
+Greek letters are written with their English names, such as `alpha`, `beta`, `theta`, and `pi`. The renderer may display those names using Greek symbols. Variant names such as `varepsilon`, `varphi`, `vartheta`, `varkappa`, `varpi`, `varrho`, and `varsigma`, and uppercase commands such as `Gamma`, `Delta`, `Theta`, `Lambda`, `Xi`, `Pi`, `Sigma`, `Upsilon`, `Phi`, `Psi`, and `Omega`, follow the same rule. LaTeX has no `\omicron` command; `omicron` renders as the ordinary Greek omicron and exports as the Latin letter `o`. Named ordinary symbols such as `aleph`, `hbar`, `emptyset`, `nabla`, and `ell` are also ordinary identifiers. Actual Unicode Greek letters and Unicode symbol glyphs are not identifiers in this version.
 
 Identifiers are not lexically reserved. Built-in constants and functions are resolved by the environment after parsing. This distinction matters for scoping: a bounded operation may bind the name `i` even when `i` denotes the imaginary unit elsewhere.
 
@@ -987,7 +987,8 @@ Renderers must handle operator precedence when emitting LaTeX. If a child expres
 
 The renderer SHOULD use the following conventions:
 
-- Known Greek-letter names map to Greek symbols: `alpha` to \(\alpha\), `beta` to \(\beta\), `theta` to \(\theta\), and so on.
+- Known Greek-letter names map to Greek symbols: `alpha` to \(\alpha\), `beta` to \(\beta\), `theta` to \(\theta\), and so on. Variant names map to their variant glyphs (`varepsilon`, `varphi`, `vartheta`) and uppercase names map to uppercase Greek (`Gamma`, `Omega`). `omicron` maps to \(\mathrm{o}\) or the ordinary Latin \(o\) in LaTeX output.
+- Named ordinary symbols map to their usual glyphs: `aleph` to \(\aleph\), `hbar` to \(\hbar\), `emptyset` to \(\emptyset\), `forall` to \(\forall\), `ell` to \(\ell\), and so on.
 - `pi` maps to \(\pi\) when it resolves to the built-in constant.
 - `infinity` maps to \(\infty\) when it resolves to the built-in constant.
 - `e` maps to \(e\) when it resolves to Euler's number.
@@ -995,7 +996,7 @@ The renderer SHOULD use the following conventions:
 - Multi-letter descriptive names such as `velocity` or `total_cost` render upright, so they are not mistaken for a product of individual letters.
 - A locally bound variable named `pi` renders as the variable, not as \(\pi\).
 
-The exact Greek-name table is a renderer concern, but it SHOULD be documented and stable. The list of built-in constants is normative; the visual mapping is not.
+The exact Greek-name and named-symbol tables are a renderer concern, but they SHOULD be documented and stable. The list of built-in constants is normative; the visual mapping is not. The reference page provides a standard LaTeX/AMS compatibility table and marks notation that has no native MathScript equivalent.
 
 ### 10.5 MathML and accessibility
 

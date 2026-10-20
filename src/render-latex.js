@@ -1,4 +1,5 @@
 import { CONSTANTS, LATEX_GREEK } from "./builtins.js";
+import { LATEX_SYMBOLS } from "./symbols.js";
 import { Scope } from "./scope.js";
 import {
   needsParensForBinaryChild,
@@ -38,6 +39,7 @@ function identifier(name, binding) {
     return esc(name);
   }
   if (LATEX_GREEK[name]) return `${LATEX_GREEK[name]} `;
+  if (LATEX_SYMBOLS[name]) return `${LATEX_SYMBOLS[name]} `;
   if (name.length === 1) return esc(name);
   return `\\mathrm{${esc(name)}}`;
 }

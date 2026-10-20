@@ -42,13 +42,14 @@ npm test
   margins. The last valid preview stays visible while diagnostics are fixed.
 - **Structured parser** with a full lexer, recursive-descent parser, and AST.
 - **Validation** for built-in arity, free function application, bound variables, matrix shapes, relation nesting, list placement, document structure, labels, references, and bibliography entries.
+- **Expanded symbol vocabulary**: lowercase, variant, and uppercase Greek names, plus named ordinary symbols such as `aleph`, `hbar`, `emptyset`, `forall`, and `ell`. These stay ordinary free variables and add no new syntax or dependency.
 - **Diagnostics** with source positions and categories. Click a diagnostic to select the offending range in the editor.
 - **Function suggestions** while typing: an autocomplete list with signatures, keyboard navigation, and correct insertion of calls and constants. In the writer, document components are suggested too, and structured components insert starter snippets — `document` expands to a complete scaffold.
-- **Hover documentation** in the editor: signatures, argument descriptions, and a rendered example for the function under the pointer, with scope-aware handling of bound variables. The writer also explains components and fields (metadata keys, named arguments, and bibliography entries).
+- **Hover documentation** in the editor: signatures, argument descriptions, and a rendered example for the function or documented symbol under the pointer, with scope-aware handling of bound variables. The writer also explains components and fields (metadata keys, named arguments, and bibliography entries).
 - **Syntax highlighting** in both editors: comments, strings, numbers, booleans, functions, constants, operators, document components, and field names each get their own color, in light and dark themes.
 - **Editing assistance**: brackets and quotes auto-close around a selection or step over their partner, `Backspace` removes an empty pair, `Enter` keeps indentation and expands bracket pairs into a block, and `Tab` / `Shift` + `Tab` indent lines. `Shift` + `Alt` + `F` or the **Format** button re-indents source from bracket depth.
 - **Maximize** button in both editors hides the output pane so the source gets the full page width.
-- **Documentation page** at `/web/docs.html` covering every function, constant, Greek letter name, operator, syntax rule, component, template, and document field — with allowed values, bibliography reference types, live previews, search, and links into both editors.
+- **Documentation page** at `/web/docs.html` covering every function, constant, Greek letter name, named symbol, operator, syntax rule, component, template, and document field — with allowed values, bibliography reference types, live previews, search, and links into both editors. A searchable **LaTeX → MathScript** reference maps standard LaTeX/AMS notation and marks every construct that has no native equivalent.
 - **Export** to LaTeX, MathML, or the raw AST. Download a complete `.tex` document with one click.
 - **Examples** for sums, products, fractions, integrals, limits, derivatives, matrices, vectors, and documents.
 - **Complex mode** toggle for the imaginary unit `i`.
@@ -63,12 +64,13 @@ easytex/
 ├── APPLICATION.md        Application features and update log
 ├── package.json
 ├── src/                  Parser, validator, renderers, and document layer
-│   ├── docs/             Function, constant, operator, and component documentation data
+│   ├── docs/             Function, constant, Greek, symbol, operator, LaTeX, and component documentation data
 │   ├── document/         Document builder, templates, sheet and LaTeX renderers
 │   ├── lexer.js
 │   ├── parser.js
 │   ├── validate.js
 │   ├── builtins.js
+│   ├── symbols.js
 │   ├── diagnostics.js
 │   ├── render-mathml.js
 │   ├── render-latex.js

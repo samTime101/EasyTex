@@ -99,6 +99,17 @@ function looksLikeField(value, word) {
   return quotes % 2 === 0;
 }
 
+function kindLabel(doc) {
+  if (doc.kind === "constant") return "constant";
+  if (doc.kind === "symbol") return "symbol";
+  if (doc.kind === "component") {
+    if (doc.role === "inline") return "inline";
+    if (doc.role === "document") return "document";
+    return "block";
+  }
+  return "function";
+}
+
 function buildContent(doc) {
   if (contentCache.has(doc.name)) return contentCache.get(doc.name);
 
@@ -111,16 +122,7 @@ function buildContent(doc) {
   signature.textContent = doc.signature;
   const kind = document.createElement("span");
   kind.className = "hover-kind";
-  kind.textContent =
-    doc.kind === "constant"
-      ? "constant"
-      : doc.kind === "component"
-        ? doc.role === "inline"
-          ? "inline"
-          : doc.role === "document"
-            ? "document"
-            : "block"
-        : "function";
+  kind.textContent = kindLabel(doc);
   head.append(signature, kind);
   wrapper.append(head);
 
@@ -240,7 +242,7 @@ function buildFieldContent(doc) {
   return wrapper;
 }
 
-export function createHoverDocs({ textarea, container, isSuppressed = () => false, kinds = ["function", "constant"] }) {
+export function createHoverDocs({ textarea, container, isSuppressed = () => false, kinds = ["function", "constant", "symbol"] }) {
   const mirror = new TextareaMirror(textarea);
   const tooltip = document.createElement("div");
   tooltip.className = "hover-docs hidden";
@@ -308,7 +310,13 @@ export function createHoverDocs({ textarea, container, isSuppressed = () => fals
       );
       if (callHit) kind = "callable";
       else if (fieldHit) kind = "field";
-      else if (valueHit && valueHit.binding === "constant") kind = "callable";
+      else if (
+        valueHit &&
+        (valueHit.binding === "constant" ||
+          (valueHit.binding === "free" && callable?.kind === "symbol"))
+      ) {
+        kind = "callable";
+      }
     } else {
       const callish = textarea.value.slice(word.end, word.end + 80).trimStart().startsWith("(");
       if (field && !callish && looksLikeField(textarea.value, word)) {

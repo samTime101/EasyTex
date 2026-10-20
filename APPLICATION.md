@@ -18,7 +18,7 @@ parsed into data and validated before rendering.
 | --- | --- | --- |
 | Expression editor | `/` (`web/index.html`) | Write and preview one MathScript expression; inspect LaTeX, MathML, and the AST. |
 | Document writer | `/web/document.html` | Write a `document({ ... })` source; preview the sheet, LaTeX, and standalone HTML; export or print. |
-| Reference | `/web/docs.html` | Every function, constant, operator, syntax rule, document template, and component, with examples. |
+| Reference | `/web/docs.html` | Every function, constant, Greek name, named symbol, operator, syntax rule, document template, and component, with examples and a LaTeX compatibility table. |
 
 ## Current features
 
@@ -32,6 +32,8 @@ parsed into data and validated before rendering.
   nesting.
 - Structures: `matrix([[1, 2], [3, 4]])` and `vector([x, y, z])`, with shape validation.
 - Constants include `pi`, `e`, `i`, and `infinity`; `log` is base 10 and `ln` is natural.
+- Expanded Greek vocabulary: variant forms (`varepsilon`, `varphi`, `vartheta`, `varkappa`, `varpi`, `varrho`, `varsigma`), uppercase commands (`Gamma` through `Omega`), and `omicron` (whose LaTeX input is the ordinary letter `o`).
+- Named ordinary symbols such as `aleph`, `hbar`, `emptyset`, `nabla`, `forall`, `exists`, `ell`, `Re`, and `Im`; they are ordinary free variables that render upright.
 - **No implicit multiplication**: `2x` is an error with a diagnostic that suggests `2*x`.
 - Free function application: `f(x) + f(x - a)` is valid without declaring `f`; bare identifiers are
   free variables; bound variables are scoped to their operation. Applying a constant such as `pi(x)`
@@ -92,7 +94,9 @@ parsed into data and validated before rendering.
 
 ### Reference page
 
-- Every function, constant, Greek letter name, operator, syntax rule, template, page size, and document component.
+- Every function, constant, Greek letter name, named symbol, operator, syntax rule, template, page size, and document component.
+- A searchable **LaTeX → MathScript** reference covering standard LaTeX/AMS functions, structures, constants, Greek letters, operators, relations, arrows, delimiters, big operators, accents, ordinary symbols, and document constructs. Each row is marked **native**, **approximate**, or **no equivalent**, with a note explaining the closest MathScript option.
+- The LaTeX table is explicit about scope: the 604-page Comprehensive LaTeX Symbol List includes package fonts, emoji, phonetics, and decorative text glyphs that have no place in MathScript's font-free model. The reference covers the standard math vocabulary rather than claiming a one-to-one glyph mapping.
 - Live MathML previews for expression examples; document examples link into the writer.
 - Search across functions, constants, Greek letters, fields, argument names, and document components;
   each component lists positional and named arguments.
@@ -109,9 +113,9 @@ parsed into data and validated before rendering.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
   help, including document components.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 72 conformance tests cover the language, the expression pipeline, the document layer, the
+- 76 conformance tests cover the language, the expression pipeline, the document layer, the
   documentation catalog, the writer examples, the authoring snippets, the field catalog, the syntax
-  highlighter, and the editing/formatting helpers.
+  highlighter, the editing/formatting helpers, and the LaTeX mapping catalog.
 
 ## Architecture
 
@@ -120,7 +124,7 @@ src/
   lexer.js, parser.js, validate.js      shared front end
   builtins.js, diagnostics.js            language surface and error model
   render-mathml.js, render-latex.js      expression renderers
-  docs/                                  function, constant, Greek, operator, field metadata
+  docs/                                  function, constant, Greek, symbol, operator, LaTeX, field metadata
   document/
     components.js                        component catalog and authoring notes
     templates.js                         templates, page sizes, length parsing
@@ -161,6 +165,19 @@ Node 18 or newer is required; there are no runtime dependencies. The dev server 
 static file server (`tools/serve.mjs`).
 
 ## Updates
+
+### 2026-10-20 — Backspace removes empty auto-closed pairs
+
+- Fixed the editor glue so Backspace on an empty auto-closed pair (`()`, `[]`, `{}`, or `""`) deletes both characters instead of only moving the caret. The same handler serves the expression editor and the document writer.
+- Added a regression test for the textarea key handler and kept the skip-over path intact when typing an existing closer.
+
+### 2026-10-20 — named symbols and LaTeX compatibility reference
+
+- Added `src/symbols.js` with named ordinary symbols (`aleph`, `hbar`, `emptyset`, `nabla`, `forall`, `exists`, `ell`, `Re`, `Im`, `Box`, and others). They are ordinary identifiers, render upright in MathML, and export as the matching LaTeX command.
+- Expanded `GREEK` with the standard variant forms (`varepsilon`, `varphi`, `vartheta`, `varkappa`, `varpi`, `varrho`, `varsigma`) and uppercase commands (`Gamma` through `Omega`). Changed `epsilon` to the lunate form to match `\epsilon`, with `varepsilon` for the curly form; `omicron` exports as the Latin letter `o`.
+- Added `src/docs/latex.js`, a 743-row LaTeX → MathScript catalog covering functions, structures, constants, Greek letters, operators, relations, arrows, delimiters, big operators, accents, ordinary symbols, fonts/spacing, and document constructs. Rows are classified as native, approximate, or no equivalent, with explicit notes for gaps.
+- The reference page gained **Named symbols** and **LaTeX compatibility** sections with status badges, counts, category tables, and searchable rows. The LaTeX scope note explains why the 25,731-symbol PDF is not a one-to-one feature list.
+- Added coverage tests tying every function, constant, Greek name, operator, and named symbol to a LaTeX row, plus duplicate-command and renderer checks. The suite grew from 72 to 75 tests for this work.
 
 ### 2026-10-20 — free function application
 

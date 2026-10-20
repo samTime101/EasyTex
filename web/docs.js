@@ -3,9 +3,12 @@ import {
   SYNTAX_NOTES,
   PRECEDENCE_EXAMPLES,
   GREEK_DOCS,
+  SYMBOL_DOCS,
+  LATEX_DOCS,
   groupFunctionsByCategory,
   groupConstantsByCategory,
   groupOperatorsByCategory,
+  groupLatexBySection,
   groupComponentsByCategory,
   groupFieldsByScope
 } from "../src/docs/index.js";
@@ -203,7 +206,7 @@ function renderHero() {
     el(
       "p",
       null,
-      "Every function, constant, Greek letter name, and operator — with arguments and worked examples — plus the experimental document layer: templates, page layout, every block and inline component, and every document(...) metadata and option field. MathScript is a function-based mathematical language: calls are name(arg1, arg2, …), any other identifier can be applied as a free function such as f(x), ordinary arithmetic stays ordinary, and source is separate from rendering."
+      "Every function, constant, Greek letter name, named symbol, and operator — with arguments and worked examples — plus a searchable LaTeX → MathScript translation table and the document layer: templates, page layout, every block and inline component, and every document(...) metadata and option field. MathScript is a function-based mathematical language: calls are name(arg1, arg2, …), any other identifier can be applied as a free function such as f(x), ordinary arithmetic stays ordinary, and source is separate from rendering."
     )
   );
 
@@ -256,7 +259,7 @@ function renderGreek() {
     el(
       "p",
       "docs-lede",
-      "Greek names are ordinary identifiers: write alpha, beta, sigma, and friends and they render as the matching Greek letter in the preview and in the LaTeX export. They stay free variables, so they can be bound by sum(...), integral(...), and the other binder functions."
+      "Greek names are ordinary identifiers: write alpha, beta, sigma, and friends and they render as the matching Greek letter in the preview and in the LaTeX export. Variant forms such as varepsilon and varphi, and uppercase commands such as Gamma and Omega, use the same mechanism. They stay free variables, so they can be bound by sum(...), integral(...), and the other binder functions. LaTeX has no \\omicron command; the ordinary Latin o is the conventional input."
     )
   );
 
@@ -270,16 +273,158 @@ function renderGreek() {
   const body = el("tbody");
   for (const doc of GREEK_DOCS) {
     const row = el("tr");
-    row.dataset.haystack = `${doc.name} greek letter ${doc.symbol} ${doc.latex}`.toLowerCase();
+    row.dataset.haystack = `${doc.name} greek letter ${doc.symbol} ${doc.latex} ${doc.note}`.toLowerCase();
     row.append(el("td", "operator-example", doc.name));
     row.append(el("td", "greek-symbol", doc.symbol));
     row.append(el("td", "operator-example", doc.latex));
-    row.append(el("td", null, doc.constant ? "Also the numeric constant \u03c0." : ""));
+    row.append(el("td", null, doc.constant ? "Also the numeric constant \u03c0." : doc.note || "—"));
     body.append(row);
   }
   table.append(body);
   node.append(table);
   content.append(node);
+}
+
+function renderSymbols() {
+  addNavSection("Symbols", [{ label: "Named symbols", id: "named-symbols" }]);
+
+  const node = section("named-symbols", "Named symbols", SYMBOL_DOCS.length);
+  node.append(
+    el(
+      "p",
+      "docs-lede",
+      "Ordinary mathematical symbols are ordinary identifiers too. Write aleph, hbar, emptyset, forall, or ell and the renderers display the matching glyph; the name stays a free variable and can be bound by a summation or integral. Operators, relations, arrows, and accents are separate constructs and are not part of this table."
+    )
+  );
+
+  const table = el("table", "operator-table");
+  const head = el("thead");
+  const headRow = el("tr");
+  for (const label of ["Name", "Symbol", "LaTeX", "Notes"]) headRow.append(el("th", null, label));
+  head.append(headRow);
+  table.append(head);
+
+  const body = el("tbody");
+  for (const doc of SYMBOL_DOCS) {
+    const row = el("tr");
+    row.dataset.haystack = `${doc.name} named symbol ${doc.symbol} ${doc.latex} ${doc.note}`.toLowerCase();
+    row.append(el("td", "operator-example", doc.name));
+    row.append(el("td", "symbol-glyph", doc.symbol));
+    row.append(el("td", "operator-example", doc.latex));
+    row.append(el("td", null, doc.note || "—"));
+    body.append(row);
+  }
+  table.append(body);
+  node.append(table);
+  content.append(node);
+}
+
+const LATEX_STATUS_LABELS = {
+  native: "native",
+  approximate: "approximate",
+  none: "no equivalent"
+};
+
+const LATEX_STATUS_EXPLANATIONS = {
+  native: "Exact MathScript construct.",
+  approximate: "Same meaning, with a different spelling or rendering.",
+  none: "No native construct in this version; the note explains the gap."
+};
+
+function latexStatusBadge(status) {
+  return el("span", `badge latex-status-${status}`, LATEX_STATUS_LABELS[status] ?? status);
+}
+
+function latexTable(rows) {
+  const table = el("table", "operator-table latex-table");
+  const head = el("thead");
+  const headRow = el("tr");
+  for (const label of ["LaTeX", "MathScript", "Status", "Notes"]) headRow.append(el("th", null, label));
+  head.append(headRow);
+  table.append(head);
+
+  const body = el("tbody");
+  for (const doc of rows) {
+    const row = el("tr");
+    row.dataset.haystack = [
+      "latex mathscript",
+      doc.category,
+      doc.latex,
+      doc.mathscript ?? "",
+      doc.status,
+      LATEX_STATUS_LABELS[doc.status] ?? "",
+      doc.note
+    ]
+      .join(" ")
+      .toLowerCase();
+    row.append(el("td", "operator-example latex-command", doc.latex));
+    const source = el("td", "latex-source");
+    if (doc.mathscript) {
+      source.append(el("code", null, doc.mathscript));
+    } else {
+      source.append(el("span", "latex-none", "—"));
+    }
+    row.append(source);
+    const status = el("td");
+    status.append(latexStatusBadge(doc.status));
+    row.append(status);
+    row.append(el("td", "latex-note", doc.note || "—"));
+    body.append(row);
+  }
+  table.append(body);
+  return table;
+}
+
+function renderLatexReference() {
+  const sections = groupLatexBySection();
+  addNavSection("LaTeX compatibility", [
+    { label: "Overview", id: "latex-reference" },
+    ...sections.map((item) => ({ label: item.title, id: item.id }))
+  ]);
+
+  const intro = section("latex-reference", "LaTeX → MathScript", LATEX_DOCS.length);
+  intro.dataset.haystack =
+    "latex mathscript translation mapping compatibility commands ams standard math symbols";
+  intro.append(
+    el(
+      "p",
+      "docs-lede",
+      "The Comprehensive LaTeX Symbol List is a 604-page font and package catalog, not a list of language constructs. This reference covers the standard LaTeX/AMS mathematical vocabulary: functions, structures, constants, Greek letters, operators, relations, arrows, delimiters, big operators, accents, ordinary symbols, and document constructs. A free predicate such as related(a, b) is often the closest MathScript expression for a relation with no native operator; a free function can name an operation but cannot reproduce an arbitrary glyph. Package-specific fonts, emoji, phonetics, and decorative text glyphs are outside MathScript's font-free model."
+    )
+  );
+
+  const counts = { native: 0, approximate: 0, none: 0 };
+  for (const doc of LATEX_DOCS) counts[doc.status] += 1;
+  const summary = el("div", "latex-summary");
+  for (const status of ["native", "approximate", "none"]) {
+    const item = el("div", "latex-summary-item");
+    item.append(latexStatusBadge(status));
+    item.append(el("span", "latex-summary-count", String(counts[status])));
+    item.append(el("span", "latex-summary-text", LATEX_STATUS_EXPLANATIONS[status]));
+    summary.append(item);
+  }
+  intro.append(summary);
+  intro.append(
+    el(
+      "p",
+      "docs-caption",
+      "Use the search box to filter by command, symbol name, category, or meaning. The table covers every function, constant, Greek name, operator, and named symbol in the language, plus the wider standard notation catalog; it deliberately marks gaps instead of pretending every LaTeX package glyph has an equivalent."
+    )
+  );
+  content.append(intro);
+
+  for (const sectionSpec of sections) {
+    const node = section(sectionSpec.id, sectionSpec.title, sectionSpec.items.length);
+    if (sectionSpec.groups.length > 1) {
+      for (const group of sectionSpec.groups) {
+        node.append(el("h3", "docs-subhead", group.category));
+        node.append(latexTable(group.items));
+      }
+    } else {
+      node.append(latexTable(sectionSpec.groups[0].items));
+    }
+    content.append(node);
+  }
 }
 
 function renderOperators() {
@@ -672,7 +817,7 @@ function renderComponents() {
 function setupSearch() {
   const empty = el("div", "search-empty");
   empty.textContent =
-    "No functions, constants, Greek letters, fields, components, or syntax notes match that search.";
+    "No functions, constants, Greek letters, named symbols, LaTeX mappings, fields, components, or syntax notes match that search.";
   empty.hidden = true;
   const anchor = content.children[0];
   if (anchor) anchor.after(empty);
@@ -724,7 +869,9 @@ renderHero();
 renderFunctions();
 renderConstants();
 renderGreek();
+renderSymbols();
 renderOperators();
+renderLatexReference();
 renderSyntax();
 renderDocumentAuthoring();
 renderDocumentTemplates();

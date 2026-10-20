@@ -43,31 +43,51 @@ export const GREEK = {
   beta: "\u03b2",
   gamma: "\u03b3",
   delta: "\u03b4",
-  epsilon: "\u03b5",
+  epsilon: "\u03f5",
+  varepsilon: "\u03b5",
   zeta: "\u03b6",
   eta: "\u03b7",
   theta: "\u03b8",
+  vartheta: "\u03d1",
   iota: "\u03b9",
   kappa: "\u03ba",
+  varkappa: "\u03f0",
   lambda: "\u03bb",
   mu: "\u03bc",
   nu: "\u03bd",
   xi: "\u03be",
   omicron: "\u03bf",
   pi: "\u03c0",
+  varpi: "\u03d6",
   rho: "\u03c1",
+  varrho: "\u03f1",
   sigma: "\u03c3",
+  varsigma: "\u03c2",
   tau: "\u03c4",
   upsilon: "\u03c5",
   phi: "\u03c6",
+  varphi: "\u03d5",
   chi: "\u03c7",
   psi: "\u03c8",
-  omega: "\u03c9"
+  omega: "\u03c9",
+  Gamma: "\u0393",
+  Delta: "\u0394",
+  Theta: "\u0398",
+  Lambda: "\u039b",
+  Xi: "\u039e",
+  Pi: "\u03a0",
+  Sigma: "\u03a3",
+  Upsilon: "\u03a5",
+  Phi: "\u03a6",
+  Psi: "\u03a8",
+  Omega: "\u03a9"
 };
 
-export const LATEX_GREEK = Object.fromEntries(
-  Object.keys(GREEK).map((name) => [name, `\\${name}`])
-);
+export const LATEX_GREEK = {
+  ...Object.fromEntries(Object.keys(GREEK).map((name) => [name, `\\${name}`])),
+  // LaTeX has no \omicron: the lowercase Latin o is the conventional input.
+  omicron: "o"
+};
 
 export function arityOf(name) {
   return FUNCTIONS[name]?.arity ?? null;

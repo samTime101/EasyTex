@@ -127,7 +127,14 @@ export function createAutocomplete({ textarea, container, maxItems = 12, kinds =
 
       const kind = document.createElement("span");
       kind.className = "ac-kind";
-      kind.textContent = doc.kind === "constant" ? "const" : doc.kind === "component" ? "doc" : "fn";
+      kind.textContent =
+        doc.kind === "constant"
+          ? "const"
+          : doc.kind === "component"
+            ? "doc"
+            : doc.kind === "symbol"
+              ? "sym"
+              : "fn";
 
       item.append(name, signature, kind);
       item.addEventListener("mousedown", (event) => {
@@ -188,7 +195,7 @@ export function createAutocomplete({ textarea, container, maxItems = 12, kinds =
       close();
       return;
     }
-    const isFunction = doc.kind !== "constant";
+    const isFunction = doc.kind === "function" || doc.kind === "component";
     let inserted;
     let caretOffset;
     if (doc.snippet) {

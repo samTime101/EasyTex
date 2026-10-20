@@ -194,6 +194,19 @@ test("free identifiers are applied as functions", () => {
   assert.equal(nested.latex, "f\\left(g\\left(x\\right)\\right)");
 });
 
+test("Greek variants, uppercase Greek, and named symbols render", () => {
+  const result = compile("aleph + hbar + emptyset + Gamma + varepsilon + ell + forall + Box");
+  assert.deepEqual(result.diagnostics.map((diag) => diag.message), []);
+  for (const symbol of ["\u2135", "\u210f", "\u2205", "\u0393", "\u03b5", "\u2113", "\u2200", "\u25a1"]) {
+    assert.ok(result.mathml.includes(symbol), `missing ${symbol}`);
+  }
+  assert.ok(result.mathml.includes('<mi mathvariant="normal">\u0393</mi>'), "uppercase Greek should be upright");
+  assert.ok(!result.mathml.includes("<mi>\u0393</mi>"), "uppercase Greek should not be italic");
+  for (const command of ["\\aleph", "\\hbar", "\\emptyset", "\\Gamma", "\\varepsilon", "\\ell", "\\forall", "\\Box"]) {
+    assert.ok(result.latex.includes(command), `missing ${command}`);
+  }
+});
+
 test("free function application still checks arguments and names", () => {
   const relation = compile("f(x = y)");
   assert.ok(relation.diagnostics.some((diag) => diag.message.includes("requires a scalar")));
