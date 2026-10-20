@@ -107,10 +107,14 @@ function renderNow() {
     lastResult = null;
     statusEl.textContent = "Empty";
     statusEl.classList.remove("error");
+    statusEl.dataset.state = "empty";
+    copyButton.disabled = true;
+    downloadButton.disabled = true;
     diagnosticsEl.replaceChildren();
     timingEl.textContent = "";
     nodeCountEl.textContent = "";
     showEmpty();
+    updateOutput();
     saveSource(editor.value);
     return;
   }
@@ -125,6 +129,9 @@ function renderNow() {
     ? `${errors.length} ${errors.length === 1 ? "issue" : "issues"}`
     : "Valid";
   statusEl.classList.toggle("error", hasErrors);
+  statusEl.dataset.state = hasErrors ? "error" : "valid";
+  copyButton.disabled = hasErrors;
+  downloadButton.disabled = hasErrors;
 
   renderDiagnostics(errors);
   timingEl.textContent = `${elapsed.toFixed(1)} ms`;
@@ -210,6 +217,7 @@ function updateOutput() {
     const selected = tab.dataset.tab === activeTab;
     tab.classList.toggle("active", selected);
     tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
   }
 
   if (!lastResult || !lastResult.ast || lastResult.diagnostics.length > 0) {
@@ -379,9 +387,20 @@ examplesEl.addEventListener("change", () => {
 copyButton.addEventListener("click", copyCurrent);
 downloadButton.addEventListener("click", downloadTex);
 
-for (const tab of tabs) {
+for (const [index, tab] of tabs.entries()) {
   tab.addEventListener("click", () => {
     activeTab = tab.dataset.tab;
     updateOutput();
+  });
+  tab.addEventListener("keydown", (event) => {
+    let next = null;
+    if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+    if (event.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+    if (event.key === "Home") next = 0;
+    if (event.key === "End") next = tabs.length - 1;
+    if (next === null) return;
+    event.preventDefault();
+    tabs[next].focus();
+    tabs[next].click();
   });
 }

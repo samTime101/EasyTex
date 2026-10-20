@@ -117,6 +117,11 @@ function renderNow() {
     lastStandalone = null;
     statusEl.textContent = "Empty";
     statusEl.classList.remove("error");
+    statusEl.dataset.state = "empty";
+    copyButton.disabled = true;
+    downloadButton.disabled = true;
+    downloadHtmlButton.disabled = true;
+    printButton.disabled = true;
     diagnosticsEl.replaceChildren();
     timingEl.textContent = "";
     statsEl.textContent = "";
@@ -144,6 +149,8 @@ function renderNow() {
         ? plural(warnings.length, "warning")
         : "Valid";
   statusEl.classList.toggle("error", errors.length > 0);
+  statusEl.dataset.state =
+    errors.length > 0 ? "error" : warnings.length > 0 ? "warning" : "valid";
 
   renderDiagnostics(lastResult.diagnostics);
   timingEl.textContent = `${elapsed.toFixed(1)} ms`;
@@ -190,6 +197,11 @@ function renderNow() {
   } else if (!lastHtml) {
     emptyStateEl.innerHTML = EMPTY_STATE_HTML;
   }
+
+  copyButton.disabled = !lastLatex && !lastStandalone;
+  downloadButton.disabled = !lastLatex;
+  downloadHtmlButton.disabled = !lastStandalone;
+  printButton.disabled = !lastHtml;
 
   updateOutput();
   if (frame) cancelAnimationFrame(frame);
@@ -272,6 +284,7 @@ function updateOutput() {
     const selected = tab.dataset.tab === activeTab;
     tab.classList.toggle("active", selected);
     tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
   }
 
   const hasSheet = Boolean(lastHtml);
@@ -524,10 +537,21 @@ examplesEl.addEventListener("change", () => {
   editor.focus();
 });
 
-for (const tab of tabs) {
+for (const [index, tab] of tabs.entries()) {
   tab.addEventListener("click", () => {
     activeTab = tab.dataset.tab;
     updateOutput();
+  });
+  tab.addEventListener("keydown", (event) => {
+    let next = null;
+    if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+    if (event.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+    if (event.key === "Home") next = 0;
+    if (event.key === "End") next = tabs.length - 1;
+    if (next === null) return;
+    event.preventDefault();
+    tabs[next].focus();
+    tabs[next].click();
   });
 }
 

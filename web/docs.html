@@ -3,8 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Complete MathScript reference: every function, constant, Greek letter, named symbol, operator, and document component, plus a searchable LaTeX to MathScript translation table." />
-    <title>MathScript reference — EasyTeX</title>
+    <meta
+      name="description"
+      content="What EasyTeX and MathScript are, plus the complete MathScript reference: every function, constant, Greek letter, named symbol, operator, and document component, with a searchable LaTeX to MathScript translation table."
+    />
+    <meta name="theme-color" content="#f4f1e8" />
+    <title>EasyTeX &amp; MathScript reference</title>
     <link rel="stylesheet" href="/web/styles.css" />
     <link rel="stylesheet" href="/web/docs.css" />
   </head>
@@ -14,22 +18,37 @@
         <span class="brand-mark" aria-hidden="true">&#8721;</span>
         <div>
           <h1>EasyTeX</h1>
-          <p>MathScript reference</p>
+          <p>Language &amp; application reference</p>
         </div>
       </a>
       <div class="header-actions">
         <label class="docs-search">
           <span class="visually-hidden">Search the reference</span>
-          <input id="docs-search" type="search" placeholder="Search the reference…" autocomplete="off" />
+          <input
+            id="docs-search"
+            type="search"
+            placeholder="Search functions, symbols, fields…"
+            autocomplete="off"
+          />
         </label>
         <a class="ghost-button" href="./document.html">Document writer</a>
         <a class="ghost-button" href="./index.html">Open editor</a>
-        <button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle theme">&#9788;</button>
+        <button id="theme-toggle" class="icon-button" type="button" aria-label="Switch to dark theme">&#9788;</button>
       </div>
     </header>
 
     <main class="docs-layout">
       <aside class="docs-nav" aria-label="Reference sections">
+        <button
+          id="docs-nav-toggle"
+          class="docs-nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="docs-nav"
+        >
+          <span>On this page</span>
+          <span class="docs-nav-toggle-mark" aria-hidden="true">+</span>
+        </button>
         <nav id="docs-nav"></nav>
         <a class="docs-nav-spec" href="../SPECIFICATION.md">Full specification &rarr;</a>
       </aside>
@@ -37,7 +56,7 @@
     </main>
 
     <footer class="app-footer">
-      <span>MathScript 0.1-draft</span>
+      <span>EasyTeX · MathScript 0.1-draft</span>
       <span class="dot" aria-hidden="true">&#183;</span>
       <a href="../SPECIFICATION.md">Specification</a>
       <span class="dot" aria-hidden="true">&#183;</span>

@@ -7,6 +7,7 @@
       name="description"
       content="EasyTeX Document Writer — write complete MathScript documents with sections, equations, figures, and references, then export LaTeX or standalone HTML."
     />
+    <meta name="theme-color" content="#f4f1e8" />
     <title>EasyTeX — Document writer</title>
     <link rel="stylesheet" href="/web/styles.css" />
     <link rel="stylesheet" href="/web/document.css" />
@@ -28,12 +29,21 @@
           </select>
         </label>
         <a class="ghost-button" href="./index.html">Expression editor</a>
-        <a class="ghost-button" href="./docs.html">Docs</a>
-        <button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle theme">&#9788;</button>
+        <a class="ghost-button" href="./docs.html">Reference</a>
+        <button id="theme-toggle" class="icon-button" type="button" aria-label="Switch to dark theme">&#9788;</button>
       </div>
     </header>
 
     <main class="workspace writer-workspace">
+      <section class="app-intro" aria-label="About MathScript documents">
+        <p class="app-intro-kicker">MathScript documents</p>
+        <p class="app-intro-text">
+          <strong>MathScript</strong> also writes whole documents. One <code>document({ ... })</code>
+          call adds metadata, sections, equations, tables, and references.
+        </p>
+        <a href="./docs.html#document-authoring">Document guide</a>
+      </section>
+
       <section class="panel editor-panel" aria-labelledby="doc-editor-title">
         <div class="panel-head">
           <div>
@@ -82,16 +92,60 @@
             <p class="panel-subtitle" id="template-label">Rendered document, LaTeX, and standalone HTML</p>
           </div>
           <div class="output-actions">
-            <button id="copy" class="ghost-button" type="button">Copy</button>
-            <button id="print" class="ghost-button" type="button">Print / PDF</button>
-            <button id="download-html" class="ghost-button" type="button">Download .html</button>
-            <button id="download" class="ghost-button" type="button">Download .tex</button>
+            <button id="copy" class="ghost-button" type="button" title="Copy the active output" disabled>
+              Copy
+            </button>
+            <button
+              id="print"
+              class="ghost-button"
+              type="button"
+              title="Print the document or save it as PDF"
+              disabled
+            >
+              Print / PDF
+            </button>
+            <button
+              id="download-html"
+              class="ghost-button"
+              type="button"
+              title="Download a standalone HTML document"
+              disabled
+            >
+              Download .html
+            </button>
+            <button
+              id="download"
+              class="ghost-button"
+              type="button"
+              title="Download a complete LaTeX file"
+              disabled
+            >
+              Download .tex
+            </button>
           </div>
         </div>
         <div class="tabs" role="tablist" aria-label="Output format">
-          <button class="tab active" data-tab="document" role="tab" aria-selected="true">Document</button>
-          <button class="tab" data-tab="latex" role="tab" aria-selected="false">LaTeX</button>
-          <button class="tab" data-tab="html" role="tab" aria-selected="false">HTML</button>
+          <button
+            class="tab active"
+            data-tab="document"
+            role="tab"
+            aria-selected="true"
+            aria-controls="doc-preview"
+          >
+            Document
+          </button>
+          <button
+            class="tab"
+            data-tab="latex"
+            role="tab"
+            aria-selected="false"
+            aria-controls="code-output"
+          >
+            LaTeX
+          </button>
+          <button class="tab" data-tab="html" role="tab" aria-selected="false" aria-controls="code-output">
+            HTML
+          </button>
         </div>
         <div class="output-shell writer-output">
           <div id="doc-preview" class="doc-preview" role="tabpanel">
@@ -117,7 +171,7 @@
     </main>
 
     <footer class="app-footer">
-      <span>MathScript 0.1-draft</span>
+      <span>EasyTeX · MathScript 0.1-draft</span>
       <span class="dot" aria-hidden="true">&#183;</span>
       <a href="../SPECIFICATION.md">Language specification</a>
       <span class="dot" aria-hidden="true">&#183;</span>

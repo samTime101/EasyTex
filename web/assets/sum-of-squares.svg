@@ -1,22 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 300" width="520" height="300" role="img" aria-label="Growth of the sum of squares compared with the integral of x squared">
   <defs>
     <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#2f4f8f" stop-opacity="0.28" />
-      <stop offset="100%" stop-color="#2f4f8f" stop-opacity="0.04" />
+      <stop offset="0%" stop-color="#58564d" stop-opacity="0.28" />
+      <stop offset="100%" stop-color="#58564d" stop-opacity="0.04" />
     </linearGradient>
   </defs>
-  <rect width="520" height="300" fill="#fffefb" />
-  <g stroke="#e2e0da" stroke-width="1">
+  <rect width="520" height="300" fill="#fffdf8" />
+  <g stroke="#e7e1d4" stroke-width="1">
     <line x1="60" y1="40" x2="490" y2="40" />
     <line x1="60" y1="90" x2="490" y2="90" />
     <line x1="60" y1="140" x2="490" y2="140" />
     <line x1="60" y1="190" x2="490" y2="190" />
   </g>
-  <path d="M60 250 L490 250" stroke="#22252b" stroke-width="1.6" fill="none" />
-  <path d="M60 250 L60 30" stroke="#22252b" stroke-width="1.6" fill="none" />
+  <path d="M60 250 L490 250" stroke="#1e251f" stroke-width="1.6" fill="none" />
+  <path d="M60 250 L60 30" stroke="#1e251f" stroke-width="1.6" fill="none" />
   <path d="M60 250 C 190 246, 330 210, 490 40 L 490 250 Z" fill="url(#fill)" stroke="none" />
-  <path d="M60 250 C 190 246, 330 210, 490 40" stroke="#2f4f8f" stroke-width="2.6" fill="none" stroke-linecap="round" />
-  <g fill="#8a909b" font-family="Georgia, serif" font-size="13">
+  <path d="M60 250 C 190 246, 330 210, 490 40" stroke="#58564d" stroke-width="2.6" fill="none" stroke-linecap="round" />
+  <g fill="#687066" font-family="Georgia, serif" font-size="13">
     <text x="62" y="268">0</text>
     <text x="200" y="268">2</text>
     <text x="340" y="268">4</text>
@@ -25,7 +25,7 @@
     <text x="14" y="145">50</text>
     <text x="8" y="45">100</text>
   </g>
-  <g fill="#5f6672" font-family="Georgia, serif" font-style="italic" font-size="14">
+  <g fill="#5f685e" font-family="Georgia, serif" font-style="italic" font-size="14">
     <text x="270" y="288">n</text>
     <text x="20" y="24">sum(i, 1, n, i&#178;)</text>
   </g>

@@ -53,7 +53,12 @@ parsed into data and validated before rendering.
 - Auto-closing brackets and quotes, smart `Enter`, line indent/unindent, pair deletion, and a
   **Format** action (`Shift` + `Alt` + `F`) that re-indents the source from bracket depth.
 - A **Maximize** toggle that hides the output pane so the source fills the workspace.
-- Examples library, complex-mode toggle for `i`, and light/dark themes persisted in `localStorage`.
+- Examples library, complex-mode toggle for `i`, and a paper-and-ink light theme with a monochrome
+  dark theme, persisted in `localStorage`.
+- A short intro strip distinguishes EasyTeX (the application) from MathScript (the language) and
+  links to the reference overview.
+- Keyboard-accessible output tabs (arrow keys, Home, and End); copy and download actions are disabled
+  when there is no valid output.
 - Copy output and download a complete `.tex` document.
 - Source can be shared with `#src=<url-encoded source>`.
 
@@ -94,6 +99,8 @@ parsed into data and validated before rendering.
 
 ### Reference page
 
+- A plain-language opening overview that explains what EasyTeX and MathScript are, followed by the
+  complete catalog.
 - Every function, constant, Greek letter name, named symbol, operator, syntax rule, template, page size, and document component.
 - A searchable **LaTeX → MathScript** reference covering standard LaTeX/AMS functions, structures, constants, Greek letters, operators, relations, arrows, delimiters, big operators, accents, ordinary symbols, and document constructs. Each row is marked **native**, **approximate**, or **no equivalent**, with a note explaining the closest MathScript option.
 - The LaTeX table is explicit about scope: the 604-page Comprehensive LaTeX Symbol List includes package fonts, emoji, phonetics, and decorative text glyphs that have no place in MathScript's font-free model. The reference covers the standard math vocabulary rather than claiming a one-to-one glyph mapping.
@@ -165,6 +172,20 @@ Node 18 or newer is required; there are no runtime dependencies. The dev server 
 static file server (`tools/serve.mjs`).
 
 ## Updates
+
+### 2026-10-20 — visual system, onboarding, and monochrome dark mode
+
+- Reworked the interface palette around warm paper, ink, rust, and pine in the light theme; the dark
+  theme is now strictly black, white, and gray, including the document sheet's default accents and
+  syntax highlighting (which uses weight and italics instead of color).
+- Added a plain-language intro strip to both editors and a new "EasyTeX & MathScript" overview at the
+  top of the reference, explaining the distinction between the application and the language.
+- Improved small-screen navigation with a collapsible reference contents panel, a compact header, and
+  panel headers that wrap cleanly; added keyboard navigation to output tabs.
+- Strengthened the UI hierarchy with serif display type, restrained borders and shadows, accessible
+  focus states, clearer status indicators, and disabled export actions when output is unavailable.
+- Updated the default document sheet accents and sample chart to match the light palette.
+- The full suite remains at 77 passing tests.
 
 ### 2026-10-20 — arbitrary-base logarithms
 

@@ -4,14 +4,14 @@
 
 export const SHEET_CSS = `
 .ms-sheet {
-  --ms-ink: #22252b;
-  --ms-muted: #5f6672;
-  --ms-faint: #8a909b;
-  --ms-rule: #d8d6d0;
-  --ms-rule-strong: #b9b5ab;
-  --ms-accent: #2f4f8f;
-  --ms-accent-soft: #eef2f9;
-  --ms-code-bg: #f5f5f2;
+  --ms-ink: #1e251f;
+  --ms-muted: #5f685e;
+  --ms-faint: #687066;
+  --ms-rule: #dad3c4;
+  --ms-rule-strong: #bbb2a1;
+  --ms-accent: #58564d;
+  --ms-accent-soft: #f3efe5;
+  --ms-code-bg: #f6f2e9;
   --ms-page-width: 794px;
   --ms-page-height: 1123px;
   --ms-margin-top: 90px;
@@ -25,7 +25,7 @@ export const SHEET_CSS = `
   margin: 0 auto;
   padding: var(--ms-margin-top) var(--ms-margin-right) var(--ms-margin-bottom) var(--ms-margin-left);
   box-sizing: border-box;
-  background: #fffefb;
+  background: #fffdf8;
   color: var(--ms-ink);
   font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
   font-size: 16px;
@@ -121,7 +121,7 @@ export const SHEET_CSS = `
 .ms-abstract p {
   margin: 0;
   font-size: 0.94em;
-  color: #333944;
+  color: var(--ms-ink);
 }
 
 .ms-toc {
@@ -355,7 +355,7 @@ export const SHEET_CSS = `
   padding: 18px;
   border: 1px dashed var(--ms-rule-strong);
   border-radius: 4px;
-  background: #f7f7f4;
+  background: #f6f2e9;
   color: var(--ms-faint);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.78em;
@@ -405,7 +405,7 @@ export const SHEET_CSS = `
   margin: 1.2em 0;
   padding: 0.1em 0 0.1em 1.1em;
   border-left: 3px solid var(--ms-rule-strong);
-  color: #4a505c;
+  color: var(--ms-muted);
   font-style: italic;
 }
 
@@ -418,7 +418,7 @@ export const SHEET_CSS = `
 .ms-theorem {
   margin: 1.2em 0;
   padding: 0.8em 1.05em;
-  background: #f8f9fb;
+  background: #f6f2e9;
   border-left: 3px solid var(--ms-accent);
   border-radius: 2px;
   break-inside: avoid;
@@ -532,7 +532,7 @@ export const SHEET_CSS = `
 .ms-page-break {
   position: relative;
   margin: 2.4em 0;
-  border-top: 2px dashed #c4c8d0;
+  border-top: 2px dashed var(--ms-rule-strong);
   break-after: page;
 }
 
@@ -542,7 +542,7 @@ export const SHEET_CSS = `
   right: 0;
   top: -0.72em;
   padding: 0 0.5em;
-  background: #fffefb;
+  background: #fffdf8;
   color: var(--ms-faint);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.62em;

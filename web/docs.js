@@ -200,20 +200,57 @@ function addNavSection(groupLabel, items) {
 }
 
 function renderHero() {
+  addNavSection("Start here", [{ label: "EasyTeX & MathScript", id: "about-easytex" }]);
+
   const hero = el("section", "docs-hero");
-  hero.append(el("h2", null, "MathScript reference"));
+  hero.id = "about-easytex";
+  hero.append(el("p", "docs-eyebrow", "EasyTeX · MathScript 0.1-draft"));
+  hero.append(el("h2", null, "EasyTeX & MathScript"));
   hero.append(
     el(
       "p",
       null,
-      "Every function, constant, Greek letter name, named symbol, and operator — with arguments and worked examples — plus a searchable LaTeX → MathScript translation table and the document layer: templates, page layout, every block and inline component, and every document(...) metadata and option field. MathScript is a function-based mathematical language: calls are name(arg1, arg2, …), any other identifier can be applied as a free function such as f(x), ordinary arithmetic stays ordinary, and source is separate from rendering."
+      "EasyTeX is the application. MathScript is the function-based language it reads. This reference documents both, from the syntax rules and built-ins to every document component and metadata field."
     )
   );
 
+  const definitions = el("div", "about-grid");
+  const application = el("article", "about-card");
+  application.append(el("p", "about-card-label", "The application"));
+  application.append(el("h3", null, "EasyTeX"));
+  application.append(
+    el(
+      "p",
+      null,
+      "A local, zero-dependency editor and document writer for mathematics. It validates MathScript, renders native MathML, exports LaTeX or standalone HTML, and prints to PDF. Nothing is sent to a server, and MathScript source is parsed as data — never executed."
+    )
+  );
+
+  const language = el("article", "about-card");
+  language.append(el("p", "about-card-label", "The language"));
+  language.append(el("h3", null, "MathScript"));
+  const languageCopy = el("p", null, "A function-based mathematical notation: write ");
+  languageCopy.append(el("code", null, "frac(a, b)"));
+  languageCopy.append(document.createTextNode(" or "));
+  languageCopy.append(el("code", null, "sum(i, 1, n, i^2)"));
+  languageCopy.append(
+    document.createTextNode(
+      " instead of backslash commands. “=” means equality, free applications such as f(x) are valid, and there is no implicit multiplication. It is not LaTeX."
+    )
+  );
+  language.append(languageCopy);
+  definitions.append(application, language);
+  hero.append(definitions);
+
+  const source = "x = frac(-b + sqrt(b^2 - 4*a*c), 2*a)";
   const example = el("div", "docs-hero-example");
-  example.append(el("code", null, "x = frac(-b + sqrt(b^2 - 4*a*c), 2*a)"));
+  const exampleHead = el("div", "docs-hero-example-head");
+  exampleHead.append(el("span", null, "MathScript in"));
+  exampleHead.append(el("span", null, "Typeset out"));
+  example.append(exampleHead);
+  example.append(el("code", null, source));
   const preview = el("div", "docs-hero-preview");
-  const result = compile("x = frac(-b + sqrt(b^2 - 4*a*c), 2*a)");
+  const result = compile(source);
   if (result.mathml) preview.innerHTML = result.mathml;
   example.append(preview);
   hero.append(example);
@@ -815,13 +852,17 @@ function renderComponents() {
 }
 
 function setupSearch() {
+  const status = el("p", "docs-search-status");
+  status.hidden = true;
+  status.setAttribute("aria-live", "polite");
+
   const empty = el("div", "search-empty");
   empty.textContent =
     "No functions, constants, Greek letters, named symbols, LaTeX mappings, fields, components, or syntax notes match that search.";
   empty.hidden = true;
   const anchor = content.children[0];
-  if (anchor) anchor.after(empty);
-  else content.append(empty);
+  if (anchor) anchor.after(status, empty);
+  else content.append(status, empty);
 
   searchInput.addEventListener("input", () => {
     const query = searchInput.value.trim().toLowerCase();
@@ -837,7 +878,34 @@ function setupSearch() {
       // searchable units; keep them visible until a query narrows the page.
       node.hidden = query !== "" && !anyVisible;
     }
+    status.hidden = query === "" || visible === 0;
+    status.textContent =
+      visible > 0 ? `${visible} matching ${visible === 1 ? "entry" : "entries"}` : "";
     empty.hidden = visible > 0;
+  });
+
+  searchInput.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || searchInput.value === "") return;
+    searchInput.value = "";
+    searchInput.dispatchEvent(new Event("input"));
+  });
+}
+
+function setupNavToggle() {
+  const toggle = document.getElementById("docs-nav-toggle");
+  if (!toggle) return;
+
+  const panel = toggle.closest(".docs-nav");
+  const setOpen = (open) => {
+    panel.classList.toggle("open", open);
+    toggle.setAttribute("aria-expanded", String(open));
+  };
+
+  toggle.addEventListener("click", () => setOpen(!panel.classList.contains("open")));
+  nav.addEventListener("click", (event) => {
+    if (event.target.closest("a") && window.matchMedia("(max-width: 980px)").matches) {
+      setOpen(false);
+    }
   });
 }
 
@@ -853,10 +921,10 @@ function setupNavHighlight() {
       if (candidate.getBoundingClientRect().top <= 130) current = candidate;
     }
     for (const link of links) {
-      link.classList.toggle(
-        "active",
-        current !== undefined && link.getAttribute("href") === `#${current.id}`
-      );
+      const active = current !== undefined && link.getAttribute("href") === `#${current.id}`;
+      link.classList.toggle("active", active);
+      if (active) link.setAttribute("aria-current", "location");
+      else link.removeAttribute("aria-current");
     }
   }
 
@@ -879,6 +947,7 @@ renderDocumentPage();
 renderDocumentFields();
 renderComponents();
 setupSearch();
+setupNavToggle();
 setupNavHighlight();
 
 // The page is rendered after load, so the browser's initial anchor scroll runs

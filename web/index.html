@@ -3,19 +3,23 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="EasyTeX — write mathematics in MathScript, preview it instantly, export LaTeX." />
+    <meta
+      name="description"
+      content="EasyTeX is a local MathScript editor: write function-based mathematics, validate it live, and export typeset MathML or LaTeX."
+    />
+    <meta name="theme-color" content="#f4f1e8" />
     <title>EasyTeX — MathScript editor</title>
     <link rel="stylesheet" href="/web/styles.css" />
   </head>
   <body>
     <header class="app-header">
-      <div class="brand">
+      <a class="brand" href="./index.html" aria-label="EasyTeX home">
         <span class="brand-mark" aria-hidden="true">&#8721;</span>
         <div>
           <h1>EasyTeX</h1>
-          <p>Write math, not LaTeX.</p>
+          <p>MathScript editor</p>
         </div>
-      </div>
+      </a>
       <div class="header-actions">
         <label class="example-picker">
           <span>Examples</span>
@@ -28,12 +32,22 @@
           <span>Complex mode</span>
         </label>
         <a class="ghost-button" href="/web/document.html">Document writer</a>
-        <a class="ghost-button" href="/web/docs.html">Docs</a>
-        <button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle theme">&#9788;</button>
+        <a class="ghost-button" href="/web/docs.html">Reference</a>
+        <button id="theme-toggle" class="icon-button" type="button" aria-label="Switch to dark theme">&#9788;</button>
       </div>
     </header>
 
     <main class="workspace">
+      <section class="app-intro" aria-label="About EasyTeX and MathScript">
+        <p class="app-intro-kicker">EasyTeX &amp; MathScript</p>
+        <p class="app-intro-text">
+          <strong>EasyTeX</strong> is a local editor and document writer for mathematics.
+          <strong>MathScript</strong> is the function-based language you type — <code>frac(a, b)</code>,
+          not backslash commands.
+        </p>
+        <a href="./docs.html#about-easytex">What is MathScript?</a>
+      </section>
+
       <section class="panel editor-panel" aria-labelledby="editor-title">
         <div class="panel-head">
           <div>
@@ -79,26 +93,70 @@
         <div class="panel-head">
           <div>
             <h2 id="preview-title">Output</h2>
-            <p class="panel-subtitle">Rendered with native MathML</p>
+            <p class="panel-subtitle">Preview, LaTeX, MathML, and the parsed tree</p>
           </div>
           <div class="output-actions">
-            <button id="copy" class="ghost-button" type="button">Copy</button>
-            <button id="download" class="ghost-button" type="button">Download .tex</button>
+            <button id="copy" class="ghost-button" type="button" title="Copy the active output" disabled>
+              Copy
+            </button>
+            <button
+              id="download"
+              class="ghost-button"
+              type="button"
+              title="Download a complete LaTeX file"
+              disabled
+            >
+              Download .tex
+            </button>
           </div>
         </div>
         <div class="tabs" role="tablist" aria-label="Output format">
-          <button class="tab active" data-tab="preview" role="tab" aria-selected="true">Preview</button>
-          <button class="tab" data-tab="latex" role="tab" aria-selected="false">LaTeX</button>
-          <button class="tab" data-tab="mathml" role="tab" aria-selected="false">MathML</button>
-          <button class="tab" data-tab="ast" role="tab" aria-selected="false">AST</button>
+          <button
+            class="tab active"
+            data-tab="preview"
+            role="tab"
+            aria-selected="true"
+            aria-controls="preview"
+          >
+            Preview
+          </button>
+          <button
+            class="tab"
+            data-tab="latex"
+            role="tab"
+            aria-selected="false"
+            aria-controls="code-output"
+          >
+            LaTeX
+          </button>
+          <button
+            class="tab"
+            data-tab="mathml"
+            role="tab"
+            aria-selected="false"
+            aria-controls="code-output"
+          >
+            MathML
+          </button>
+          <button
+            class="tab"
+            data-tab="ast"
+            role="tab"
+            aria-selected="false"
+            aria-controls="code-output"
+          >
+            AST
+          </button>
         </div>
         <div class="output-shell">
           <div id="preview" class="preview" role="tabpanel"></div>
           <pre id="code-output" class="code-output hidden" role="tabpanel"></pre>
           <div class="empty-state hidden" id="empty-state">
             <span class="empty-mark" aria-hidden="true">&#8730;</span>
-            <p>Start typing a MathScript expression.</p>
-            <p class="muted">Try <code>sum(i, 1, n, i^2)</code> or choose an example above.</p>
+            <p>Start with a MathScript expression.</p>
+            <p class="muted">
+              Try <code>frac(a, b)</code> or <code>sum(i, 1, n, i^2)</code>, or choose an example above.
+            </p>
           </div>
         </div>
         <div class="preview-foot">
@@ -109,7 +167,7 @@
     </main>
 
     <footer class="app-footer">
-      <span>MathScript 0.1-draft</span>
+      <span>EasyTeX · MathScript 0.1-draft</span>
       <span class="dot" aria-hidden="true">&#183;</span>
       <a href="../SPECIFICATION.md">Language specification</a>
       <span class="dot" aria-hidden="true">&#183;</span>

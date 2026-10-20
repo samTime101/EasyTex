@@ -1,7 +1,19 @@
 export function initTheme(toggle) {
   function set(theme) {
     document.documentElement.dataset.theme = theme;
-    if (toggle) toggle.textContent = theme === "dark" ? "\u263e" : "\u2600";
+
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    const label = `Switch to ${nextTheme} theme`;
+    if (toggle) {
+      // Show the theme the button will switch to.
+      toggle.textContent = theme === "dark" ? "\u2600" : "\u263e";
+      toggle.setAttribute("aria-label", label);
+      toggle.setAttribute("title", label);
+    }
+
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor) themeColor.content = theme === "dark" ? "#050505" : "#f4f1e8";
+
     try {
       localStorage.setItem("easytex.theme", theme);
     } catch {
