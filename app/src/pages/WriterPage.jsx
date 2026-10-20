@@ -10,6 +10,7 @@ import { Diagnostics } from "../components/Diagnostics.jsx";
 import { useToast } from "../hooks/useToast.jsx";
 import { useEditorZoom } from "../hooks/useEditorZoom.js";
 import { ZoomControl } from "../components/ZoomControl.jsx";
+import { ModeTabs } from "../components/ModeTabs.jsx";
 import { DEFAULT_DOCUMENT_SOURCE, DOCUMENT_EXAMPLES } from "@ui/document-examples.js";
 
 const STORAGE_KEY = "easytex.document";
@@ -285,7 +286,6 @@ export function WriterPage() {
     <>
       <Header
         subtitle="Document writer"
-        mode="document"
         nav={[{ label: "Reference", href: "/docs" }]}
       >
         <ZoomControl zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onReset={resetZoom} />
@@ -319,6 +319,7 @@ export function WriterPage() {
               <p className="panel-subtitle">{"document({ ... })"} with sections, equations, and references</p>
             </div>
             <div className="panel-head-actions">
+              <ModeTabs mode="document" />
               <span
                 id="status"
                 className={hasErrors ? "status error" : "status"}

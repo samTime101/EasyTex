@@ -230,10 +230,10 @@ and standard output.
 
 ### 2026-10-20 — a mode switch in the header
 
-- The two editors are the same app in two modes, so the header now carries a **mode switch**
-  instead of a separate button: `Expression | Document`. The current mode is marked, the other one
-  is one click away, and the URL still says which mode you are in. The reference page keeps its own
-  links, because it is a document rather than a mode.
+- The two editors are the same app in two modes, so the panel head now carries a **mode switch**
+  instead of a separate button: `Expression | Document`, next to the status and the panel actions.
+  The current mode is marked, the other one is one click away, and the URL still says which mode
+  you are in. The reference page keeps its own links, because it is a document rather than a mode.
 - The switch is a pair of links, not buttons, so it can be opened in a new tab and it works without
   JavaScript.
 

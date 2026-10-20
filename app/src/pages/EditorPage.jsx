@@ -8,6 +8,7 @@ import { Diagnostics } from "../components/Diagnostics.jsx";
 import { useToast } from "../hooks/useToast.jsx";
 import { useEditorZoom } from "../hooks/useEditorZoom.js";
 import { ZoomControl } from "../components/ZoomControl.jsx";
+import { ModeTabs } from "../components/ModeTabs.jsx";
 import { EXPRESSION_EXAMPLES, DEFAULT_EXPRESSION_SOURCE } from "@ui/expression-examples.js";
 
 
@@ -134,7 +135,6 @@ ${result.latex}
     <>
       <Header
         subtitle="MathScript editor"
-        mode="editor"
         nav={[{ label: "Reference", href: "/docs" }]}
       >
         <ZoomControl zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onReset={resetZoom} />
@@ -177,6 +177,7 @@ ${result.latex}
               <p className="panel-subtitle">Function-based notation with live validation</p>
             </div>
             <div className="panel-head-actions">
+              <ModeTabs mode="editor" />
               <span
                 id="status"
                 className={hasErrors ? "status error" : "status"}
