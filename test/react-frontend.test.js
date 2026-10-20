@@ -157,6 +157,28 @@ test("the writer suggests the named arguments around the caret", async () => {
   view.unmount();
 });
 
+test("the writer suggests the values of an argument after the closing quote", async () => {
+  const view = mount(WriterPage);
+  const editor = view.container.querySelector("#editor");
+  act(() => {
+    editor.focus();
+  });
+  editor.value = "";
+  type(editor, 'document = Document(type="article", title="T")\nmain = document.section("S")\nmain.page(size="")');
+  // The caret lands after the closing quote, where the values belong.
+  act(() => {
+    editor.setSelectionRange(editor.value.length - 1, editor.value.length - 1);
+  });
+  await wait(150);
+
+  const items = [...view.container.querySelectorAll(".autocomplete-item")];
+  assert.ok(items.length >= 3, "the values are offered");
+  assert.match(items[0].textContent, /^A4/);
+  assert.match(items[0].textContent, /default/i, "the default is marked");
+  assert.match(items[1].textContent, /option/i, "the other values are marked as options");
+  view.unmount();
+});
+
 test("the writer suggests the methods of the container around the caret", async () => {
   const view = mount(WriterPage);
   const editor = view.container.querySelector("#editor");

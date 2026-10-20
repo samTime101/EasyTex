@@ -154,6 +154,33 @@ test("the values are offered when the caret sits after the empty string", () => 
   assert.equal(result.prefix, "");
 });
 
+test("the values are offered when the caret sits after the closing quote", () => {
+  // The user types size="" and the caret lands on the closing quote; the list
+  // must open for them.
+  const source = `${PREAMBLE}main.page(size="")`;
+  const quote = source.length - 1;
+  const end = completionContextAt(source, quote);
+  assert.equal(end.type, "value");
+  assert.deepEqual(names(end).slice(0, 5), ["A4", "A3", "A5", "Letter", "Legal"]);
+  assert.equal(end.prefix, "");
+  assert.equal(end.tokenStart, quote - 2, "the whole string is replaced");
+  assert.equal(end.tokenEnd, quote);
+
+  const inside = completionContextAt(source, quote - 1);
+  assert.equal(inside.type, "value");
+  assert.deepEqual(names(inside).slice(0, 5), ["A4", "A3", "A5", "Letter", "Legal"]);
+
+  const past = completionContextAt(source, source.length);
+  assert.equal(past, null, "the caret has left the string");
+});
+
+test("a value that is already written keeps its text as the prefix", () => {
+  const source = `${PREAMBLE}main.page(size="A4")`;
+  const result = completionContextAt(source, source.length - 1);
+  assert.equal(result.type, "value");
+  assert.equal(result.prefix, "A4");
+});
+
 test("a string that is not a value offers nothing", () => {
   assert.equal(inside(`${PREAMBLE}main.paragraph("abc`).type, "blocked");
   assert.equal(inside(`${PREAMBLE}main.paragraph("a`).type, "blocked");

@@ -51,10 +51,14 @@ export function bindingsBefore(source, caret) {
 }
 
 // The token the caret sits in, if any.
+//
+// A string that ends exactly at the caret still counts: the user has just
+// typed the closing quote, and the value list must open for them.
 function tokenAt(tokens, caret) {
   let fallback = null;
   for (const token of tokens) {
     if (token.start > caret) break;
+    if (token.type === "string" && token.start <= caret && caret <= token.end) return token;
     if (token.start <= caret && caret < token.end) return token;
     if (token.end === caret) fallback = token;
   }
