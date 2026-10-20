@@ -78,6 +78,7 @@ export function WriterPage() {
   const editorRef = useRef(null);
   const previewRef = useRef(null);
   const sheetRef = useRef(null);
+  const shellRef = useRef(null);
   const toast = useToast();
 
   const compileNow = useCallback(() => {
@@ -137,25 +138,33 @@ export function WriterPage() {
     }
   }, [shown.html]);
 
-  // The sheet is scaled to the width of the preview column.
+  // The sheet is scaled to the width of the output column.
   useEffect(() => {
     const preview = previewRef.current;
+    const shell = shellRef.current;
     const mount = sheetRef.current;
     if (!preview || !mount) return undefined;
     const fit = () => {
       const sheet = mount.firstElementChild;
       if (!sheet) return;
-      const available = preview.clientWidth - 52;
+      const style = getComputedStyle(preview);
+      const padding =
+        (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+      // The width comes from the output column, never from the sheet itself: a
+      // sheet that sized itself would shrink the zoom, and the smaller zoom
+      // would shrink the sheet again, so the preview would jitter.
+      const available = (shell?.clientWidth ?? preview.clientWidth) - padding;
       if (available <= 0) return;
       const declared = parseLength(getComputedStyle(sheet).getPropertyValue("--ms-page-width"));
       const pageWidth = declared.ok ? declared.px : sheet.offsetWidth;
       const zoom = available / pageWidth;
-      sheet.style.zoom = zoom < 0.99 && zoom >= 0.45 ? zoom.toFixed(3) : "";
+      const next = zoom < 0.99 && zoom >= 0.45 ? zoom.toFixed(3) : "";
+      if (sheet.style.zoom !== next) sheet.style.zoom = next;
     };
     fit();
     if (typeof ResizeObserver === "function") {
       const observer = new ResizeObserver(fit);
-      observer.observe(preview);
+      observer.observe(shell ?? preview);
       return () => observer.disconnect();
     }
     return undefined;
@@ -397,7 +406,7 @@ export function WriterPage() {
             </div>
           </div>
           <OutputTabs tabs={TABS} active={tab} onChange={setTab} />
-          <div className="output-shell writer-output">
+          <div className="output-shell writer-output" ref={shellRef}>
             <div
               id="doc-preview"
               className={tab === "document" ? "doc-preview" : "doc-preview hidden"}

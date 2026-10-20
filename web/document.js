@@ -26,6 +26,7 @@ const templateLabelEl = document.getElementById("template-label");
 const tabs = [...document.querySelectorAll(".tab")];
 const docPreviewEl = document.getElementById("doc-preview");
 const sheetEl = document.getElementById("sheet");
+const outputShellEl = document.querySelector(".output-shell.writer-output");
 const staleNoticeEl = document.getElementById("stale-notice");
 const codeOutputEl = document.getElementById("code-output");
 const emptyStateEl = document.getElementById("empty-state");
@@ -327,20 +328,25 @@ function applyPrintPage(doc) {
 }
 
 // The preview shows the sheet at its real page width, scaled down to fit the
-// column. Below roughly half size reflowing reads better than shrinking.
+// column. The width comes from the output column, never from the sheet
+// itself: a sheet that sized itself would shrink the zoom, and the smaller
+// zoom would shrink the sheet again, so the preview would jitter.
 function fitSheet() {
   const sheet = sheetEl.firstElementChild;
   if (!sheet || !lastHtml) return;
-  const available = docPreviewEl.clientWidth - 52;
+  const style = getComputedStyle(docPreviewEl);
+  const padding = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+  const available = (outputShellEl?.clientWidth ?? docPreviewEl.clientWidth) - padding;
   if (available <= 0) return;
   const declared = parseLength(getComputedStyle(sheet).getPropertyValue("--ms-page-width"));
   const pageWidth = declared.ok ? declared.px : sheet.offsetWidth;
   const zoom = available / pageWidth;
-  sheet.style.zoom = zoom < 0.99 && zoom >= 0.45 ? zoom.toFixed(3) : "";
+  const next = zoom < 0.99 && zoom >= 0.45 ? zoom.toFixed(3) : "";
+  if (sheet.style.zoom !== next) sheet.style.zoom = next;
 }
 
 if (typeof ResizeObserver === "function") {
-  new ResizeObserver(() => fitSheet()).observe(docPreviewEl);
+  new ResizeObserver(() => fitSheet()).observe(outputShellEl ?? docPreviewEl);
 }
 
 function slug(text) {

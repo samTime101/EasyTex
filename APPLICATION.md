@@ -223,6 +223,18 @@ standard input and standard output.
 
 ## Updates
 
+### 2026-10-20 — a stable sheet preview and a fixed reference navigation
+
+- Fixed the document writer's preview jitter in both hosts. The sheet is scaled from the width of
+  the output column, never from its own width: a sheet that sized itself shrank the zoom, and the
+  smaller zoom shrank the sheet again, so the preview resized itself in a loop. The zoom is now
+  computed from the column and only written when it really changes.
+- The React writer was missing `web/document.css`, so the preview column was not a flex item and
+  the sheet could size the column. The React host now loads the writer stylesheet as well.
+- Fixed the reference navigation in the React host. The links were wrapped in a group element that
+  broke the column layout of the navigation, so the entries ran into each other. The navigation now
+  has the same structure as the static page: a group label followed by its links, stacked.
+
 ### 2026-10-20 — a React host for the same app
 
 - Added a React implementation of the whole web app in `app/`, built with Vite: the expression

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   groupComponentsByCategory,
   groupConstantsByCategory,
@@ -149,7 +149,7 @@ export function DocsPage() {
           </button>
           <nav id="docs-nav">
             {groups.map((group) => (
-              <div key={group.label}>
+              <Fragment key={group.label}>
                 <div className="nav-group">{group.label}</div>
                 {group.items.map((item) => (
                   <a
@@ -164,7 +164,7 @@ export function DocsPage() {
                     {item.label}
                   </a>
                 ))}
-              </div>
+              </Fragment>
             ))}
           </nav>
           <a className="docs-nav-spec" href="/SPECIFICATION.md">
