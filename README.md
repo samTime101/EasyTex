@@ -78,6 +78,7 @@ them to.
 - **Plain-language onboarding**: the expression editor and reference explain the difference between EasyTeX and MathScript.
 - **Platform-independent engine**: the language lives in `src/` with no browser or operating-system API, behind a documented JSON contract. The web app, the command line host, and any future desktop or mobile app are separate hosts on top of the same engine. See [`ENGINE.md`](./ENGINE.md).
 - **A React application**: the expression editor, the document writer, and the reference page are React components in `app/`, built with Vite on top of the very same engine and the very same stylesheet. The browser layer in `ui/` holds the design system and the editor helpers that the app and the tests share.
+- **A type scale, not a pile of sizes**: named sizes with their line height and weight, balanced headings, a 68-character measure, and tabular numbers so the live readouts never shift.
 - **Zero runtime dependencies.** Everything is plain ES modules.
 
 ## Project layout

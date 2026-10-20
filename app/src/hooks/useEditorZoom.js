@@ -5,14 +5,27 @@ export const MIN_ZOOM = 11;
 export const MAX_ZOOM = 24;
 export const DEFAULT_ZOOM = 14.5;
 
+// A touch screen zooms the page when a field with small text takes the
+// focus, so the smallest size is larger there.
+export function minimumZoom() {
+  try {
+    return window.matchMedia?.("(pointer: coarse)")?.matches ? 16 : MIN_ZOOM;
+  } catch {
+    return MIN_ZOOM;
+  }
+}
+
 function readZoom() {
+  const floor = minimumZoom();
   try {
     const stored = Number(localStorage.getItem(STORAGE_KEY));
-    if (Number.isFinite(stored) && stored >= MIN_ZOOM && stored <= MAX_ZOOM) return stored;
+    if (Number.isFinite(stored) && stored >= floor && stored <= MAX_ZOOM) {
+      return stored;
+    }
   } catch {
     // Storage may be unavailable; the default size is used instead.
   }
-  return DEFAULT_ZOOM;
+  return Math.max(DEFAULT_ZOOM, floor);
 }
 
 // The size of the source text. The editor and its highlight layer share the
@@ -33,7 +46,7 @@ export function useEditorZoom() {
   }, []);
 
   const zoomOut = useCallback(() => {
-    setZoom((current) => Math.max(MIN_ZOOM, Math.round((current - 1) * 10) / 10));
+    setZoom((current) => Math.max(minimumZoom(), Math.round((current - 1) * 10) / 10));
   }, []);
 
   const reset = useCallback(() => setZoom(DEFAULT_ZOOM), []);

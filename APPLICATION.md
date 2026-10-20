@@ -228,6 +228,26 @@ and standard output.
 
 ## Updates
 
+### 2026-10-20 — a typography and interface pass
+
+- Gave the app a **type scale**: named sizes from `--text-2xs` to `--text-xl`, each with its line
+  height and weight, so a role is one decision instead of three. Every font size is now in `rem`,
+  so the reader's browser font size still applies.
+- **Headings are balanced and paragraphs are pretty** (`text-wrap`), the prose keeps a 68-character
+  measure, and the numbers that change while you type — the status, the timings, the statistics, the
+  section counts — use `tabular-nums`, so nothing shifts under the cursor.
+- The **header sticks** to the top of the page and grows a hairline once the content scrolls under
+  it; the reference page keeps its navigation in view.
+- The **panel heads** were the noisiest part of the interface: the title now shrinks and its
+  subtitle ellipsizes, the actions stay on one row, and the export buttons share the panel's button
+  size. The text size control moved to the header, where the other view settings live.
+- The **status is a chip** instead of a floating line, the suggestion list marks the chosen row, and
+  the diagnostics carry an accent on the side that names the problem.
+- The controls share one height, answer the press, and every icon-only button carries a name. The
+  motion respects `prefers-reduced-motion`, the writer uses the dynamic viewport height, and the
+  editor keeps at least 16px of text on a touch screen, where a smaller field would zoom the page.
+- The layers use a fixed stacking scale instead of ad-hoc `z-index` values.
+
 ### 2026-10-20 — more examples and a text size control
 
 - The example library grew: **33 expressions** for the expression editor and **12 documents** for

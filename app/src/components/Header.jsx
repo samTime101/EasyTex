@@ -1,10 +1,23 @@
+import { useEffect, useRef } from "react";
 import { useTheme } from "../lib/theme.js";
 
 export function Header({ subtitle, nav = [], children }) {
   const [theme, toggleTheme] = useTheme();
+  const headerRef = useRef(null);
   const next = theme === "dark" ? "light" : "dark";
+
+  // The header keeps a hairline once the page scrolls under it.
+  useEffect(() => {
+    const onScroll = () => {
+      headerRef.current?.classList.toggle("is-stuck", window.scrollY > 4);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="app-header">
+    <header className="app-header" ref={headerRef}>
       <a className="brand" href="/" aria-label="EasyTeX home">
         <span className="brand-mark" aria-hidden="true">
           &#8721;

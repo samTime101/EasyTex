@@ -4,6 +4,7 @@ body.writer-body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
 }
 
 /* The React app renders into a root element, so the workspace lives one level
@@ -101,7 +102,7 @@ body.writer-body .app-footer {
   border: 1px solid var(--danger-line);
   background: var(--danger-soft);
   color: var(--danger);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
@@ -115,7 +116,7 @@ body.writer-body .app-footer {
   border-radius: 10px;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 /* -------------------------------------------------------------------- print */

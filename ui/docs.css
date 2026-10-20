@@ -23,12 +23,7 @@ html[data-theme="dark"] {
 }
 
 .docs-header {
-  border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--panel) 82%, transparent);
-  backdrop-filter: blur(8px);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  transition: border-color 120ms ease;
 }
 
 .docs-search input {
@@ -38,7 +33,7 @@ html[data-theme="dark"] {
   color: var(--ink);
   border-radius: 10px;
   padding: 9px 12px;
-  font-size: 13px;
+  font-size: var(--text-ui);
 }
 
 .docs-search input:focus {
@@ -49,7 +44,7 @@ html[data-theme="dark"] {
 .docs-search-status {
   margin: -4px 0 0;
   color: var(--faint);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .docs-layout {
@@ -81,7 +76,7 @@ html[data-theme="dark"] {
 
 .docs-nav .nav-group {
   color: var(--faint);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -89,11 +84,14 @@ html[data-theme="dark"] {
 }
 
 .docs-nav a {
+  display: block;
   color: var(--muted);
-  font-size: 13px;
-  padding: 5px 9px;
+  font-size: var(--text-ui);
+  line-height: var(--leading-snug);
+  padding: 6px 9px;
   border-radius: 8px;
   border-left: 2px solid transparent;
+  transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
 }
 
 .docs-nav a:hover {
@@ -114,7 +112,7 @@ html[data-theme="dark"] {
 }
 
 .docs-nav-spec {
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 600;
   padding: 9px;
   border: 1px dashed var(--line-strong);
@@ -142,7 +140,7 @@ html[data-theme="dark"] {
 .docs-eyebrow {
   margin: 0 0 8px;
   color: var(--accent);
-  font-size: 10.5px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -181,7 +179,7 @@ html[data-theme="dark"] {
 .about-card-label {
   margin: 0 0 5px;
   color: var(--faint);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -190,7 +188,7 @@ html[data-theme="dark"] {
 .about-card h3 {
   margin: 0 0 6px;
   font-family: var(--sans);
-  font-size: 18px;
+  font-size: var(--text-lg);
   font-weight: 650;
   letter-spacing: -0.02em;
 }
@@ -198,13 +196,13 @@ html[data-theme="dark"] {
 .about-card p:last-child {
   margin: 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-ui);
   line-height: 1.55;
 }
 
 .about-card code {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--accent-2);
 }
 
@@ -223,7 +221,7 @@ html[data-theme="dark"] {
   gap: 12px;
   margin-bottom: 12px;
   color: var(--faint);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -231,7 +229,7 @@ html[data-theme="dark"] {
 
 .docs-hero-example code {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: var(--text-ui);
   color: var(--ink);
 }
 
@@ -240,7 +238,7 @@ html[data-theme="dark"] {
 .docs-hero-code {
   display: block;
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: var(--text-ui);
   line-height: 1.6;
   color: var(--ink);
   background: var(--panel-2);
@@ -253,7 +251,7 @@ html[data-theme="dark"] {
 .docs-inline-code {
   display: inline-block;
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: var(--text-ui);
   line-height: 1.55;
   color: var(--ink);
   background: var(--panel-2);
@@ -266,7 +264,7 @@ html[data-theme="dark"] {
 
 .docs-hero-preview {
   margin-top: 10px;
-  font-size: 30px;
+  font-size: 1.875rem;
   overflow-x: auto;
 }
 
@@ -287,7 +285,7 @@ html[data-theme="dark"] {
 .docs-section h2 {
   margin: 4px 0 0;
   font-family: var(--sans);
-  font-size: 21px;
+  font-size: 1.3125rem;
   font-weight: 650;
   letter-spacing: -0.025em;
   padding-bottom: 8px;
@@ -295,8 +293,9 @@ html[data-theme="dark"] {
 }
 
 .section-count {
+  font-variant-numeric: tabular-nums;
   color: var(--faint);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 500;
   margin-left: 8px;
 }
@@ -322,14 +321,14 @@ html[data-theme="dark"] {
 
 .function-card h3 {
   margin: 0;
-  font-size: 19px;
+  font-size: 1.1875rem;
   font-family: var(--mono);
   letter-spacing: -0.02em;
 }
 
 .signature {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: var(--text-ui);
   color: var(--accent);
   background: var(--accent-soft);
   border-radius: 7px;
@@ -337,7 +336,7 @@ html[data-theme="dark"] {
 }
 
 .badge {
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -367,32 +366,36 @@ html[data-theme="dark"] {
 .function-description {
   margin: 6px 0 0;
   color: var(--muted);
-  font-size: 13.5px;
+  font-size: 0.84375rem;
 }
 
 .args-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 14px;
-  font-size: 13px;
+  font-size: var(--text-ui);
 }
 
 .args-table caption {
-  text-align: left;
+  text-align: start;
   color: var(--faint);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   padding-bottom: 6px;
 }
 
 .args-table th,
 .args-table td {
-  text-align: left;
+  text-align: start;
   vertical-align: top;
-  padding: 7px 10px;
+  padding: 8px 10px;
   border-top: 1px solid var(--line);
+}
+
+.args-table tbody tr:hover {
+  background: var(--panel-2);
 }
 
 .args-table th {
@@ -401,21 +404,25 @@ html[data-theme="dark"] {
   width: 20%;
 }
 
+.args-table td:first-child {
+  width: 26%;
+}
+
 .args-table td.arg-type {
-  width: 18%;
+  width: 16%;
   color: var(--faint);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--text-ui);
 }
 
 .args-table code {
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: var(--text-ui);
 }
 
 .docs-subhead {
   margin: 24px 0 0;
-  font-size: 13px;
+  font-size: var(--text-ui);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--faint);
@@ -426,13 +433,13 @@ html[data-theme="dark"] {
   margin-top: 6px;
   color: var(--ink);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--text-sm);
   white-space: pre-wrap;
 }
 
 .greek-symbol,
 .symbol-glyph {
-  font-size: 18px;
+  font-size: var(--text-lg);
   line-height: 1;
 }
 
@@ -462,7 +469,7 @@ html[data-theme="dark"] {
 
 .latex-summary-text {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .badge.latex-status-native {
@@ -523,7 +530,7 @@ html[data-theme="dark"] .badge.latex-status-native {
 
 .latex-source code {
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: var(--text-ui);
   color: var(--ink);
   background: var(--accent-soft);
   border-radius: 6px;
@@ -561,7 +568,7 @@ html[data-theme="dark"] .badge.latex-status-native {
 
 .example-note {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .example-actions {
@@ -576,7 +583,7 @@ html[data-theme="dark"] .badge.latex-status-native {
   color: var(--muted);
   border-radius: 7px;
   padding: 4px 9px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 
@@ -595,7 +602,7 @@ html[data-theme="dark"] .badge.latex-status-native {
   margin: 0;
   padding: 14px;
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: var(--text-ui);
   line-height: 1.6;
   color: var(--ink);
   background: var(--panel);
@@ -613,12 +620,12 @@ html[data-theme="dark"] .badge.latex-status-native {
 }
 
 .example-preview math {
-  font-size: 24px;
+  font-size: 1.5rem;
 }
 
 .example-error {
   color: var(--danger);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-family: var(--mono);
 }
 
@@ -626,7 +633,7 @@ html[data-theme="dark"] .badge.latex-status-native {
 .precedence-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -637,9 +644,15 @@ html[data-theme="dark"] .badge.latex-status-native {
 .operator-table td,
 .precedence-table th,
 .precedence-table td {
-  text-align: left;
-  padding: 9px 12px;
+  text-align: start;
+  padding: 10px 12px;
   border-top: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.operator-table tbody tr:hover,
+.precedence-table tbody tr:hover {
+  background: var(--panel-2);
 }
 
 .operator-table thead th,
@@ -647,9 +660,11 @@ html[data-theme="dark"] .badge.latex-status-native {
   border-top: 0;
   background: var(--panel-2);
   color: var(--muted);
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .operator-symbol {
@@ -660,7 +675,7 @@ html[data-theme="dark"] .badge.latex-status-native {
 
 .operator-example {
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: var(--text-ui);
   color: var(--muted);
 }
 
@@ -679,19 +694,19 @@ html[data-theme="dark"] .badge.latex-status-native {
 
 .syntax-note h3 {
   margin: 0 0 6px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .syntax-note p {
   margin: 0 0 10px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-ui);
 }
 
 .syntax-note code {
   display: inline-block;
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: var(--text-ui);
   color: var(--ink);
   background: var(--accent-soft);
   border-radius: 7px;
@@ -707,20 +722,21 @@ html[data-theme="dark"] .badge.latex-status-native {
   font-family: var(--mono);
   text-transform: none;
   letter-spacing: 0;
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 
 .badge.badge-role {
   text-transform: none;
   letter-spacing: 0;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-family: var(--mono);
 }
 
 .docs-lede {
   margin: 0;
   color: var(--muted);
-  max-width: 78ch;
+  max-width: var(--measure);
+  line-height: var(--leading-relaxed);
 }
 
 .docs-doc-actions {
@@ -755,9 +771,11 @@ html[data-theme="dark"] .badge.latex-status-native {
 }
 
 .docs-caption {
+  max-width: var(--measure);
+  line-height: var(--leading-relaxed);
   margin: 0;
   color: var(--faint);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .document-example-body {
@@ -809,16 +827,16 @@ html[data-theme="dark"] .badge.latex-status-native {
     border: 0;
     background: transparent;
     color: var(--ink);
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-weight: 700;
     letter-spacing: 0.04em;
-    text-align: left;
+    text-align: start;
     text-transform: uppercase;
   }
 
   .docs-nav-toggle-mark {
     color: var(--muted);
-    font-size: 17px;
+    font-size: 1.0625rem;
     font-weight: 400;
     line-height: 1;
   }
@@ -888,7 +906,7 @@ html[data-theme="dark"] .badge.latex-status-native {
   }
 
   .docs-hero h2 {
-    font-size: 30px;
+    font-size: 1.875rem;
   }
 
   .about-grid {

@@ -139,6 +139,7 @@ ${result.latex}
           { label: "Reference", href: "/docs" }
         ]}
       >
+        <ZoomControl zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onReset={resetZoom} />
         <label className="example-picker">
           <span>Examples</span>
           <select
@@ -198,7 +199,6 @@ ${result.latex}
               >
                 Format
               </button>
-              <ZoomControl zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onReset={resetZoom} />
               <button
                 id="editor-size"
                 className="panel-button"
@@ -250,10 +250,11 @@ ${result.latex}
                 className="ghost-button"
                 type="button"
                 title="Download a complete LaTeX file"
+                aria-label="Download a complete LaTeX file"
                 disabled={hasErrors || isEmpty}
                 onClick={downloadTex}
               >
-                Download .tex
+                TeX
               </button>
             </div>
           </div>

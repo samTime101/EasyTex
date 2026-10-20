@@ -290,6 +290,7 @@ export function WriterPage() {
           { label: "Reference", href: "/docs" }
         ]}
       >
+        <ZoomControl zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onReset={resetZoom} />
         <label className="example-picker">
           <span>Examples</span>
           <select
@@ -340,7 +341,6 @@ export function WriterPage() {
               >
                 Format
               </button>
-              <ZoomControl zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onReset={resetZoom} />
               <button
                 id="editor-size"
                 className="panel-button"
@@ -400,30 +400,33 @@ export function WriterPage() {
                 className="ghost-button"
                 type="button"
                 title="Print the document or save it as PDF"
+                aria-label="Print the document or save it as PDF"
                 disabled={!shown.html}
                 onClick={printSheet}
               >
-                Print / PDF
+                Print
               </button>
               <button
                 id="download-html"
                 className="ghost-button"
                 type="button"
                 title="Download a standalone HTML document"
+                aria-label="Download a standalone HTML document"
                 disabled={!shown.standalone}
                 onClick={downloadHtml}
               >
-                Download .html
+                HTML
               </button>
               <button
                 id="download"
                 className="ghost-button"
                 type="button"
                 title="Download a complete LaTeX file"
+                aria-label="Download a complete LaTeX file"
                 disabled={!shown.latex}
                 onClick={downloadTex}
               >
-                Download .tex
+                TeX
               </button>
             </div>
           </div>
