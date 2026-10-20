@@ -12,8 +12,10 @@ export function completionInsertion(doc, options = {}) {
   const tokenEnd = options.tokenEnd ?? 0;
 
   if (doc.kind === "field") {
+    // A named argument is written name = value; the value follows the
+    // separator, so the caret lands right after it.
     const nextChar = source[tokenEnd] ?? "";
-    const inserted = nextChar === ":" || nextChar === "=" ? doc.name : `${doc.name}: `;
+    const inserted = nextChar === "=" ? doc.name : `${doc.name}=`;
     return { inserted, caretOffset: inserted.length };
   }
   if (doc.kind === "method") {
