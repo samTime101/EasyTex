@@ -2,13 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { compileDocument, parseLength, renderStandaloneHTML, SHEET_CSS } from "../lib/engine.js";
 import { loadSource, saveSource } from "../lib/storage.js";
 import { resolveImageSources } from "../lib/engine.js";
-import { printDocument } from "@web/print-document.js";
+import { printDocument } from "@ui/print-document.js";
 import { Header } from "../components/Header.jsx";
 import { SourceEditor } from "../components/SourceEditor.jsx";
 import { OutputTabs } from "../components/OutputTabs.jsx";
 import { Diagnostics } from "../components/Diagnostics.jsx";
 import { useToast } from "../hooks/useToast.jsx";
-import { DEFAULT_DOCUMENT_SOURCE, DOCUMENT_EXAMPLES } from "@web/document-examples.js";
+import { DEFAULT_DOCUMENT_SOURCE, DOCUMENT_EXAMPLES } from "@ui/document-examples.js";
 
 const STORAGE_KEY = "easytex.document";
 const WRITER_KINDS = ["component", "function", "constant"];
@@ -280,7 +280,13 @@ export function WriterPage() {
 
   return (
     <>
-      <Header subtitle="Document writer">
+      <Header
+        subtitle="Document writer"
+        nav={[
+          { label: "Expression editor", href: "/" },
+          { label: "Reference", href: "/docs" }
+        ]}
+      >
         <label className="example-picker">
           <span>Examples</span>
           <select

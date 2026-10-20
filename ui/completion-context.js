@@ -52,6 +52,17 @@ function commentAt(tokens, caret) {
   );
 }
 
+// An empty string that ends right at the caret, as in size: "" with the caret
+// after the closing quote. The values of the field are still worth offering:
+// the string is empty, and accepting a value replaces it.
+function emptyStringEndingAt(tokens, caret) {
+  for (const token of tokens) {
+    if (token.type !== "string" || token.end !== caret) continue;
+    return token.text.length === 2 ? token : null;
+  }
+  return null;
+}
+
 function significantBefore(tokens, limit) {
   const result = [];
   for (const token of tokens) {
@@ -234,7 +245,9 @@ function fieldCandidates(context, entries) {
 }
 
 function valueContext(source, tokens, caret) {
-  const string = stringAt(tokens, caret);
+  const inside = stringAt(tokens, caret);
+  const trailing = inside ? null : emptyStringEndingAt(tokens, caret);
+  const string = inside ? inside : trailing ? { token: trailing, closed: true } : null;
   const limit = string ? string.token.start : caret;
   const frames = buildFrames(tokens, limit);
 
@@ -274,7 +287,7 @@ function valueContext(source, tokens, caret) {
 
     return {
       type: "value",
-      prefix: source.slice(string.token.start + 1, caret),
+      prefix: source.slice(string.token.start + 1, Math.min(caret, string.token.end - 1)),
       tokenStart: string.token.start,
       tokenEnd: string.token.end,
       candidates

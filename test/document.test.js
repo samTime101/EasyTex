@@ -24,8 +24,8 @@ import {
   FIELD_SCOPE_ORDER,
   groupFieldsByScope
 } from "../src/docs/index.js";
-import { DOCUMENT_EXAMPLES, DEFAULT_DOCUMENT_SOURCE } from "../web/document-examples.js";
-import { prepareSnippet, lineIndent } from "../web/snippets.js";
+import { DOCUMENT_EXAMPLES, DEFAULT_DOCUMENT_SOURCE } from "../ui/document-examples.js";
+import { prepareSnippet, lineIndent } from "../ui/snippets.js";
 
 function messages(result) {
   return result.diagnostics.map((entry) => `${entry.severity} ${entry.category}: ${entry.message}`);

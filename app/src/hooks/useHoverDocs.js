@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { docsFor, fieldDocsFor } from "../lib/engine.js";
 import { analyzeSource, looksLikeField, wordAt } from "../lib/hover-analysis.js";
-import { TextareaMirror } from "@web/textarea-geometry.js";
+import { TextareaMirror } from "@ui/textarea-geometry.js";
 
 function contains(span, offset) {
   return offset >= span.start.offset && offset < span.end.offset;

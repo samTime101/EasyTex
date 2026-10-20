@@ -57,10 +57,10 @@ test("the React host reaches the engine through the engine surface", () => {
   assert.match(bridge, /from "@engine\/engine\.js"/);
 });
 
-test("the React app shares the styles and the engine with the static host", () => {
+test("the React app shares the styles and the engine with the browser layer", () => {
   const main = readFileSync(path.join(appDirectory, "src", "main.jsx"), "utf8");
-  assert.match(main, /@web\/styles\.css/);
-  assert.match(main, /@web\/docs\.css/);
+  assert.match(main, /@ui\/styles\.css/);
+  assert.match(main, /@ui\/docs\.css/);
 });
 
 const viteAvailable = existsSync(path.join(root, "node_modules", "vite", "package.json"));
@@ -72,7 +72,7 @@ test(
     const result = await new Promise((resolve) => {
       const child = spawn(
         process.execPath,
-        [path.join(root, "node_modules", "vite", "bin", "vite.js"), "build", "--config", "vite.react.config.js"],
+        [path.join(root, "node_modules", "vite", "bin", "vite.js"), "build", "--config", "vite.config.js"],
         { cwd: root, stdio: ["ignore", "pipe", "pipe"] }
       );
       let output = "";

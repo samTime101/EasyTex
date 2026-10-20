@@ -4,7 +4,7 @@ import {
   completionInsertion,
   matchDocumentation
 } from "../lib/engine.js";
-import { TextareaMirror } from "@web/textarea-geometry.js";
+import { TextareaMirror } from "@ui/textarea-geometry.js";
 
 const WORD_BEFORE_CARET = /[A-Za-z][A-Za-z0-9_]*$/;
 

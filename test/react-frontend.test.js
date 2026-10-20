@@ -36,7 +36,7 @@ const { createElement, act } = await import("react");
 const { createRoot } = await import("react-dom/client");
 
 const vite = await createServer({
-  configFile: new URL("../vite.react.config.js", import.meta.url).pathname,
+  configFile: new URL("../vite.config.js", import.meta.url).pathname,
   server: { middlewareMode: true, hmr: false },
   appType: "custom",
   logLevel: "error"
@@ -47,7 +47,7 @@ test.after(() => vite.close());
 const { EditorPage } = await vite.ssrLoadModule("/src/pages/EditorPage.jsx");
 const { WriterPage } = await vite.ssrLoadModule("/src/pages/WriterPage.jsx");
 const { DocsPage } = await vite.ssrLoadModule("/src/pages/DocsPage.jsx");
-const { printDocument, pageGeometryCss } = await import("../web/print-document.js");
+const { printDocument, pageGeometryCss } = await import("../ui/print-document.js");
 
 // The editor compiles after a short delay, so the tests wait for it.
 const COMPILE_DELAY = 300;
@@ -178,6 +178,24 @@ test("the reference page lists every section and filters them", () => {
   assert.ok(visibleCards.length >= 1, "the search keeps the matching cards");
   assert.ok(visibleCards.length < 40, "and hides the rest");
   view.unmount();
+});
+
+test("every page offers a way to the other pages", () => {
+  const editor = mount(EditorPage);
+  const editorLinks = [...editor.container.querySelectorAll(".header-actions a")].map((link) =>
+    link.getAttribute("href")
+  );
+  assert.ok(editorLinks.includes("/document"), "the editor links to the writer");
+  assert.ok(editorLinks.includes("/docs"), "and to the reference");
+  editor.unmount();
+
+  const writer = mount(WriterPage);
+  const writerLinks = [...writer.container.querySelectorAll(".header-actions a")].map((link) =>
+    link.getAttribute("href")
+  );
+  assert.ok(writerLinks.includes("/"), "the writer links to the expression editor");
+  assert.ok(!writerLinks.includes("/document"), "and not to itself");
+  writer.unmount();
 });
 
 test("the print helper sends the sheet and the page geometry to print-js", () => {

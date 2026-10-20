@@ -112,7 +112,13 @@ export function DocsPage() {
 
   return (
     <>
-      <Header subtitle="Language &amp; application reference">
+      <Header
+        subtitle="Language &amp; application reference"
+        nav={[
+          { label: "Expression editor", href: "/" },
+          { label: "Document writer", href: "/document" }
+        ]}
+      >
         <label className="docs-search">
           <span className="visually-hidden">Search the reference</span>
           <input

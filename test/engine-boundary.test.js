@@ -61,13 +61,13 @@ test("the engine uses no browser and no operating-system API", () => {
   }
 });
 
-test("the engine never imports the web UI or the tools", () => {
+test("the engine never imports the browser layer or the tools", () => {
   for (const file of filesIn(path.join(root, "src"))) {
     const source = readFileSync(file, "utf8");
     assert.equal(
-      /from\s+["'][^"']*\.\.\/web\//.test(source),
+      /from\s+["'][^"']*\.\.\/ui\//.test(source),
       false,
-      `${path.relative(root, file)} imports the web UI`
+      `${path.relative(root, file)} imports the browser layer`
     );
     assert.equal(
       /from\s+["'][^"']*\.\.\/tools\//.test(source),
@@ -77,8 +77,8 @@ test("the engine never imports the web UI or the tools", () => {
   }
 });
 
-test("the web UI never imports the command line tools", () => {
-  for (const file of filesIn(path.join(root, "web"))) {
+test("the browser layer never imports the command line tools", () => {
+  for (const file of filesIn(path.join(root, "ui"))) {
     const source = readFileSync(file, "utf8");
     assert.equal(
       /from\s+["'][^"']*\.\.\/tools\//.test(source),
@@ -88,8 +88,8 @@ test("the web UI never imports the command line tools", () => {
   }
 });
 
-test("the web UI reaches the engine through its public surface", () => {
-  for (const file of filesIn(path.join(root, "web"))) {
+test("the browser layer reaches the engine through its public surface", () => {
+  for (const file of filesIn(path.join(root, "ui"))) {
     const source = readFileSync(file, "utf8");
     for (const internal of ["../src/index.js", "../src/document/index.js"]) {
       assert.equal(

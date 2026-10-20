@@ -147,7 +147,13 @@ ${result.latex}
 
   return (
     <>
-      <Header subtitle="MathScript editor">
+      <Header
+        subtitle="MathScript editor"
+        nav={[
+          { label: "Document writer", href: "/document" },
+          { label: "Reference", href: "/docs" }
+        ]}
+      >
         <label className="example-picker">
           <span>Examples</span>
           <select

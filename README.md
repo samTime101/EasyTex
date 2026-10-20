@@ -17,15 +17,15 @@ list and update log.
 
 ## Quick start
 
-No dependencies are required. Node 18 or newer is enough.
+Node 18 or newer is enough. The app itself needs React and Vite; the engine needs nothing at all.
 
 ```bash
 npm run dev
 ```
 
-Then open <http://localhost:5173>. The document writer is at
-<http://localhost:5173/web/document.html> and the full language reference is at
-<http://localhost:5173/web/docs.html>.
+Then open <http://localhost:5174>. The document writer is at
+<http://localhost:5174/document> and the full language reference is at
+<http://localhost:5174/docs>.
 
 Run the conformance tests with:
 
@@ -35,37 +35,20 @@ npm test
 
 ## Deploying
 
-EasyTeX is a static site: no build step, no dependencies, no server. Any static host can serve the
-repository as it is. The included `vercel.json` maps the friendly paths on Vercel:
+The app is a React application: `npm run build` writes it to `dist/`, and every path is routed to
+the same document by the included `vercel.json`.
 
 | Path | Page |
 | --- | --- |
 | `/` | Expression editor |
-| `/editor` | Expression editor |
 | `/document` | Document writer |
 | `/docs` | Reference |
 | `/SPECIFICATION.md` | Language specification |
 
-Connect the repository to Vercel and deploy; nothing else is needed. On another host, serve the
-repository root and map `/` to `/web/index.html`, exactly as the development server does. Every
-link inside the app is absolute, so the pages keep working at whatever URL the host maps them to.
-
-## The React app
-
-The same three pages are also implemented as a React application in `app/`. It is a host like any
-other: it uses the engine in `src/` and the stylesheet in `web/`, and it adds nothing to the
-language itself.
-
-```bash
-npm run dev:react      # http://localhost:5174
-npm run build:react    # builds into dist/
-npm run preview:react  # serves the build
-```
-
-The Vite configuration is called `vite.react.config.js` on purpose. Vercel treats a project with a
-`vite.config.js` as a Vite app and would build the React version on every push, so the static site
-stays the deployed one until the React build is ready to take over. To switch, point the project at
-the React output: set the build command to `npm run build:react` and the output directory to `dist`.
+Connect the repository to Vercel and deploy; the configuration builds the app and routes every
+path to it. On another host, build the app and serve `dist/` with a fallback to `index.html`.
+Every link inside the app is absolute, so the pages keep working at whatever URL the host maps
+them to.
 
 ## Features
 
@@ -86,14 +69,14 @@ the React output: set the build command to `npm run build:react` and the output 
 - **Syntax highlighting** in both editors: comments, strings, numbers, booleans, functions, constants, operators, document components, and field names each get their own color, in light and dark themes. The reference page uses the same highlighter, so every sample on it is colored too.
 - **Editing assistance**: brackets and quotes auto-close around a selection or step over their partner, `Backspace` removes an empty pair, `Enter` keeps indentation and expands bracket pairs into a block, and `Tab` / `Shift` + `Tab` indent lines. `Shift` + `Alt` + `F` or the **Format** button re-indents source from bracket depth.
 - **Maximize** button in both editors hides the output pane so the source gets the full page width.
-- **Documentation page** at `/web/docs.html` covering every function, constant, Greek letter name, named symbol, operator, syntax rule, component, template, and document field — with allowed values, defaults, bibliography reference types, live previews, search, and links into both editors. A searchable **LaTeX → MathScript** reference maps standard LaTeX/AMS notation and marks every construct that has no native equivalent.
+- **Documentation page** at `/docs` covering every function, constant, Greek letter name, named symbol, operator, syntax rule, component, template, and document field — with allowed values, defaults, bibliography reference types, live previews, search, and links into both editors. A searchable **LaTeX → MathScript** reference maps standard LaTeX/AMS notation and marks every construct that has no native equivalent.
 - **Export** to LaTeX, MathML, or the raw AST. Download a complete `.tex` document with one click.
 - **Examples** for sums, products, fractions, logarithms, integrals, limits, derivatives, matrices, vectors, and documents.
 - **Complex mode** toggle for the imaginary unit `i`.
 - **Paper-and-ink light theme and a black-and-white dark interface**, persisted in `localStorage`.
 - **Plain-language onboarding**: the expression editor and reference explain the difference between EasyTeX and MathScript.
 - **Platform-independent engine**: the language lives in `src/` with no browser or operating-system API, behind a documented JSON contract. The web app, the command line host, and any future desktop or mobile app are separate hosts on top of the same engine. See [`ENGINE.md`](./ENGINE.md).
-- **A React host for the same app**: the expression editor, the document writer, and the reference page are also implemented as React components in `app/`, built with Vite, on top of the very same engine and the very same stylesheet. The static pages stay in place as the deployed version and as a fallback.
+- **A React application**: the expression editor, the document writer, and the reference page are React components in `app/`, built with Vite on top of the very same engine and the very same stylesheet. The browser layer in `ui/` holds the design system and the editor helpers that the app and the tests share.
 - **Zero runtime dependencies.** Everything is plain ES modules.
 
 ## Project layout
@@ -104,7 +87,7 @@ easytex/
 ├── ENGINE.md             Engine contract: hosts, JSON protocol, manifest
 ├── APPLICATION.md        Application features and update log
 ├── package.json
-├── vite.react.config.js  Build configuration for the React host
+├── vite.config.js        Build configuration
 ├── src/                  The engine: parser, validator, renderers, document layer
 │   ├── engine.js         Public engine surface used by every host
 │   ├── manifest.js       Portable JSON description of the whole language
@@ -120,7 +103,7 @@ easytex/
 │   ├── render-latex.js
 │   ├── render-shared.js
 │   └── index.js
-├── app/                  The React host
+├── app/                  The React application
 │   ├── index.html
 │   └── src/
 │       ├── main.jsx      Mounts React
@@ -130,29 +113,22 @@ easytex/
 │       ├── lib/          The bridge to the engine, routing, theme, storage
 │       └── pages/        Editor, writer, and reference pages
 ├── test/                 Node test-runner conformance tests
-├── tools/serve.mjs       Dependency-free static dev server
+├── tools/serve.mjs       Dependency-free file server
 ├── tools/easytex-engine.mjs  Command line host speaking the JSON contract
-└── web/                  The static host
-    ├── index.html        Expression editor
-    ├── styles.css
-    ├── app.js
-    ├── autocomplete.js
-    ├── completion-context.js
-    ├── snippets.js
-    ├── hover-docs.js
-    ├── highlight.js
-    ├── editing.js
-    ├── textarea-geometry.js
-    ├── theme.js
-    ├── document.html     Document writer
-    ├── document.css
-    ├── document.js
-    ├── document-examples.js
-    ├── asset-paths.js
+└── ui/                   The shared browser layer
+    ├── styles.css        The design system
+    ├── docs.css          Reference page styles
+    ├── document.css      Document writer styles
+    ├── highlight.js      The syntax highlighter
+    ├── editing.js        Auto-closing pairs, indentation, formatting
+    ├── completion-context.js  Object fields and field values
+    ├── completion-insertion.js  What a suggestion inserts
+    ├── snippets.js       Component starter snippets
+    ├── textarea-geometry.js     Text measurement
+    ├── asset-paths.js    Where the app keeps its files
+    ├── document-examples.js     Writer examples
     ├── assets/           Sample images used by document examples
-    ├── docs.html         Reference page
-    ├── docs.css
-    └── docs.js
+    └── vendor/           print-js, vendored for the offline pages
 ```
 
 ## Keyboard shortcuts

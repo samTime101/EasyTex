@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { completionInsertion } from "../web/autocomplete.js";
+import { completionInsertion } from "../ui/completion-insertion.js";
 
 // ------------------------------------------------------------------- fields
 

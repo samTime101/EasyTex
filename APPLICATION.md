@@ -1,8 +1,8 @@
 # EasyTeX application
 
-EasyTeX is a zero-dependency web application for writing mathematics in **MathScript**, a
-function-based notation language specified in [`SPECIFICATION.md`](./SPECIFICATION.md). It has two
-editors that share one parser, validator, and set of renderers:
+EasyTeX is a web application for writing mathematics in **MathScript**, a function-based notation
+language specified in [`SPECIFICATION.md`](./SPECIFICATION.md). It has two editors that share one
+parser, validator, and set of renderers:
 
 - an **expression editor** for single mathematical expressions, and
 - a **document writer** for complete documents with sections, numbered equations, figures, tables,
@@ -16,9 +16,9 @@ parsed into data and validated before rendering.
 
 | Page | Path | Purpose |
 | --- | --- | --- |
-| Expression editor | `/` (`web/index.html`) | Write and preview one MathScript expression; inspect LaTeX, MathML, and the AST. |
-| Document writer | `/web/document.html` | Write a `document({ ... })` source; preview the sheet, LaTeX, and standalone HTML; export or print. |
-| Reference | `/web/docs.html` | Every function, constant, Greek name, named symbol, operator, syntax rule, document template, and component, with examples and a LaTeX compatibility table. |
+| Expression editor | `/` | Write and preview one MathScript expression; inspect LaTeX, MathML, and the AST. |
+| Document writer | `/document` | Write a `document({ ... })` source; preview the sheet, LaTeX, and standalone HTML; export or print. |
+| Reference | `/docs` | Every function, constant, Greek name, named symbol, operator, syntax rule, document template, and component, with examples and a LaTeX compatibility table. |
 
 ## Current features
 
@@ -138,10 +138,9 @@ parsed into data and validated before rendering.
   else. A boundary test enforces this mechanically.
 - `src/engine.js` is the single public surface. Every host — the browser UI, the command line
   tool, a desktop or mobile application — reaches the language through it.
-- Two browser hosts now share that engine: the zero-dependency static pages in `web/` and the
-  React application in `app/`. The React host reuses the engine, the documentation catalog, and
-  the very same stylesheet, so both look and behave alike; the static pages stay deployed and
-  remain the fallback.
+- The React application in `app/` is the user interface. It reaches the language only through
+  `src/engine.js` and reuses the documentation catalog and the design system in `ui/`, so the
+  engine stays independent of the browser and of the app.
 - `src/manifest.js` returns the whole language surface as plain JSON: functions and arities,
   constants, Greek names, named symbols, operators, components, fields with their allowed values
   and defaults, metadata names, page options, margin sides, named arguments, bibliography types,
@@ -172,19 +171,22 @@ src/
     render-latex.js                      complete LaTeX export
     export-html.js                       standalone HTML export
     index.js                             compileDocument() entry point
-web/
-  index.html, app.js                     expression editor
-  document.html, document.js, css        document writer
-  document-examples.js                   writer examples (tested in CI)
-  docs.html, docs.js, docs.css           reference page
-  autocomplete.js, completion-context.js        suggestions and object/value context
-  snippets.js, hover-docs.js                    editor assistance (filterable by kind)
-  highlight.js, editing.js               syntax highlighting and editing helpers
+ui/                                    the shared browser layer
+  styles.css, docs.css, document.css   the design system
+  highlight.js                          syntax highlighting
+  editing.js                            auto-closing pairs, indentation, formatting
+  completion-context.js                 object fields and field values
+  completion-insertion.js                what a suggestion inserts
+  snippets.js                           component starter snippets
+  textarea-geometry.js                  text measurement
+  asset-paths.js                        where the app keeps its files
+  document-examples.js                  writer examples (tested in CI)
+  vendor/                               print-js, vendored for offline use
 tools/
   serve.mjs                              development static server
   easytex-engine.mjs                     command line host speaking the JSON contract
 app/
-  index.html                             entry document for the React host
+  index.html                             entry document of the application
   src/
     main.jsx, App.jsx                    mount and router
     lib/                                 bridge to the engine, routing, theme, storage
@@ -217,11 +219,29 @@ npm test        # conformance and documentation tests
 npm run engine -- compile --source "x = frac(1, 2)"   # the engine from a terminal
 ```
 
-Node 18 or newer is required; there are no runtime dependencies. The dev server is a dependency-free
-static file server (`tools/serve.mjs`). The engine host (`tools/easytex-engine.mjs`) speaks JSON on
-standard input and standard output.
+Node 18 or newer is required. The app is a React application built with Vite; the engine has no
+dependencies at all, and the engine host (`tools/easytex-engine.mjs`) speaks JSON on standard input
+and standard output.
 
 ## Updates
+
+### 2026-10-20 — the React app is the app
+
+- The React application is now the only user interface. The old static pages, their scripts, and
+  their markup are gone; what remains in `ui/` is the shared browser layer: the design system, the
+  highlighter, the editing rules, the completion rules, and the vendored print library.
+- The deployment follows: `vercel.json` builds the app with `npm run build`, serves `dist/`, and
+  routes every path to the application. The specification and the other documents travel with the
+  build, so `/SPECIFICATION.md` keeps working.
+- Fixed the field values not showing up. The list of allowed values appeared only while the caret
+  was *between* the quotes, so it vanished the moment the caret moved past the closing quote. An
+  empty string at the caret now counts as a value position, and accepting a value replaces the
+  empty string.
+- Every page now offers the other pages: the expression editor links to the document writer and the
+  reference, the writer links back to the expression editor, and the reference links to both.
+- The editor keeps a visible scrollbar. The scrollbar area is always reserved, and the thumb is
+  drawn in the readable grey instead of a barely visible line.
+- The suite grew from 134 to 141 tests.
 
 ### 2026-10-20 — printable documents, a scrollable editor, and frontend tests
 
@@ -229,11 +249,11 @@ standard input and standard output.
   vendored [print-js](https://github.com/eidellev/print-js) library copies the rendered sheet into a
   hidden frame together with the document's own stylesheet and the `@page` geometry, so the output
   is the document on its real paper size, and the browser's "Save as PDF" gives a vector copy of
-  the mathematics. The library lives in `web/vendor/` so the static pages keep working offline.
+  the mathematics. The library lives in `ui/vendor/` so the app keeps working offline.
 - Fixed the editor being cut off in the writer. The painted highlight layer kept the size the
   textarea had when the page loaded, so when the panel grew — the diagnostics appear, the window
   resizes — the layer stayed short and hid the rest of the source. The layer now follows the
-  textarea's size, exactly like the static host.
+  textarea's size.
 - Removed the scrollbar arrows. A classic scrollbar draws an up/down control at the end of its
   track, which landed on top of the equation numbers in the preview. The scrollbars are now thin
   and have no buttons.
@@ -249,28 +269,23 @@ standard input and standard output.
   the output column, never from its own width: a sheet that sized itself shrank the zoom, and the
   smaller zoom shrank the sheet again, so the preview resized itself in a loop. The zoom is now
   computed from the column and only written when it really changes.
-- The React writer was missing `web/document.css`, so the preview column was not a flex item and
+- The writer was missing `ui/document.css`, so the preview column was not a flex item and
   the sheet could size the column. The React host now loads the writer stylesheet as well.
 - Fixed the reference navigation in the React host. The links were wrapped in a group element that
   broke the column layout of the navigation, so the entries ran into each other. The navigation now
   has the same structure as the static page: a group label followed by its links, stacked.
 
-### 2026-10-20 — a React host for the same app
+### 2026-10-20 — the React application
 
-- Added a React implementation of the whole web app in `app/`, built with Vite: the expression
-  editor, the document writer, and the reference page. It is a host like the static pages — it
-  reaches the language only through `src/engine.js`, and it reuses the shared stylesheet, the
-  documentation catalog, the highlighter, and the completion rules, so both hosts look and behave
-  the same.
-- The React editor keeps every behaviour of the static one: the painted highlight layer, the
-  suggestion list with keyboard and mouse selection, the hover card, auto-closing pairs, smart
-  `Enter`, indentation, formatting, the output tabs, the diagnostics, and the exports.
-- The React reference page keeps the search box, the section navigation that follows the scroll,
-  the highlighted samples, the live previews, and the whole LaTeX compatibility table.
-- The build is named `vite.react.config.js` on purpose: Vercel auto-detects a project called
-  `vite.config.js` and would build the React version on every push, so the static site stays the
-  deployed one and remains the fallback. `npm run dev:react`, `npm run build:react`, and
-  `npm run preview:react` run the React host.
+- Built the whole web app as a React application in `app/`, with Vite: the expression editor, the
+  document writer, and the reference page. It reaches the language only through `src/engine.js`,
+  and it reuses the shared stylesheet, the documentation catalog, the highlighter, and the
+  completion rules.
+- The editor keeps every behaviour: the painted highlight layer, the suggestion list with keyboard
+  and mouse selection, the hover card, auto-closing pairs, smart `Enter`, indentation, formatting,
+  the output tabs, the diagnostics, and the exports.
+- The reference page keeps the search box, the section navigation that follows the scroll, the
+  highlighted samples, the live previews, and the whole LaTeX compatibility table.
 - Added tests for the router, for the host boundaries, and a build smoke test. The suite grew from
   129 to 134 tests.
 

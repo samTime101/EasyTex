@@ -50,7 +50,7 @@ export {
   matchDocumentation
 } from "@engine/docs/index.js";
 
-export { scanSource, highlightSource } from "@web/highlight.js";
+export { scanSource, highlightSource } from "@ui/highlight.js";
 export {
   INDENT,
   autoCloseEdit,
@@ -59,9 +59,9 @@ export {
   indentEdit,
   formatSource,
   formatEdit
-} from "@web/editing.js";
-export { completionContextAt } from "@web/completion-context.js";
-export { completionInsertion } from "@web/autocomplete.js";
-export { prepareSnippet, lineIndent } from "@web/snippets.js";
-export { TEXTAREA_STYLE_PROPS } from "@web/textarea-geometry.js";
-export { resolveImageSources } from "@web/asset-paths.js";
+} from "@ui/editing.js";
+export { completionContextAt } from "@ui/completion-context.js";
+export { completionInsertion } from "@ui/completion-insertion.js";
+export { prepareSnippet, lineIndent } from "@ui/snippets.js";
+export { TEXTAREA_STYLE_PROPS } from "@ui/textarea-geometry.js";
+export { resolveImageSources } from "@ui/asset-paths.js";

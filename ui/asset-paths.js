@@ -8,7 +8,7 @@
 // Every page in the app is served from the same directory, so the app root is
 // a constant. A host that mounts the app elsewhere changes it here.
 
-export const APP_ROOT = "/web/";
+export const APP_ROOT = "/ui/";
 
 export function resolveImageSources(root, base = APP_ROOT) {
   if (!root) return;

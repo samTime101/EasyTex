@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { scanSource, highlightSource } from "../web/highlight.js";
+import { scanSource, highlightSource } from "../ui/highlight.js";
 import {
   INDENT,
   autoCloseEdit,
@@ -10,9 +10,9 @@ import {
   formatSource,
   formatEdit,
   attachEditing
-} from "../web/editing.js";
+} from "../ui/editing.js";
 import { compileDocument, compile } from "../src/index.js";
-import { DOCUMENT_EXAMPLES, DEFAULT_DOCUMENT_SOURCE } from "../web/document-examples.js";
+import { DOCUMENT_EXAMPLES, DEFAULT_DOCUMENT_SOURCE } from "../ui/document-examples.js";
 
 function kinds(source) {
   return scanSource(source).map((token) => `${token.type}:${token.text}`);

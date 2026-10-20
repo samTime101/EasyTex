@@ -5,10 +5,10 @@
   "type": "module",
   "description": "EasyTeX: a MathScript editor and previewer. Write math, not LaTeX.",
   "scripts": {
-    "dev": "node tools/serve.mjs",
-    "dev:react": "vite --config vite.react.config.js",
-    "build:react": "vite build --config vite.react.config.js",
-    "preview:react": "vite preview --config vite.react.config.js",
+    "dev": "vite --config vite.config.js",
+    "build": "vite build --config vite.config.js",
+    "preview": "vite preview --config vite.config.js",
+    "serve": "node tools/serve.mjs",
     "test": "node --test",
     "engine": "node tools/easytex-engine.mjs"
   },

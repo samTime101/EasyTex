@@ -115,12 +115,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--line-strong);
+  background: var(--muted);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
+  background: var(--ink);
 }
 
 ::-webkit-scrollbar-button {
@@ -400,6 +400,8 @@ button:disabled {
   tab-size: 2;
   white-space: pre-wrap;
   overflow-wrap: break-word;
+  /* The scrollbar is always there, so a long source can always be scrolled. */
+  scrollbar-gutter: stable;
 }
 
 #editor:focus-visible {

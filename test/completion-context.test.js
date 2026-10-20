@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { FIELD_CONTEXTS, contextFieldDocs } from "../src/docs/field-contexts.js";
-import { completionContextAt } from "../web/completion-context.js";
+import { completionContextAt } from "../ui/completion-context.js";
 
 function names(result) {
   return (result?.candidates ?? []).map((candidate) => candidate.name);
@@ -119,6 +119,19 @@ test("enumerated object values are offered inside empty quotes", () => {
 
   const unknownObject = insideQuotes('document({ foo: { type: ""');
   assert.equal(unknownObject.type, "blocked");
+});
+
+test("the values of a field are offered when the caret sits after the empty string", () => {
+  const source = 'page({ size: ""';
+  const result = completionContextAt(source, source.length);
+  assert.equal(result.type, "value");
+  assert.deepEqual(names(result).slice(0, 5), ["A4", "A3", "A5", "Letter", "Legal"]);
+  assert.equal(result.prefix, "");
+  assert.equal(result.tokenStart, 13);
+  assert.equal(result.tokenEnd, 15);
+
+  const filled = completionContextAt('page({ size: "A4"', 'page({ size: "A4"'.length);
+  assert.equal(filled, null, "a filled value offers nothing");
 });
 
 test("non-string options are offered without quote characters", () => {

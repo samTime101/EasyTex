@@ -1,6 +1,6 @@
 import { useTheme } from "../lib/theme.js";
 
-export function Header({ subtitle, children }) {
+export function Header({ subtitle, nav = [], children }) {
   const [theme, toggleTheme] = useTheme();
   const next = theme === "dark" ? "light" : "dark";
   return (
@@ -16,12 +16,11 @@ export function Header({ subtitle, children }) {
       </a>
       <div className="header-actions">
         {children}
-        <a className="ghost-button" href="/document">
-          Document writer
-        </a>
-        <a className="ghost-button" href="/docs">
-          Reference
-        </a>
+        {nav.map((item) => (
+          <a className="ghost-button" href={item.href} key={item.href}>
+            {item.label}
+          </a>
+        ))}
         <button
           id="theme-toggle"
           className="icon-button"
