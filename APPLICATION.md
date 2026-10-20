@@ -126,7 +126,7 @@ parsed into data and validated before rendering.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
   help, including document components, object field scopes, defaults, and allowed values.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 129 conformance tests cover the language, the expression pipeline, the document layer, the
+- 134 conformance tests cover the language, the expression pipeline, the document layer, the
   documentation catalog, the writer examples, the authoring snippets, the field catalog, the
   context-aware completion and its insertion rules, the syntax highlighter, the editing/formatting
   helpers, the LaTeX mapping catalog, and the engine boundary.
@@ -138,6 +138,10 @@ parsed into data and validated before rendering.
   else. A boundary test enforces this mechanically.
 - `src/engine.js` is the single public surface. Every host — the browser UI, the command line
   tool, a desktop or mobile application — reaches the language through it.
+- Two browser hosts now share that engine: the zero-dependency static pages in `web/` and the
+  React application in `app/`. The React host reuses the engine, the documentation catalog, and
+  the very same stylesheet, so both look and behave alike; the static pages stay deployed and
+  remain the fallback.
 - `src/manifest.js` returns the whole language surface as plain JSON: functions and arities,
   constants, Greek names, named symbols, operators, components, fields with their allowed values
   and defaults, metadata names, page options, margin sides, named arguments, bibliography types,
@@ -179,6 +183,14 @@ web/
 tools/
   serve.mjs                              development static server
   easytex-engine.mjs                     command line host speaking the JSON contract
+app/
+  index.html                             entry document for the React host
+  src/
+    main.jsx, App.jsx                    mount and router
+    lib/                                 bridge to the engine, routing, theme, storage
+    hooks/                               autocomplete, hover card, toast
+    components/                          editor, suggestion list, hover card, tabs, header
+    pages/                               expression editor, document writer, reference
 ```
 
 Design rules:
@@ -210,6 +222,25 @@ static file server (`tools/serve.mjs`). The engine host (`tools/easytex-engine.m
 standard input and standard output.
 
 ## Updates
+
+### 2026-10-20 — a React host for the same app
+
+- Added a React implementation of the whole web app in `app/`, built with Vite: the expression
+  editor, the document writer, and the reference page. It is a host like the static pages — it
+  reaches the language only through `src/engine.js`, and it reuses the shared stylesheet, the
+  documentation catalog, the highlighter, and the completion rules, so both hosts look and behave
+  the same.
+- The React editor keeps every behaviour of the static one: the painted highlight layer, the
+  suggestion list with keyboard and mouse selection, the hover card, auto-closing pairs, smart
+  `Enter`, indentation, formatting, the output tabs, the diagnostics, and the exports.
+- The React reference page keeps the search box, the section navigation that follows the scroll,
+  the highlighted samples, the live previews, and the whole LaTeX compatibility table.
+- The build is named `vite.react.config.js` on purpose: Vercel auto-detects a project called
+  `vite.config.js` and would build the React version on every push, so the static site stays the
+  deployed one and remains the fallback. `npm run dev:react`, `npm run build:react`, and
+  `npm run preview:react` run the React host.
+- Added tests for the router, for the host boundaries, and a build smoke test. The suite grew from
+  129 to 134 tests.
 
 ### 2026-10-20 — static hosting on Vercel and everywhere else
 

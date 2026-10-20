@@ -50,6 +50,23 @@ Connect the repository to Vercel and deploy; nothing else is needed. On another 
 repository root and map `/` to `/web/index.html`, exactly as the development server does. Every
 link inside the app is absolute, so the pages keep working at whatever URL the host maps them to.
 
+## The React app
+
+The same three pages are also implemented as a React application in `app/`. It is a host like any
+other: it uses the engine in `src/` and the stylesheet in `web/`, and it adds nothing to the
+language itself.
+
+```bash
+npm run dev:react      # http://localhost:5174
+npm run build:react    # builds into dist/
+npm run preview:react  # serves the build
+```
+
+The Vite configuration is called `vite.react.config.js` on purpose. Vercel treats a project with a
+`vite.config.js` as a Vite app and would build the React version on every push, so the static site
+stays the deployed one until the React build is ready to take over. To switch, point the project at
+the React output: set the build command to `npm run build:react` and the output directory to `dist`.
+
 ## Features
 
 - **Live preview** using native MathML, with no third-party rendering library.
@@ -74,6 +91,7 @@ link inside the app is absolute, so the pages keep working at whatever URL the h
 - **Paper-and-ink light theme and a black-and-white dark interface**, persisted in `localStorage`.
 - **Plain-language onboarding**: the expression editor and reference explain the difference between EasyTeX and MathScript.
 - **Platform-independent engine**: the language lives in `src/` with no browser or operating-system API, behind a documented JSON contract. The web app, the command line host, and any future desktop or mobile app are separate hosts on top of the same engine. See [`ENGINE.md`](./ENGINE.md).
+- **A React host for the same app**: the expression editor, the document writer, and the reference page are also implemented as React components in `app/`, built with Vite, on top of the very same engine and the very same stylesheet. The static pages stay in place as the deployed version and as a fallback.
 - **Zero runtime dependencies.** Everything is plain ES modules.
 
 ## Project layout
@@ -84,6 +102,7 @@ easytex/
 ├── ENGINE.md             Engine contract: hosts, JSON protocol, manifest
 ├── APPLICATION.md        Application features and update log
 ├── package.json
+├── vite.react.config.js  Build configuration for the React host
 ├── src/                  The engine: parser, validator, renderers, document layer
 │   ├── engine.js         Public engine surface used by every host
 │   ├── manifest.js       Portable JSON description of the whole language
@@ -99,10 +118,19 @@ easytex/
 │   ├── render-latex.js
 │   ├── render-shared.js
 │   └── index.js
+├── app/                  The React host
+│   ├── index.html
+│   └── src/
+│       ├── main.jsx      Mounts React
+│       ├── App.jsx       Routes to the three pages
+│       ├── components/   Editor, autocomplete, hover card, tabs, header
+│       ├── hooks/        Autocomplete, hover, toast
+│       ├── lib/          The bridge to the engine, routing, theme, storage
+│       └── pages/        Editor, writer, and reference pages
 ├── test/                 Node test-runner conformance tests
 ├── tools/serve.mjs       Dependency-free static dev server
 ├── tools/easytex-engine.mjs  Command line host speaking the JSON contract
-└── web/                  EasyTeX web app
+└── web/                  The static host
     ├── index.html        Expression editor
     ├── styles.css
     ├── app.js

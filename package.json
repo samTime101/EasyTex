@@ -6,8 +6,19 @@
   "description": "EasyTeX: a MathScript editor and previewer. Write math, not LaTeX.",
   "scripts": {
     "dev": "node tools/serve.mjs",
+    "dev:react": "vite --config vite.react.config.js",
+    "build:react": "vite build --config vite.react.config.js",
+    "preview:react": "vite preview --config vite.react.config.js",
     "test": "node --test",
     "engine": "node tools/easytex-engine.mjs"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.2",
+    "vite": "^8.3.4"
+  }
 }
