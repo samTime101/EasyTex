@@ -43,7 +43,14 @@ export function useHoverDocs({ textareaRef, shellRef, kinds = ["function", "cons
       const shell = shellRef.current;
       if (!textarea || !shell) return;
 
-      const offset = mirror().offsetFromPoint(event.clientX, event.clientY);
+      let offset = null;
+      try {
+        offset = mirror().offsetFromPoint(event.clientX, event.clientY);
+      } catch {
+        // Without a layout engine the pointer cannot be mapped to a
+        // character; the card simply stays hidden.
+        offset = null;
+      }
       if (offset === null) {
         hide();
         return;

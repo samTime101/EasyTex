@@ -134,7 +134,14 @@ export function useAutocomplete({
     const textarea = textareaRef.current;
     const shell = shellRef.current;
     if (!textarea || !shell) return;
-    const anchor = mirror().caretPoint(tokenRef.current.start);
+    let anchor;
+    try {
+      anchor = mirror().caretPoint(tokenRef.current.start);
+    } catch {
+      // Without a layout engine the caret cannot be measured; the list stays
+      // where the stylesheet puts it instead of breaking the editor.
+      return;
+    }
     const bounds = shell.getBoundingClientRect();
     const width = 430;
     const height = Math.min(view.items.length * 34 + 12, 320);

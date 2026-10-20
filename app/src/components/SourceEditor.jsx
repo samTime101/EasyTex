@@ -64,19 +64,32 @@ export const SourceEditor = forwardRef(function SourceEditor(
   });
 
   // The highlight layer copies the textarea's box, font, and wrapping, and
-  // follows its scroll position.
+  // follows its scroll position. The box has to be copied again whenever the
+  // textarea resizes — the panel grows when the diagnostics appear, and a stale
+  // box would cut the text off.
   useLayoutEffect(() => {
     const textarea = textareaRef.current;
     const layer = layerRef.current;
-    if (!textarea || !layer) return;
-    const style = getComputedStyle(textarea);
-    layer.style.left = `${textarea.offsetLeft}px`;
-    layer.style.top = `${textarea.offsetTop}px`;
-    layer.style.width = `${textarea.offsetWidth}px`;
-    layer.style.height = `${textarea.offsetHeight}px`;
-    for (const prop of TEXTAREA_STYLE_PROPS) layer.style[prop] = style[prop];
-    layer.scrollTop = textarea.scrollTop;
-    layer.scrollLeft = textarea.scrollLeft;
+    if (!textarea || !layer) return undefined;
+
+    function syncBox() {
+      const style = getComputedStyle(textarea);
+      layer.style.left = `${textarea.offsetLeft}px`;
+      layer.style.top = `${textarea.offsetTop}px`;
+      layer.style.width = `${textarea.offsetWidth}px`;
+      layer.style.height = `${textarea.offsetHeight}px`;
+      for (const prop of TEXTAREA_STYLE_PROPS) layer.style[prop] = style[prop];
+      layer.scrollTop = textarea.scrollTop;
+      layer.scrollLeft = textarea.scrollLeft;
+    }
+
+    syncBox();
+    if (typeof ResizeObserver === "function") {
+      const observer = new ResizeObserver(syncBox);
+      observer.observe(textarea);
+      return () => observer.disconnect();
+    }
+    return undefined;
   }, [value]);
 
   useEffect(() => {

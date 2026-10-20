@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { compileDocument, parseLength, renderStandaloneHTML, SHEET_CSS } from "../lib/engine.js";
 import { loadSource, saveSource } from "../lib/storage.js";
 import { resolveImageSources } from "../lib/engine.js";
+import { printDocument } from "@web/print-document.js";
 import { Header } from "../components/Header.jsx";
 import { SourceEditor } from "../components/SourceEditor.jsx";
 import { OutputTabs } from "../components/OutputTabs.jsx";
@@ -250,13 +251,18 @@ export function WriterPage() {
     toast.show(`Downloaded ${name}`);
   }
 
-  function printDocument() {
+  function printSheet() {
     if (!shown.html) {
       toast.show("Nothing to print yet");
       return;
     }
     if (tab !== "document") setTab("document");
-    window.print();
+    printDocument({
+      sheet: sheetRef.current,
+      doc: shown.doc,
+      sheetCss: SHEET_CSS,
+      title: shown.doc?.metadata.titleText || "EasyTeX document"
+    });
   }
 
   const status = !source.trim()
@@ -379,7 +385,7 @@ export function WriterPage() {
                 type="button"
                 title="Print the document or save it as PDF"
                 disabled={!shown.html}
-                onClick={printDocument}
+                onClick={printSheet}
               >
                 Print / PDF
               </button>

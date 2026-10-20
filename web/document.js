@@ -9,6 +9,7 @@ import { attachHighlighter } from "./highlight.js";
 import { attachEditing, formatTextarea } from "./editing.js";
 import { DEFAULT_DOCUMENT_SOURCE, DOCUMENT_EXAMPLES } from "./document-examples.js";
 import { resolveImageSources } from "./asset-paths.js";
+import { printDocument } from "./print-document.js";
 
 const STORAGE_KEY = "easytex.document";
 const WRITER_KINDS = ["component", "function", "constant"];
@@ -388,7 +389,7 @@ function downloadHtml() {
   toast(`Downloaded ${name}`);
 }
 
-function printDocument() {
+function printSheet() {
   if (!lastHtml) {
     toast("Nothing to print yet");
     return;
@@ -397,7 +398,12 @@ function printDocument() {
     activeTab = "document";
     updateOutput();
   }
-  window.print();
+  printDocument({
+    sheet: sheetEl,
+    doc: lastDocument,
+    sheetCss: SHEET_CSS,
+    title: lastDocument?.metadata.titleText || "EasyTeX document"
+  });
 }
 
 async function copyCurrent() {
@@ -566,7 +572,7 @@ for (const [index, tab] of tabs.entries()) {
 }
 
 copyButton.addEventListener("click", copyCurrent);
-printButton.addEventListener("click", printDocument);
+printButton.addEventListener("click", printSheet);
 downloadButton.addEventListener("click", downloadTex);
 downloadHtmlButton.addEventListener("click", downloadHtml);
 

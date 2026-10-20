@@ -72,8 +72,10 @@ the React output: set the build command to `npm run build:react` and the output 
 - **Live preview** using native MathML, with no third-party rendering library.
 - **Document writer** for `document({ ... })` sources: templates, page geometry, sections, numbered
   equations, tables, figures, listings, theorems, cross-references, citations, and bibliographies.
-- **LaTeX and standalone HTML export** of documents, plus Print/PDF with the document's page size and
-  margins. The last valid preview stays visible while diagnostics are fixed.
+- **LaTeX and standalone HTML export** of documents, plus Print/PDF that prints the document
+  alone — its own stylesheet, its real paper size and margins — through the print-js library, so the
+  browser's "Save as PDF" gives a vector copy of the mathematics. The last valid preview stays
+  visible while diagnostics are fixed.
 - **Structured parser** with a full lexer, recursive-descent parser, and AST.
 - **Validation** for built-in arity, free function application, bound variables, matrix shapes, relation nesting, list placement, document structure, labels, references, and bibliography entries.
 - **Logarithms with an explicit base**: `log(x)` is base 10, `ln(x)` is natural, and `logbase(x, b)` takes the value first and the base second.

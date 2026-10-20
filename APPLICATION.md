@@ -126,7 +126,7 @@ parsed into data and validated before rendering.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
   help, including document components, object field scopes, defaults, and allowed values.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 134 conformance tests cover the language, the expression pipeline, the document layer, the
+- 141 conformance tests cover the language, the expression pipeline, the document layer, the
   documentation catalog, the writer examples, the authoring snippets, the field catalog, the
   context-aware completion and its insertion rules, the syntax highlighter, the editing/formatting
   helpers, the LaTeX mapping catalog, and the engine boundary.
@@ -222,6 +222,26 @@ static file server (`tools/serve.mjs`). The engine host (`tools/easytex-engine.m
 standard input and standard output.
 
 ## Updates
+
+### 2026-10-20 — printable documents, a scrollable editor, and frontend tests
+
+- The **Print / PDF** button now prints the document instead of the whole application. The
+  vendored [print-js](https://github.com/eidellev/print-js) library copies the rendered sheet into a
+  hidden frame together with the document's own stylesheet and the `@page` geometry, so the output
+  is the document on its real paper size, and the browser's "Save as PDF" gives a vector copy of
+  the mathematics. The library lives in `web/vendor/` so the static pages keep working offline.
+- Fixed the editor being cut off in the writer. The painted highlight layer kept the size the
+  textarea had when the page loaded, so when the panel grew — the diagnostics appear, the window
+  resizes — the layer stayed short and hid the rest of the source. The layer now follows the
+  textarea's size, exactly like the static host.
+- Removed the scrollbar arrows. A classic scrollbar draws an up/down control at the end of its
+  track, which landed on top of the equation numbers in the preview. The scrollbars are now thin
+  and have no buttons.
+- The suggestion list and the hover card no longer break when the caret cannot be measured.
+- Added **frontend tests for the React host**: a real DOM (jsdom), the real renderer, and the real
+  pages, loaded through Vite. They cover the editor preview, the diagnostics, the output tabs, the
+  writer's sheet and statistics, the field suggestions, the reference search, and the print
+  contract. The suite grew from 134 to 141 tests.
 
 ### 2026-10-20 — a stable sheet preview and a fixed reference navigation
 
