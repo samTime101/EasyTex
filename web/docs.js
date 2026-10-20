@@ -20,6 +20,7 @@ import {
   PAGE_SIZES
 } from "../src/document/index.js";
 import { initTheme } from "./theme.js";
+import { highlightSource } from "./highlight.js";
 
 const content = document.getElementById("docs-content");
 const nav = document.getElementById("docs-nav");
@@ -65,6 +66,15 @@ function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+// Code on the reference page is highlighted with the same scanner the editors
+// use, so a sample reads the same everywhere. The highlighter escapes its
+// input, so the result is safe to assign to innerHTML.
+function code(tag, className, source, options = {}) {
+  const node = el(tag, className);
+  node.innerHTML = highlightSource(source, options);
   return node;
 }
 
@@ -117,7 +127,7 @@ function renderExample(example) {
   head.append(actions);
 
   const body = el("div", "example-body");
-  const source = el("pre", "example-source", example.source);
+  const source = code("pre", "example-source", example.source);
   const preview = el("div", "example-preview");
 
   const result = compile(example.source);
@@ -248,7 +258,7 @@ function renderHero() {
   exampleHead.append(el("span", null, "MathScript in"));
   exampleHead.append(el("span", null, "Typeset out"));
   example.append(exampleHead);
-  example.append(el("code", null, source));
+  example.append(code("code", "docs-hero-code", source));
   const preview = el("div", "docs-hero-preview");
   const result = compile(source);
   if (result.mathml) preview.innerHTML = result.mathml;
@@ -397,7 +407,7 @@ function latexTable(rows) {
     row.append(el("td", "operator-example latex-command", doc.latex));
     const source = el("td", "latex-source");
     if (doc.mathscript) {
-      source.append(el("code", null, doc.mathscript));
+      source.append(code("code", "docs-inline-code", doc.mathscript));
     } else {
       source.append(el("span", "latex-none", "—"));
     }
@@ -507,7 +517,7 @@ function renderSyntax() {
     card.dataset.haystack = `${note.title} ${note.body} ${note.example}`.toLowerCase();
     card.append(el("h3", null, note.title));
     card.append(el("p", null, note.body));
-    card.append(el("code", null, note.example));
+    card.append(code("code", "docs-inline-code", note.example));
     grid.append(card);
   }
   syntax.append(grid);
@@ -523,8 +533,9 @@ function renderSyntax() {
   const body = el("tbody");
   for (const item of PRECEDENCE_EXAMPLES) {
     const row = el("tr");
-    row.append(el("td", "operator-example", item.source));
-    row.append(el("td", null, item.meaning));
+    const sourceCell = el("td", "operator-example");
+    sourceCell.append(code("code", "docs-inline-code", item.source));
+    row.append(sourceCell, el("td", null, item.meaning));
     body.append(row);
   }
   table.append(body);
@@ -579,7 +590,7 @@ function renderDocumentAuthoring() {
     const card = el("div", "syntax-note");
     card.append(el("h3", null, note.title));
     card.append(el("p", null, note.body));
-    card.append(el("code", null, note.example));
+    card.append(code("code", "docs-inline-code", note.example));
     notes.append(card);
   }
   intro.append(notes);
@@ -672,10 +683,11 @@ function renderDocumentPage() {
   node.append(table);
 
   node.append(
-    el(
+    code(
       "pre",
       "example-source docs-code-block",
-      'page({\n  size: "A4",\n  orientation: "portrait",\n  margins: { top: "25mm", right: "25mm", bottom: "25mm", left: "25mm" },\n  columns: 2\n})'
+      'page({\n  size: "A4",\n  orientation: "portrait",\n  margins: { top: "25mm", right: "25mm", bottom: "25mm", left: "25mm" },\n  columns: 2\n})',
+      { fields: true }
     )
   );
 
@@ -725,7 +737,7 @@ function fieldsTable(fields) {
     if (field.defaultValue) {
       description.append(document.createTextNode(` Default: ${field.defaultValue}.`));
     }
-    if (field.example) description.append(el("code", "field-example", field.example));
+    if (field.example) description.append(code("code", "field-example", field.example, { fields: true }));
     row.append(description);
     body.append(row);
   }
@@ -806,7 +818,7 @@ function renderDocumentExample(example) {
   head.append(actions);
 
   const body = el("div", "example-body document-example-body");
-  body.append(el("pre", "example-source", example.source));
+  body.append(code("pre", "example-source", example.source));
   wrapper.append(head, body);
   return wrapper;
 }

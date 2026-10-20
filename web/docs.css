@@ -232,7 +232,36 @@ html[data-theme="dark"] {
 .docs-hero-example code {
   font-family: var(--mono);
   font-size: 13px;
-  color: var(--accent);
+  color: var(--ink);
+}
+
+/* Highlighted code on the reference page. The token colors come from the
+   shared theme, so a sample reads the same here as in the editors. */
+.docs-hero-code {
+  display: block;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  overflow-x: auto;
+}
+
+.docs-inline-code {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 3px 7px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .docs-hero-preview {
@@ -395,7 +424,7 @@ html[data-theme="dark"] {
 .field-example {
   display: block;
   margin-top: 6px;
-  color: var(--accent-2);
+  color: var(--ink);
   font-family: var(--mono);
   font-size: 12px;
   white-space: pre-wrap;
@@ -495,7 +524,7 @@ html[data-theme="dark"] .badge.latex-status-native {
 .latex-source code {
   font-family: var(--mono);
   font-size: 12.5px;
-  color: var(--accent);
+  color: var(--ink);
   background: var(--accent-soft);
   border-radius: 6px;
   padding: 2px 6px;
@@ -568,7 +597,7 @@ html[data-theme="dark"] .badge.latex-status-native {
   font-family: var(--mono);
   font-size: 12.5px;
   line-height: 1.6;
-  color: var(--accent);
+  color: var(--ink);
   background: var(--panel);
   border-right: 1px solid var(--line);
   white-space: pre-wrap;
@@ -663,7 +692,7 @@ html[data-theme="dark"] .badge.latex-status-native {
   display: inline-block;
   font-family: var(--mono);
   font-size: 12.5px;
-  color: var(--accent);
+  color: var(--ink);
   background: var(--accent-soft);
   border-radius: 7px;
   padding: 4px 8px;

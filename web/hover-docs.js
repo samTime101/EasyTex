@@ -1,6 +1,7 @@
 import { compile, parse, validate, NAMED_ARGUMENTS } from "../src/index.js";
 import { docsFor, fieldDocsFor, FIELD_SCOPE_LABELS } from "../src/docs/index.js";
 import { TextareaMirror } from "./textarea-geometry.js";
+import { highlightSource } from "./highlight.js";
 
 const WORD_CHAR = /[A-Za-z0-9_]/;
 const IDENTIFIER = /^[A-Za-z][A-Za-z0-9_]*$/;
@@ -110,40 +111,85 @@ function kindLabel(doc) {
   return "function";
 }
 
+// A labelled, highlighted code block. The example uses the same scanner as
+// the editors, so the sample in the card looks like the source in the editor.
+function buildExampleBlock(source, { preview = false } = {}) {
+  const block = document.createElement("div");
+  block.className = "hover-example";
+
+  const label = document.createElement("span");
+  label.className = "hover-example-label";
+  label.textContent = "Example";
+
+  const code = document.createElement("code");
+  code.className = "hover-code";
+  code.innerHTML = highlightSource(source, { components: true, fields: true });
+
+  block.append(label, code);
+
+  if (preview) {
+    const rendered = document.createElement("div");
+    rendered.className = "hover-preview";
+    const result = compile(source);
+    if (result.mathml) rendered.innerHTML = result.mathml;
+    block.append(rendered);
+  }
+
+  return block;
+}
+
 function buildContent(doc) {
   if (contentCache.has(doc.name)) return contentCache.get(doc.name);
 
   const wrapper = document.createElement("div");
+  wrapper.className = "hover-card";
 
   const head = document.createElement("div");
   head.className = "hover-head";
-  const signature = document.createElement("code");
-  signature.className = "hover-signature";
-  signature.textContent = doc.signature;
+  const title = document.createElement("span");
+  title.className = "hover-title";
+  const name = document.createElement("code");
+  name.className = "hover-name";
+  name.textContent = doc.name;
+  title.append(name);
   const kind = document.createElement("span");
   kind.className = "hover-kind";
   kind.textContent = kindLabel(doc);
-  head.append(signature, kind);
+  head.append(title, kind);
   wrapper.append(head);
+
+  const signature = document.createElement("code");
+  signature.className = "hover-signature";
+  signature.textContent = doc.signature;
+  wrapper.append(signature);
 
   const summary = document.createElement("p");
   summary.className = "hover-summary";
   summary.textContent = doc.summary;
   wrapper.append(summary);
 
+  if (doc.description) {
+    const description = document.createElement("p");
+    description.className = "hover-description";
+    description.textContent = doc.description;
+    wrapper.append(description);
+  }
+
   if (doc.args?.length) {
     const list = document.createElement("ul");
     list.className = "hover-args";
     for (const arg of doc.args) {
       const item = document.createElement("li");
-      const name = document.createElement("code");
-      name.textContent = arg.name;
+      const argName = document.createElement("code");
+      argName.className = "hover-arg-name";
+      argName.textContent = arg.name;
       const type = document.createElement("span");
       type.className = "hover-type";
       type.textContent = arg.type;
       const description = document.createElement("span");
-      description.textContent = ` \u2014 ${arg.description}`;
-      item.append(name, type, description);
+      description.className = "hover-arg-description";
+      description.textContent = arg.description;
+      item.append(argName, type, description);
       list.append(item);
     }
     wrapper.append(list);
@@ -151,20 +197,7 @@ function buildContent(doc) {
 
   const example = doc.examples?.[0];
   if (example) {
-    const block = document.createElement("div");
-    block.className = "hover-example";
-    const source = document.createElement("code");
-    source.textContent = example.source;
-    block.append(source);
-
-    if (doc.kind !== "component") {
-      const preview = document.createElement("div");
-      preview.className = "hover-preview";
-      const result = compile(example.source);
-      if (result.mathml) preview.innerHTML = result.mathml;
-      block.append(preview);
-    }
-    wrapper.append(block);
+    wrapper.append(buildExampleBlock(example.source, { preview: doc.kind !== "component" }));
   }
 
   contentCache.set(doc.name, wrapper);
@@ -176,13 +209,14 @@ function buildFieldContent(doc) {
   if (contentCache.has(cacheKey)) return contentCache.get(cacheKey);
 
   const wrapper = document.createElement("div");
+  wrapper.className = "hover-card";
 
   const head = document.createElement("div");
   head.className = "hover-head";
   const title = document.createElement("span");
   title.className = "hover-title";
   const signature = document.createElement("code");
-  signature.className = "hover-signature";
+  signature.className = "hover-name";
   signature.textContent = doc.name;
   title.append(signature);
   if (doc.type) {
@@ -224,9 +258,10 @@ function buildFieldContent(doc) {
       : group.label;
     values.append(label);
     for (const value of group.values) {
-      const code = document.createElement("code");
-      code.textContent = value;
-      values.append(code);
+      const chip = document.createElement("code");
+      chip.className = value === group.defaultValue ? "hover-chip is-default" : "hover-chip";
+      chip.textContent = value;
+      values.append(chip);
     }
     wrapper.append(values);
   }
@@ -237,19 +272,15 @@ function buildFieldContent(doc) {
     const label = document.createElement("span");
     label.className = "hover-values-label";
     label.textContent = "Default";
-    const code = document.createElement("code");
-    code.textContent = doc.defaultValue;
-    values.append(label, code);
+    const chip = document.createElement("code");
+    chip.className = "hover-chip is-default";
+    chip.textContent = doc.defaultValue;
+    values.append(label, chip);
     wrapper.append(values);
   }
 
   if (doc.example) {
-    const block = document.createElement("div");
-    block.className = "hover-example";
-    const source = document.createElement("code");
-    source.textContent = doc.example;
-    block.append(source);
-    wrapper.append(block);
+    wrapper.append(buildExampleBlock(doc.example));
   }
 
   contentCache.set(cacheKey, wrapper);
