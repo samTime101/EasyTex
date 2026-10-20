@@ -1,5 +1,5 @@
 import { CATEGORY, diagnostic, makeSpan, mergeSpans } from "./diagnostics.js";
-import { tokenize, TOKEN } from "./lexer.js";
+import { splitTopLevel, tokenize, TOKEN } from "./lexer.js";
 
 class ParseError extends Error {
   constructor(message, span) {
@@ -333,6 +333,57 @@ class Parser {
     const close = this.expectPunct("}", "the object opened with '{'");
     return { kind: "Object", entries, span: mergeSpans(open.span, close.span) };
   }
+}
+
+// Parse a source that holds several independent expressions.
+//
+// The language itself is a single expression, but an editor is a scratchpad:
+// a person checks one line, then the next. Each top-level expression is parsed
+// on its own, so a broken line does not hide the lines around it, and every
+// span stays absolute.
+export function parseSequence(source) {
+  const { tokens, diagnostics } = tokenize(source);
+  const ranges = splitTopLevel(source);
+  const expressions = [];
+  let index = 0;
+
+  for (const range of ranges) {
+    const slice = [];
+    while (index < tokens.length) {
+      const token = tokens[index];
+      if (token.type === TOKEN.EOF) break;
+      if (token.span.start.offset >= range.end) break;
+      slice.push(token);
+      index += 1;
+    }
+    if (slice.length === 0) continue;
+
+    const end = slice[slice.length - 1].span.end;
+    const parser = new Parser([...slice, { type: TOKEN.EOF, value: "", raw: "", span: makeSpan(end, end) }]);
+    const entry = {
+      start: range.start,
+      end: range.end,
+      text: source.slice(range.start, range.end).trim(),
+      ast: null,
+      diagnostics: []
+    };
+
+    try {
+      entry.ast = parser.parse();
+    } catch (error) {
+      if (error instanceof ParseError) {
+        const problem = diagnostic(CATEGORY.SYNTAX, error.message, error.span);
+        entry.diagnostics.push(problem);
+        diagnostics.push(problem);
+      } else {
+        throw error;
+      }
+    }
+
+    expressions.push(entry);
+  }
+
+  return { expressions, diagnostics, tokens };
 }
 
 export function parse(source) {

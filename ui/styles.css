@@ -608,7 +608,7 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: nowrap;
   margin-left: auto;
 }
@@ -656,7 +656,7 @@ button:disabled {
 }
 
 .mode-tabs a {
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 6px;
   color: var(--muted);
   font-size: var(--text-xs);
@@ -881,6 +881,26 @@ button:disabled {
   padding: 46px 32px;
   overflow: auto;
   min-width: 0;
+}
+
+/* The scratchpad: one render per expression, in the order they were written. */
+.preview-list {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 22px;
+  row-gap: 22px;
+}
+
+.preview-item {
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+
+.preview-item + .preview-item {
+  border-top: 1px solid var(--line);
+  padding-top: 22px;
 }
 
 .preview math {

@@ -16,7 +16,16 @@
 // binding; the engine itself never learns about the host. See ENGINE.md for
 // the request/response contract and the portable manifest.
 
-export { compile, parse, validate, renderMathML, renderLaTeX, formatDiagnostic, CATEGORY } from "./index.js";
+export {
+  compile,
+  compileScratchpad,
+  parse,
+  validate,
+  renderMathML,
+  renderLaTeX,
+  formatDiagnostic,
+  CATEGORY
+} from "./index.js";
 export {
   compileDocument,
   buildDocument,

@@ -26,6 +26,89 @@ function isIdentifierPart(ch) {
   return isLetter(ch) || isDigit(ch) || ch === "_";
 }
 
+// The character ranges of the top-level expressions in a source.
+//
+// A source may hold several independent expressions, one after another. The
+// boundaries are the line breaks that are not inside a bracket, a string, or a
+// comment, so an expression that continues over several lines stays whole.
+export function splitTopLevel(source) {
+  const ranges = [];
+  let depth = 0;
+  let start = 0;
+  let offset = 0;
+
+  function close(end) {
+    if (source.slice(start, end).trim() !== "") ranges.push({ start, end });
+  }
+
+  while (offset < source.length) {
+    const ch = source[offset];
+
+    if (ch === '"') {
+      offset += 1;
+      while (offset < source.length) {
+        if (source[offset] === "\\") {
+          offset += 2;
+          continue;
+        }
+        if (source[offset] === '"') {
+          offset += 1;
+          break;
+        }
+        if (source[offset] === "\n") break;
+        offset += 1;
+      }
+      continue;
+    }
+
+    if (ch === "/" && source[offset + 1] === "/") {
+      while (offset < source.length && source[offset] !== "\n" && source[offset] !== "\r") offset += 1;
+      continue;
+    }
+
+    if (ch === "/" && source[offset + 1] === "*") {
+      offset += 2;
+      while (offset < source.length) {
+        if (source[offset] === "*" && source[offset + 1] === "/") {
+          offset += 2;
+          break;
+        }
+        offset += 1;
+      }
+      continue;
+    }
+
+    if (ch === "(" || ch === "[" || ch === "{") {
+      depth += 1;
+      offset += 1;
+      continue;
+    }
+
+    if (ch === ")" || ch === "]" || ch === "}") {
+      depth = Math.max(0, depth - 1);
+      offset += 1;
+      continue;
+    }
+
+    if (ch === "\n" || ch === "\r") {
+      if (depth === 0) {
+        close(offset);
+        offset += 1;
+        if (source[offset] === "\n") offset += 1;
+        start = offset;
+        continue;
+      }
+      offset += 1;
+      continue;
+    }
+
+    offset += 1;
+  }
+
+  close(source.length);
+  return ranges;
+}
+
 export function tokenize(source) {
   const tokens = [];
   const diagnostics = [];

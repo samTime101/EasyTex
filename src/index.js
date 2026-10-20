@@ -28,10 +28,43 @@ export {
   parseDimension
 } from "./document/index.js";
 
-import { parse } from "./parser.js";
+import { parse, parseSequence } from "./parser.js";
 import { validate } from "./validate.js";
 import { renderMathML } from "./render-mathml.js";
 import { renderLaTeX } from "./render-latex.js";
+
+// Compile a source that holds several independent expressions.
+//
+// The language is a single expression; an editor is a scratchpad. Each
+// top-level expression is compiled on its own, so one broken line does not
+// hide the others, and the diagnostics keep their absolute positions.
+export function compileScratchpad(source, options = {}) {
+  const { expressions, diagnostics, tokens } = parseSequence(source);
+
+  const results = expressions.map((entry) => {
+    if (!entry.ast) {
+      return { ...entry, mathml: null, latex: null };
+    }
+    const validated = validate(entry.ast, options);
+    const problems = [...entry.diagnostics, ...validated.diagnostics];
+    const failed = problems.some((entry) => entry.severity !== "warning");
+    return {
+      ...entry,
+      diagnostics: problems,
+      mathml: failed ? null : renderMathML(entry.ast, options),
+      latex: failed ? null : renderLaTeX(entry.ast, options)
+    };
+  });
+
+  return {
+    expressions: results,
+    diagnostics: results.flatMap((entry) => entry.diagnostics),
+    mathml: results.map((entry) => entry.mathml).filter(Boolean).join("\n"),
+    latex: results.map((entry) => entry.latex).filter(Boolean).join("\n"),
+    ast: results.map((entry) => entry.ast),
+    tokens
+  };
+}
 
 export function compile(source, options = {}) {
   const parsed = parse(source);

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { compile } from "../lib/engine.js";
+import { compileScratchpad } from "../lib/engine.js";
 import { loadSource, saveSource } from "../lib/storage.js";
 import { Header } from "../components/Header.jsx";
 import { SourceEditor } from "../components/SourceEditor.jsx";
@@ -60,7 +60,7 @@ export function EditorPage() {
       return;
     }
     const started = performance.now();
-    const next = compile(source, { complex });
+    const next = compileScratchpad(source, { complex });
     setElapsed(performance.now() - started);
     setResult(next);
   }, [complex, source]);
@@ -75,18 +75,24 @@ export function EditorPage() {
   }, [source]);
 
   const diagnostics = result?.diagnostics ?? [];
-  const hasErrors = Boolean(result && (diagnostics.length > 0 || !result.ast));
-  const isEmpty = !source.trim();
+  const problems = diagnostics.filter((entry) => entry.severity !== "warning");
+  const expressions = result?.expressions ?? [];
+  const hasErrors = problems.length > 0;
+  const isEmpty = !source.trim() || (Boolean(result) && expressions.length === 0);
 
   const codeText = useMemo(() => {
     if (!result) return "";
     if (tab === "latex") return result.latex ?? "";
     if (tab === "mathml") return result.mathml ?? "";
-    if (tab === "ast") return result.ast ? astForDisplay(result.ast) : "";
+    if (tab === "ast") return result.ast?.length ? astForDisplay(result.ast) : "";
     return result.latex ?? "";
   }, [result, tab]);
 
-  const status = isEmpty ? "Empty" : hasErrors ? `${diagnostics.length} ${diagnostics.length === 1 ? "issue" : "issues"}` : "Valid";
+  const status = isEmpty
+    ? "Empty"
+    : hasErrors
+      ? `${problems.length} ${problems.length === 1 ? "issue" : "issues"}`
+      : "Valid";
 
   function selectDiagnostic(diagnostic) {
     const textarea = editorRef.current?.element();
@@ -174,7 +180,7 @@ ${result.latex}
           <div className="panel-head">
             <div>
               <h2 id="editor-title">MathScript</h2>
-              <p className="panel-subtitle">Function-based notation with live validation</p>
+              <p className="panel-subtitle">Function-based notation</p>
             </div>
             <div className="panel-head-actions">
               <ModeTabs mode="editor" />
@@ -267,30 +273,28 @@ ${result.latex}
                 <p>Start typing a MathScript expression.</p>
                 <p className="muted">
                   Try <code>frac(a, b)</code> or <code>sum(i, 1, n, i^2)</code>, or choose an example
-                  above.
+                  above. One expression per line works too: each line is checked and rendered on its
+                  own.
                 </p>
               </div>
             ) : null}
-            {hasErrors && !isEmpty ? (
-              <div className="empty-state" id="empty-state">
-                <span className="empty-mark error-mark" aria-hidden="true">
-                  !
-                </span>
-                <p className="error-title">The expression is not valid yet.</p>
-                <p className="muted">{diagnostics[0]?.message ?? "Unknown error"}</p>
-                <p className="muted">Click a diagnostic below the editor to jump to it.</p>
-              </div>
-            ) : null}
-            {!hasErrors && !isEmpty && tab === "preview" ? (
+            {!isEmpty && tab === "preview" ? (
               <div
                 id="preview"
-                className="preview"
+                className="preview preview-list"
                 role="tabpanel"
                 aria-labelledby="tab-preview"
-                dangerouslySetInnerHTML={{ __html: result?.mathml ?? "" }}
-              />
+              >
+                {expressions.map((entry, index) => (
+                  <div
+                    className="preview-item"
+                    key={entry.start ?? index}
+                    dangerouslySetInnerHTML={{ __html: entry.mathml ?? "" }}
+                  />
+                ))}
+              </div>
             ) : null}
-            {!hasErrors && !isEmpty && tab !== "preview" ? (
+            {!isEmpty && tab !== "preview" ? (
               <pre
                 id="code-output"
                 className="code-output"
@@ -303,7 +307,11 @@ ${result.latex}
           </div>
           <div className="preview-foot">
             <span>{result ? `${elapsed.toFixed(1)} ms` : ""}</span>
-            <span>{result?.ast ? `${countNodes(result.ast)} AST nodes` : ""}</span>
+            <span>
+              {result?.ast?.length
+                ? `${result.ast.reduce((total, ast) => total + countNodes(ast), 0)} AST nodes`
+                : ""}
+            </span>
           </div>
         </section>
       </main>

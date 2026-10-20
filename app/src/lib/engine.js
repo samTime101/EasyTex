@@ -6,6 +6,7 @@
 
 export {
   compile,
+  compileScratchpad,
   parse,
   validate,
   compileDocument,

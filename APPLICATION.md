@@ -228,6 +228,22 @@ and standard output.
 
 ## Updates
 
+### 2026-10-20 — the expression editor takes several expressions
+
+- The language is still one expression per source: MathScript has no statements, no assignment, and
+  no sequencing, which is what keeps every expression unambiguous and safe to parse as data.
+- The **editor**, however, did not have to be that strict, and now is not: the source is read as a
+  scratchpad of independent expressions, one per line, and each one is checked and rendered on its
+  own. A line that continues inside brackets stays a single expression, and a comment never splits
+  anything.
+- A broken line no longer hides the rest: the renders of the other lines stay on screen and the
+  diagnostic points at the exact line and column of the mistake.
+- This is a **host** feature, not a change to the language. The engine grew
+  `compileScratchpad()` beside `compile()`, and the language, the document layer, and the exports
+  are untouched.
+- The suite grew from 144 to 152 tests, and the panel head was tightened so the mode switch, the
+  status, and the panel actions still fit on one line.
+
 ### 2026-10-20 — a mode switch in the header
 
 - The two editors are the same app in two modes, so the panel head now carries a **mode switch**

@@ -35,6 +35,11 @@ export const SYNTAX_NOTES = [
     example: "sum(i, 1, n, i^2) // first n squares"
   },
   {
+    title: "One expression per line",
+    body: "The expression editor is a scratchpad: every line is an independent expression, checked and rendered on its own, so a mistake on one line does not hide the ones around it. A line that continues inside brackets stays a single expression, and the language itself is still one expression per source.",
+    example: "sum(i, 1, n, i^2)\nx = frac(1, 2)"
+  },
+  {
     title: "Relations are propositions",
     body: "A relation may appear only as a complete expression. It cannot be an operand of an arithmetic operator, a scalar function, or another relation. Chained comparisons are not valid.",
     example: "x + 1 = 5"

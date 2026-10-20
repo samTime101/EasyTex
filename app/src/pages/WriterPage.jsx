@@ -316,7 +316,7 @@ export function WriterPage() {
           <div className="panel-head">
             <div>
               <h2 id="doc-editor-title">Document</h2>
-              <p className="panel-subtitle">{"document({ ... })"} with sections, equations, and references</p>
+              <p className="panel-subtitle">Sections, equations, and references</p>
             </div>
             <div className="panel-head-actions">
               <ModeTabs mode="document" />
