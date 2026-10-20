@@ -8,6 +8,7 @@ import { createHoverDocs } from "./hover-docs.js";
 import { attachHighlighter } from "./highlight.js";
 import { attachEditing, formatTextarea } from "./editing.js";
 import { DEFAULT_DOCUMENT_SOURCE, DOCUMENT_EXAMPLES } from "./document-examples.js";
+import { resolveImageSources } from "./asset-paths.js";
 
 const STORAGE_KEY = "easytex.document";
 const WRITER_KINDS = ["component", "function", "constant"];
@@ -162,6 +163,7 @@ function renderNow() {
     statsEl.textContent = statsText(doc);
     pageInfoEl.textContent = pageText(doc);
     sheetEl.innerHTML = lastResult.html;
+    resolveImageSources(sheetEl);
     lastHtml = lastResult.html;
     lastLatex = lastResult.latex;
     lastStandalone = renderStandaloneHTML({

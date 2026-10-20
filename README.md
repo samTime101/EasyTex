@@ -118,6 +118,7 @@ easytex/
     ├── document.css
     ├── document.js
     ├── document-examples.js
+    ├── asset-paths.js
     ├── assets/           Sample images used by document examples
     ├── docs.html         Reference page
     ├── docs.css

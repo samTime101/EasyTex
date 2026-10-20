@@ -21,6 +21,7 @@ import {
 } from "../src/engine.js";
 import { initTheme } from "./theme.js";
 import { highlightSource } from "./highlight.js";
+import { resolveImageSources } from "./asset-paths.js";
 
 const content = document.getElementById("docs-content");
 const nav = document.getElementById("docs-nav");
@@ -573,6 +574,7 @@ function renderDocumentAuthoring() {
   const result = compileDocument(DOCUMENT_SAMPLE);
   if (result.html) {
     frame.innerHTML = result.html;
+    resolveImageSources(frame);
   } else {
     frame.append(el("span", "example-error", result.diagnostics[0]?.message ?? "Render error"));
   }

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { resolveImageSources, APP_ROOT } from "../web/asset-paths.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const webDirectory = path.join(root, "web");
@@ -77,4 +78,37 @@ test("the Vercel configuration serves the editor at the root", () => {
 test("the development server maps the root the same way", () => {
   const server = readFileSync(path.join(root, "tools", "serve.mjs"), "utf8");
   assert.match(server, /pathname === "\/"\) pathname = "\/web\/index\.html"/);
+});
+
+test("relative image paths resolve against the app, not the current URL", () => {
+  function fakeImage(source) {
+    const attributes = { "data-ms-src": source, src: source };
+    return {
+      getAttribute: (name) => attributes[name],
+      setAttribute: (name, value) => {
+        attributes[name] = value;
+      },
+      attributes
+    };
+  }
+
+  function resolve(source) {
+    const image = fakeImage(source);
+    resolveImageSources({ querySelectorAll: () => [image] });
+    return image.attributes.src;
+  }
+
+  assert.equal(APP_ROOT, "/web/");
+  assert.equal(resolve("assets/sum-of-squares.svg"), "/web/assets/sum-of-squares.svg");
+  assert.equal(resolve("./assets/sum-of-squares.svg"), "/web/assets/sum-of-squares.svg");
+  assert.equal(resolve("/already/absolute.svg"), "/already/absolute.svg");
+  assert.equal(resolve("https://example.com/a.svg"), "https://example.com/a.svg");
+  assert.equal(resolve("data:image/svg+xml;base64,AA"), "data:image/svg+xml;base64,AA");
+});
+
+test("the bundled example image exists in the app directory", () => {
+  assert.ok(
+    statSync(path.join(root, "web", "assets", "sum-of-squares.svg"), { throwIfNoEntry: false }),
+    "the writer example needs its image"
+  );
 });
