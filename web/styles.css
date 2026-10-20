@@ -21,22 +21,21 @@
   --warn-line: #e5cda6;
   --code-bg: #1b211c;
   --code-ink: #f2eee4;
-  --tok-comment: #7e857b;
-  --tok-string: #486a45;
-  --tok-number: #8a4d2f;
-  --tok-boolean: #744a6f;
-  --tok-function: #9e3f2b;
-  --tok-component: #2f5c4d;
-  --tok-constant: #7c5623;
-  --tok-field: #6d4b77;
-  --tok-operator: #59615a;
-  --tok-punct: #8a9088;
+  --tok-comment: #7d857b;
+  --tok-string: #2f6b3a;
+  --tok-number: #2f6f8f;
+  --tok-boolean: #8a3f75;
+  --tok-function: #b03a20;
+  --tok-component: #236149;
+  --tok-constant: #7d560f;
+  --tok-field: #703d86;
+  --tok-operator: #4f5a50;
+  --tok-punct: #858d83;
   --shadow: 0 1px 2px rgba(30, 37, 31, 0.05), 0 10px 28px rgba(30, 37, 31, 0.055);
   --radius: 14px;
   --radius-sm: 9px;
-  --mono: "SFMono-Regular", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
-  --sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, "Times New Roman", serif;
+  --mono: "JetBrains Mono", "SFMono-Regular", "Cascadia Code", "Source Code Pro", "Roboto Mono", "Noto Sans Mono", Menlo, Consolas, monospace;
+  --sans: "Inter", "SF Pro Text", "Segoe UI", "Noto Sans", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
 }
 
 html[data-theme="dark"] {
@@ -62,16 +61,16 @@ html[data-theme="dark"] {
   --warn-line: #5a5a5a;
   --code-bg: #000000;
   --code-ink: #f7f7f7;
-  --tok-comment: #8a8a8a;
-  --tok-string: #d0d0d0;
-  --tok-number: #ffffff;
-  --tok-boolean: #bdbdbd;
-  --tok-function: #ffffff;
-  --tok-component: #ededed;
-  --tok-constant: #d9d9d9;
-  --tok-field: #c9c9c9;
-  --tok-operator: #a3a3a3;
-  --tok-punct: #737373;
+  --tok-comment: #8f8f8f;
+  --tok-string: #8fd694;
+  --tok-number: #8cc8ff;
+  --tok-boolean: #f2a6d8;
+  --tok-function: #ff8a66;
+  --tok-component: #64d8c0;
+  --tok-constant: #ffd166;
+  --tok-field: #c79bf2;
+  --tok-operator: #b8c2b8;
+  --tok-punct: #808a80;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 14px 36px rgba(0, 0, 0, 0.5);
 }
 
@@ -152,18 +151,18 @@ a:hover {
   border-radius: 11px;
   background: var(--accent);
   color: var(--panel);
-  font-family: var(--serif);
-  font-size: 27px;
-  font-weight: 600;
+  font-family: var(--sans);
+  font-size: 26px;
+  font-weight: 700;
   line-height: 1;
   box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.14);
 }
 
 .brand h1 {
   margin: 0;
-  font-family: var(--serif);
-  font-size: 23px;
-  font-weight: 600;
+  font-family: var(--sans);
+  font-size: 22px;
+  font-weight: 650;
   letter-spacing: -0.025em;
   line-height: 1.1;
 }
@@ -270,9 +269,10 @@ a:hover {
 .app-intro-kicker {
   flex: 0 0 auto;
   color: var(--ink);
-  font-family: var(--serif);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -332,9 +332,9 @@ a:hover {
 
 .panel-head h2 {
   margin: 0;
-  font-family: var(--serif);
-  font-size: 18px;
-  font-weight: 600;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 650;
   letter-spacing: -0.015em;
   line-height: 1.2;
 }
@@ -483,6 +483,7 @@ button:disabled {
 
 .tok-function {
   color: var(--tok-function);
+  font-weight: 600;
 }
 
 .tok-constant {
@@ -506,20 +507,8 @@ button:disabled {
   color: var(--tok-punct);
 }
 
-/* In monochrome dark mode, weight and italics carry the distinctions that
-   color carries in the light theme. */
-html[data-theme="dark"] .tok-function {
-  font-weight: 700;
-}
-
-html[data-theme="dark"] .tok-constant {
-  font-style: italic;
-}
-
-html[data-theme="dark"] .tok-string {
-  font-style: italic;
-}
-
+/* The dark chrome is monochrome; syntax tokens keep a muted color palette so
+   the editor remains scannable. */
 @media print {
   .editor-highlight {
     display: none;

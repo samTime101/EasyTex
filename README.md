@@ -54,8 +54,8 @@ npm test
 - **Export** to LaTeX, MathML, or the raw AST. Download a complete `.tex` document with one click.
 - **Examples** for sums, products, fractions, logarithms, integrals, limits, derivatives, matrices, vectors, and documents.
 - **Complex mode** toggle for the imaginary unit `i`.
-- **Paper-and-ink light theme and a black-and-white dark theme**, persisted in `localStorage`.
-- **Plain-language onboarding**: both editors explain the difference between EasyTeX and MathScript, and the reference opens with a short overview of each.
+- **Paper-and-ink light theme and a black-and-white dark interface**, persisted in `localStorage`.
+- **Plain-language onboarding**: the expression editor and reference explain the difference between EasyTeX and MathScript.
 - **Zero runtime dependencies.** Everything is plain ES modules.
 
 ## Project layout

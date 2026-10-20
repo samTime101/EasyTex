@@ -176,14 +176,17 @@ static file server (`tools/serve.mjs`).
 ### 2026-10-20 — visual system, onboarding, and monochrome dark mode
 
 - Reworked the interface palette around warm paper, ink, rust, and pine in the light theme; the dark
-  theme is now strictly black, white, and gray, including the document sheet's default accents and
-  syntax highlighting (which uses weight and italics instead of color).
-- Added a plain-language intro strip to both editors and a new "EasyTeX & MathScript" overview at the
-  top of the reference, explaining the distinction between the application and the language.
+  chrome is black, white, and gray. Syntax highlighting keeps a restrained, high-contrast color
+  palette in both themes so the editor stays scannable.
+- Added a plain-language intro strip to the expression editor and a new "EasyTeX & MathScript"
+  overview at the top of the reference, explaining the distinction between the application and the
+  language. The document writer stays focused on the source and preview.
+- Replaced the serif display face with a tighter sans-serif hierarchy, while keeping the printed
+  document sheet's serif typography.
 - Improved small-screen navigation with a collapsible reference contents panel, a compact header, and
   panel headers that wrap cleanly; added keyboard navigation to output tabs.
-- Strengthened the UI hierarchy with serif display type, restrained borders and shadows, accessible
-  focus states, clearer status indicators, and disabled export actions when output is unavailable.
+- Strengthened the UI hierarchy with restrained borders and shadows, accessible focus states, clearer
+  status indicators, and disabled export actions when output is unavailable.
 - Updated the default document sheet accents and sample chart to match the light palette.
 - The full suite remains at 77 passing tests.
 

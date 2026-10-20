@@ -150,11 +150,11 @@ html[data-theme="dark"] {
 
 .docs-hero h2 {
   margin: 0 0 10px;
-  font-family: var(--serif);
-  font-size: clamp(30px, 3.2vw, 44px);
-  font-weight: 600;
-  letter-spacing: -0.035em;
-  line-height: 1.08;
+  font-family: var(--sans);
+  font-size: clamp(30px, 3.2vw, 42px);
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
 }
 
 .docs-hero > p:not(.docs-eyebrow) {
@@ -189,9 +189,9 @@ html[data-theme="dark"] {
 
 .about-card h3 {
   margin: 0 0 6px;
-  font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 600;
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 650;
   letter-spacing: -0.02em;
 }
 
@@ -257,9 +257,9 @@ html[data-theme="dark"] {
 
 .docs-section h2 {
   margin: 4px 0 0;
-  font-family: var(--serif);
-  font-size: 25px;
-  font-weight: 600;
+  font-family: var(--sans);
+  font-size: 21px;
+  font-weight: 650;
   letter-spacing: -0.025em;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--line-strong);
