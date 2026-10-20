@@ -107,18 +107,25 @@ test("highlightSource marks functions, constants, numbers, and operators", () =>
 });
 
 test("highlightSource only marks components and fields when asked", () => {
-  const math = highlightSource('document({ type: "report" })');
+  const math = highlightSource('document = Document(type="report")');
   assert.equal(count(math, "component"), 0);
   assert.equal(count(math, "field"), 0);
 
-  const writer = highlightSource('document({ type: "report" })', { components: true, fields: true });
-  assert.ok(writer.includes('<span class="tok-component">document</span>'));
+  const writer = highlightSource('document = Document(type="report")', {
+    components: true,
+    fields: true
+  });
+  assert.ok(writer.includes('<span class="tok-component">Document</span>'));
   assert.ok(writer.includes('<span class="tok-field">type</span>'));
   assert.ok(writer.includes('<span class="tok-string">"report"</span>'));
 
+  // A method name is a component only after a dot.
+  const method = highlightSource('main.paragraph("hi")', { components: true, fields: true });
+  assert.ok(method.includes('<span class="tok-component">paragraph</span>'));
+
   // A name is a field only in field position: label(...) stays a component.
-  const call = highlightSource('label("sec")', { components: true, fields: true });
-  assert.ok(call.includes('<span class="tok-component">label</span>'));
+  const call = highlightSource('ref("sec")', { components: true, fields: true });
+  assert.ok(call.includes('<span class="tok-component">ref</span>'));
   assert.equal(count(call, "field"), 0);
 
   const named = highlightSource('label="sec"', { components: true, fields: true });

@@ -17,7 +17,7 @@ parsed into data and validated before rendering.
 | Page | Path | Purpose |
 | --- | --- | --- |
 | Expression editor | `/` | Write and preview one MathScript expression; inspect LaTeX, MathML, and the AST. |
-| Document writer | `/document` | Write a `document({ ... })` source; preview the sheet, LaTeX, and standalone HTML; export or print. |
+| Document writer | `/document` | Write a document as a program of statements; preview the sheet, LaTeX, and standalone HTML; export or print. |
 | Reference | `/docs` | Every function, constant, Greek name, named symbol, operator, syntax rule, document template, and component, with examples and a LaTeX compatibility table. |
 
 ## Current features
@@ -65,20 +65,29 @@ parsed into data and validated before rendering.
 
 ### Document writer
 
-- One `document({ ... })` call declares type, metadata, and content.
+- A document is a **program of statements**. `document = Document(type="article", title="…")` creates
+  the document; every other statement is a method call on a bound name, such as
+  `main = document.section("Introduction")` and `main.paragraph("The sum is ", inline(sum(i, 1, n, i^2)), ".")`.
+- A name stands for a document or a block, never for a value, and is only used before a dot. There is
+  no assignment in the language, so `n = 5` is a diagnostic rather than a statement.
+- Every method declares how many positional arguments it takes. While those slots are open, `=` is
+  the equality relation; afterwards it is a named argument, and an unknown name lists the names the
+  method accepts.
 - Templates: `article`, `report`, `academic_report`, `thesis`, `book`, `presentation`,
   `technical_document`, `letter`. Templates control heading numbering, contents, the abstract, and
   the LaTeX class.
 - Declarative page layout: A3/A4/A5/Letter/Legal, portrait or landscape, per-side margins in
   mm/cm/in/pt/px, and one to three columns.
-- 31 components across six categories: document metadata, structure, text and inline formatting,
-  mathematics blocks, tables and figures, and academic structures.
+- 36 methods across seven categories: the document itself, document structure, prose, mathematics
+  blocks, tables and figures, academic structures, and references.
 - Automatic numbering for sections, equations (`number=true`), tables, figures, listings, and
-  theorem-like results; `label(...)` and named `label=` register targets, `ref(...)` resolves them,
-  and unresolved or duplicate labels are errors.
-- Bibliography entries with per-type required fields; `cite(...)` renders numbered, linked citations
-  and the bibliography is numbered in definition order. A references section is appended when a
-  document cites sources without a bibliography block.
+  theorem-like results; the named `label=` registers a target, `ref(...)` resolves it, and
+  unresolved or duplicate labels are errors.
+- A reference list is created with `refs = document.bibliography()`, and each entry is added with the
+  method named after its type — `refs.book("euler1748", author="…", title="…", publisher="…", year=1748)` —
+  with per-type required fields. `cite(...)` renders numbered, linked citations and the list is
+  numbered in definition order. A references section is appended when a document cites sources
+  without a reference list.
 - Theorem, lemma, definition, corollary, and proof blocks.
 - Inline Markdown-free formatting: `bold`, `italic`, `underline`, `emphasis`, `code_text`, and
   `inline` mathematics inside prose.
@@ -90,18 +99,18 @@ parsed into data and validated before rendering.
 - Seven built-in examples, including a deliberately broken document that demonstrates diagnostics.
 - Missing images degrade to a readable placeholder instead of a broken icon.
 - Autocomplete and hover documentation cover document components as well as functions and constants.
-- Context-aware field completion in the writer: inside `document({ ... })`, `page({ ... })`,
-  `margins: { ... }`, and bibliography entry objects, the list contains only fields that belong in
-  that object. Fields already present are omitted, and a reference entry narrows to the fields of its
-  declared `type`.
-- Typing an empty string (`""`) for a field with allowed values or a default opens its value list.
-  Enumerated fields mark the default, and the default is offered first. Non-string options such as
-  `columns` and `number=` are suggested without quotes.
-- Starter snippets: accepting `document` expands a complete, valid article scaffold; `section`,
+- Context-aware completion in the writer: after a dot, the list contains only the methods the
+  container around the caret accepts; inside a call, only the named arguments that method takes, and
+  the arguments already given are omitted. The bindings of the statements before the caret decide
+  what a name stands for.
+- Typing an empty string (`""`) for an argument with allowed values or a default opens its value list.
+  Enumerated arguments mark the default, and the default is offered first. Non-string options such as
+  `columns=` and `number=` are suggested without quotes.
+- Starter snippets: accepting `Document` expands a complete, valid article scaffold; `section`,
   `table`, `figure`, `theorem`, `bibliography`, and friends expand to matching templates. Multi-line
   snippets are indented to the insertion point and the caret lands in the first empty placeholder.
-- Field hover help: metadata keys, page options, margin sides, named arguments (`label=`, `number=`,
-  `caption=`, …), and bibliography fields show their scope, value type, allowed values, defaults, and
+- Hover help: methods, metadata keys, page options, margins, named arguments (`label=`, `number=`,
+  `caption=`, …), and reference fields show their scope, value type, allowed values, defaults, and
   an example.
 - The same syntax highlighting, auto-closing, smart indentation, formatting, and maximize controls as
   the expression editor, with document components and field names highlighted too.
@@ -227,6 +236,38 @@ dependencies at all, and the engine host (`tools/easytex-engine.mjs`) speaks JSO
 and standard output.
 
 ## Updates
+
+### 2026-10-20 — a document is a program of statements
+
+- The document layer was rewritten. A document is no longer one `document({ ... })` object; it is a
+  **program of statements**:
+
+  ```text
+  document = Document(type="article", title="Summing Squares")
+  main = document.section("Result")
+  main.equation(sum(i, 1, n, i^2) = frac(n*(n + 1)*(2*n + 1), 6), number=true, label="eq:series")
+  main.paragraph("Equation ", ref("eq:series"), " gives the closed form.")
+  ```
+
+- The old data form is gone. Nothing is executed either way: the statements are folded into the same
+  document tree the renderer has always used, so the sheet, the LaTeX export, and the standalone
+  HTML are unchanged.
+- **A name stands for a document or a block, never for a value.** A name is only used before a dot,
+  so `n = 5` is a diagnostic and a section named `e` never hides the constant `e`.
+- **Arguments are decided by position, not by name.** Each method declares how many positional
+  arguments it takes; while those slots are open `=` is the equality relation, and afterwards it is
+  a named argument. An unknown name lists the names the method accepts.
+- The catalogue became a **method catalogue**: the metadata moved to the named arguments of
+  `Document(...)`, the page geometry to `document.page(...)`, the labels to a `label=` named
+  argument, the prose from `text(...)` to `paragraph(...)`, and the bibliography to a reference list
+  whose entries are added with the method named after their type (`refs.book(...)`,
+  `refs.article(...)`).
+- The writer learned the new shape: the completion offers the methods of the container around the
+  caret and the named arguments of the call being written, the highlighting marks the constructor,
+  the methods, and the named arguments, and every example — including the twelve in the writer — was
+  rewritten in the new syntax.
+- The specification (§10.6), the engine contract, the manifest, and the reference page follow the
+  new language. The suite grew from 153 to 196 tests.
 
 ### 2026-10-20 — the expression editor takes several expressions
 

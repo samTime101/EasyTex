@@ -20,6 +20,7 @@ export {
   compile,
   compileScratchpad,
   parse,
+  parseProgram,
   validate,
   renderMathML,
   renderLaTeX,
@@ -47,3 +48,4 @@ export {
   BIBLIOGRAPHY_TYPES
 } from "./document/index.js";
 export { engineManifest, ENGINE_NAME, ENGINE_VERSION } from "./manifest.js";
+export { CONTAINER_OF_METHOD, methodsFor } from "./document/components.js";

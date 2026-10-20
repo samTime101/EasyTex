@@ -1,7 +1,17 @@
 # PROPOSAL — the statement syntax for documents
 
-**Status:** proposal, revised. Nothing in this file is implemented yet.
-**Decision:** approve, or amend, before any code is written.
+**Status:** **implemented**. The document layer now speaks this syntax, and the old data form is
+gone. The decisions taken while implementing are recorded in the amendment note below.
+
+**Amendment note (implementation).** The proposal was approved with three changes:
+
+1. the old data form is **removed**, not kept as a compatibility case — the statement syntax is the
+   only document syntax that exists;
+2. the content of a container is a **named argument** (`content="…"`), not a second positional
+   argument: the position rule of §2.4 needs an exact arity per method, and an optional positional
+   argument would make the boundary between the positional and the named arguments ambiguous;
+3. the container of a heading keeps its level, so a subsection is not a section, and a
+   subsubsection may only be called on a subsection.
 
 **Revision note.** The first draft was wrong in three places, and all three are fixed below:
 
@@ -112,10 +122,10 @@ A **container** holds blocks. A **leaf** holds content. A **reference list** hol
 | Container | Positional arguments | Named arguments | Holds |
 | --- | --- | --- | --- |
 | the document | — | `type`, `title`, `subtitle`, `author`, `date`, `language`, `keywords`, `abstract`, `affiliations` | every block |
-| `section`, `subsection`, `subsubsection` | `title`, optional content | `label` | blocks |
-| `theorem`, `lemma`, `definition`, `corollary` | `title`, optional content | `label` | blocks |
-| `proof` | optional content | `title` | blocks |
-| `quote` | optional content | — | blocks |
+| `section`, `subsection`, `subsubsection` | `title` | `content`, `label` | blocks |
+| `theorem`, `lemma`, `definition`, `corollary` | `title` | `content`, `label` | blocks |
+| `proof` | — | `content`, `title` | blocks |
+| `quote` | — | `content` | blocks |
 
 | Leaf | Positional arguments | Named arguments | Holds |
 | --- | --- | --- | --- |
@@ -139,13 +149,13 @@ A **figure** is a container of images:
 | --- | --- | --- | --- |
 | `image` | the source path | `width`, `height`, `alt` | one image |
 
-**The content of a container is positional.** A container with one piece of prose takes it as its
-second argument, so it needs no variable of its own:
+**The content of a container is the named argument `content`.** A container with one piece of prose
+takes it there, so it needs no variable of its own:
 
 ```mathscript
-defs.theorem("Convergence", "The sequence increases and stays below 2.", label="thm:conv")
-defs.proof("Compare with the telescoping series.")
-notes.quote("The purpose of computing is insight, not numbers.")
+defs.theorem("Convergence", content="The sequence increases and stays below 2.", label="thm:conv")
+defs.proof(content="Compare with the telescoping series.")
+notes.quote(content="The purpose of computing is insight, not numbers.")
 ```
 
 The content is a **string**, which becomes one paragraph. A container with several blocks is bound
@@ -248,7 +258,7 @@ Every statement desugars into the tree that exists today.
 | `refs = document.bibliography()` | the reference list of the document |
 | `refs.book("k", author="…", year=1748)` | one book entry on that list |
 | `document.page(size="A4", columns=2, margin="25mm")` | the page configuration |
-| `defs.theorem("T", "content", label="thm:t")` | a theorem with one paragraph |
+| `defs.theorem("T", content="…", label="thm:t")` | a theorem with one paragraph |
 
 So the renderer, the LaTeX exporter, the standalone HTML export, the label and reference
 validation, the bibliography validation, the manifest, and the command-line host are **untouched**.
@@ -338,12 +348,12 @@ main.paragraph("See ", ref("eq:euler"), " and ", cite("euler1748"), ".")
 | `label("eq:x")` | **removed** — use `label="eq:x"` on the block |
 | `page_break()` | `main.page_break()` |
 | `page({ size: "A4", columns: 2, margins: {…} })` | `document.page(size="A4", columns=2, margin="25mm")` |
-| `quote([text("…")])` | `notes.quote("…")` |
+| `quote([text("…")])` | `notes.quote(content="…")` |
 | `bullets([…])` | `main.bullets([…])` |
 | `numbered([…])` | `main.numbered([…])` |
-| `theorem("T", [ … ])` | `defs.theorem("T", "…", label="thm:t")` |
+| `theorem("T", [ … ])` | `defs.theorem("T", content="…", label="thm:t")` |
 | `lemma`, `definition`, `corollary` | the same shape as `theorem` |
-| `proof([ … ])` | `defs.proof("…")` |
+| `proof([ … ])` | `defs.proof(content="…")` |
 | `bibliography([{ … }])` | `refs = document.bibliography()` then `refs.book("k", …)`, one call per entry |
 
 **Not one object literal and not one list of blocks is needed anywhere in a document.** The only
@@ -411,7 +421,7 @@ implementation.listing("let total = 0;\nfor (let i = 1; i <= n; i += 1) total +=
                         label="lst:sum")
 
 notes = document.section("Notes")
-notes.quote("The purpose of computing is insight, not numbers.")
+notes.quote(content="The purpose of computing is insight, not numbers.")
 ```
 
 ### 6.3 Academic note: theorems and proofs
@@ -422,16 +432,18 @@ document = Document(type="academic_report", title="On the Convergence of a Seque
                     abstract="We define the partial sums of the reciprocal squares and show the sequence is bounded above.")
 
 defs = document.section("Definitions and results")
-defs.definition("Partial sums",
-                 "For ", inline(n), " a positive integer, write ", inline(S(n) = sum(i, 1, n, frac(1, i^2))), ".",
-                 label="def:partial")
-defs.lemma("Bounded terms", "Each term of the sum is at most ", inline(frac(1, i^2)), ".")
-defs.theorem("Convergence",
-              "The sequence defined in ", ref("def:partial"), " increases and stays below ", 2, ".",
-              label="thm:conv")
-defs.proof("Compare the series with the telescoping series ",
-            inline(sum(i, 1, n, frac(1, i*(i + 1)))),
-            " and note that every term is smaller.")
+partial = defs.definition("Partial sums", label="def:partial")
+partial.paragraph("For ", inline(n), " a positive integer, write ",
+                  inline(S(n) = sum(i, 1, n, frac(1, i^2))), ".")
+terms = defs.lemma("Bounded terms")
+terms.paragraph("Each term of the sum is at most ", inline(frac(1, i^2)), ".")
+convergence = defs.theorem("Convergence", label="thm:conv")
+convergence.paragraph("The sequence defined in ", ref("def:partial"),
+                      " increases and stays below ", 2, ".")
+argument = defs.proof()
+argument.paragraph("Compare the series with the telescoping series ",
+                    inline(sum(i, 1, n, frac(1, i*(i + 1)))),
+                    " and note that every term is smaller.")
 
 discussion = document.section("Discussion")
 discussion.paragraph("The bound is not sharp; a sharper bound follows from ", ref("thm:conv"),
@@ -506,7 +518,7 @@ one.paragraph("Let ", inline(S(n) = sum(i, 1, n, i^2)), " denote the partial sum
               "The difference of two consecutive partial sums is")
 one.equation(S(n) - S(n - 1) = n^2, number=true, label="eq:difference")
 one.paragraph("Equation ", ref("eq:difference"), " is the whole of the recurrence.")
-one.quote("The purpose of computing is insight, not numbers.")
+one.quote(content="The purpose of computing is insight, not numbers.")
 
 two = document.section("Chapter II: The closed form")
 two.paragraph("Summing the recurrence gives")
@@ -532,11 +544,13 @@ statement.paragraph("There is a constant ", inline(c), " such that ", inline(S(n
                     " for every ", inline(n), ".")
 
 proof = document.section("Proof of the bound")
-proof.lemma("Termwise comparison",
-            "For every ", inline(i >= 1), ", ", inline(frac(1, i^2) < frac(1, i*(i - 1))), ".")
-proof.theorem("The bound", "The partial sums are bounded by two.", label="thm:bound")
-proof.proof("Compare the series with the telescoping series ",
-            inline(sum(i, 2, n, frac(1, i*(i - 1)))), ".")
+comparison = proof.lemma("Termwise comparison")
+comparison.paragraph("For every ", inline(i >= 1), ", ",
+                     inline(frac(1, i^2) < frac(1, i*(i - 1))), ".")
+bound = proof.theorem("The bound", content="The partial sums are bounded by two.", label="thm:bound")
+telescoping = proof.proof()
+telescoping.paragraph("Compare the series with the telescoping series ",
+                       inline(sum(i, 2, n, frac(1, i*(i - 1)))), ".")
 ```
 
 ### 6.9 Presentation: a landscape page
@@ -610,24 +624,20 @@ main.table(["A", "B"], [["1"]], caption="A ragged table")
 
 ## 7. What happens to the old syntax
 
-**It keeps working.** The current data form is a program with one statement, so it is *not* a
-second grammar — it is a case of the first:
+**It is removed.** The data form is gone: there is one document syntax, it is the statement syntax,
+and it is the only one the reference, the completion, the highlighting, and the examples teach.
+
+A source that still uses the old form is refused with a readable diagnostic rather than a silent
+misreading:
 
 ```mathscript
-document({ type: "article", content: [ … ] })   ← one expression statement
+document({ type: "article", content: [ text("Hello") ] })
+→ error document: A document is created with Document(...) and built with statements;
+  an expression on its own is not a document
 ```
 
-Decision needed: after this lands, should the data form be
-
-- **(a) a documented peer** — both forms are taught in the reference, or
-- **(b) a compatibility form** — the reference teaches the statement form only, and the data form
-  keeps parsing (and keeps its tests) but is not advertised.
-
-I recommend **(b)**: one form in the documentation, one form to read, and the old one keeps working
-for anything already written. The specification would describe the program, and would mention the
-data form as the single-expression case.
-
-`paragraph` is renamed in both forms, so the data form uses `paragraph(…)` too.
+Nothing was lost with it: the old form was a way of building the same tree, and the tree, the
+renderer, the exporters, and the manifest are unchanged.
 
 ---
 
@@ -664,16 +674,14 @@ throughout.
 
 ---
 
-## 10. What I need from you
+## 10. What was decided
 
-1. **Approve or amend §2** (the grammar, the containers and leaves, the two meanings of `=`, the
-   strictness list, the newline rule).
-2. **Choose (a) or (b) in §7** — is the data form still taught?
-3. **Confirm the renames and the removals**: `text` → `paragraph`; `Document` capital only;
+1. **§2 approved** — the grammar, the containers and leaves, the two meanings of `=`, the
+   strictness list, and the newline rule are the ones written above.
+2. **§7 decided: the data form is removed.** One syntax, taught everywhere.
+3. **The renames and removals confirmed**: `text` → `paragraph`; `Document` capital only;
    `numbered=` gone; the `label(…)` method gone; the page setup is one call; the reference types
    are methods.
-4. **Tell me if you want it stricter still** — for instance, whether a container's content may be
-   given as several positional strings, or whether `document.bibliography()` should take the
-   entries directly instead of returning a list.
-
-Nothing is written until you say so.
+4. **Stricter, in three places**: the content of a container is the named argument `content`; a
+   heading keeps its level, so a subsubsection needs a subsection; and a method that may not be
+   called on a container is refused with the list of methods that may.

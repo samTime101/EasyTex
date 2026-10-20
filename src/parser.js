@@ -386,6 +386,249 @@ export function parseSequence(source) {
   return { expressions, diagnostics, tokens };
 }
 
+// A document is a program of statements:
+//
+//   document = Document(type="article", title="…")
+//   main = document.section("Introduction")
+//   main.paragraph("…")
+//
+// The grammar has four statement shapes and no others, and nothing is
+// executed: the statements are parsed here and folded into a document tree by
+// src/document/build.js.
+
+// The tokens of a call's argument list, split at the commas that are not
+// inside a bracket.
+function splitArgumentGroups(tokens) {
+  const groups = [];
+  let depth = 0;
+  let current = [];
+  for (const token of tokens) {
+    if (token.type === TOKEN.PUNCT) {
+      if (token.value === "(" || token.value === "[" || token.value === "{") depth += 1;
+      else if (token.value === ")" || token.value === "]" || token.value === "}") depth -= 1;
+      else if (token.value === "," && depth === 0) {
+        groups.push(current);
+        current = [];
+        continue;
+      }
+    }
+    current.push(token);
+  }
+  groups.push(current);
+  return groups;
+}
+
+function parseArgumentList(tokens) {
+  const args = [];
+  const diagnostics = [];
+  for (const group of splitArgumentGroups(tokens)) {
+    if (group.length === 0) continue;
+    const end = group[group.length - 1].span.end;
+    const parser = new Parser([
+      ...group,
+      { type: TOKEN.EOF, value: "", raw: "", span: makeSpan(end, end) }
+    ]);
+    try {
+      args.push(parser.parseExpression());
+    } catch (error) {
+      if (error instanceof ParseError) {
+        diagnostics.push(diagnostic(CATEGORY.SYNTAX, error.message, error.span));
+        continue;
+      }
+      throw error;
+    }
+  }
+  return { args, diagnostics };
+}
+
+// The tokens of a call: the opening bracket, the arguments, and the closing
+// bracket. The closing bracket may be missing, which is an error.
+function callTokens(slice) {
+  let depth = 0;
+  let openIndex = 0;
+  for (let index = 0; index < slice.length; index += 1) {
+    const token = slice[index];
+    if (token.type !== TOKEN.PUNCT) continue;
+    if (token.value === "(") {
+      depth += 1;
+      if (depth === 1) openIndex = index;
+    }
+    else if (token.value === ")") {
+      depth -= 1;
+      if (depth === 0) return { open: index, close: index, inner: slice.slice(openIndex + 1, index) };
+    }
+  }
+  return { open: 0, close: -1, inner: slice.slice(1) };
+}
+
+function parseStatement(slice) {
+  const [first, second, third, fourth] = slice;
+  const span = makeSpan(slice[0].span.start, slice[slice.length - 1].span.end);
+
+  // name = ...
+  if (first?.type === TOKEN.IDENTIFIER && second?.type === TOKEN.OPERATOR && second.value === "=") {
+    const call = parseCallStatement(slice.slice(2));
+    if (!call.statement) {
+      return { kind: "Invalid", diagnostics: call.diagnostics, span };
+    }
+    return {
+      kind: "Binding",
+      name: first.value,
+      call: call.statement,
+      diagnostics: call.diagnostics,
+      span
+    };
+  }
+
+  // target.method(...)
+  if (
+    first?.type === TOKEN.IDENTIFIER &&
+    second?.type === TOKEN.PUNCT &&
+    second.value === "." &&
+    third?.type === TOKEN.IDENTIFIER &&
+    fourth?.type === TOKEN.PUNCT &&
+    fourth.value === "("
+  ) {
+    const call = parseCallStatement(slice);
+    if (!call.statement) {
+      return { kind: "Invalid", diagnostics: call.diagnostics, span };
+    }
+    return {
+      kind: "MethodCall",
+      target: first.value,
+      method: third.value,
+      arguments: call.statement.arguments,
+      diagnostics: call.diagnostics,
+      span
+    };
+  }
+
+  // Document(...)
+  if (
+    first?.type === TOKEN.IDENTIFIER &&
+    first.value === "Document" &&
+    second?.type === TOKEN.PUNCT &&
+    second.value === "("
+  ) {
+    const call = parseCallStatement(slice);
+    if (!call.statement) {
+      return { kind: "Invalid", diagnostics: call.diagnostics, span };
+    }
+    return {
+      kind: "DocumentCall",
+      arguments: call.statement.arguments,
+      diagnostics: call.diagnostics,
+      span
+    };
+  }
+
+  // Anything else is an expression, and an expression is not a document.
+  const end = slice[slice.length - 1].span.end;
+  const parser = new Parser([
+    ...slice,
+    { type: TOKEN.EOF, value: "", raw: "", span: makeSpan(end, end) }
+  ]);
+  try {
+    const expression = parser.parse();
+    return {
+      kind: "Expression",
+      expression,
+      diagnostics: [
+        diagnostic(
+          CATEGORY.DOCUMENT,
+          "A document is created with Document(...) and built with statements; an expression on its own is not a document",
+          expression?.span
+        )
+      ],
+      span
+    };
+  } catch (error) {
+    if (error instanceof ParseError) {
+      return {
+        kind: "Invalid",
+        diagnostics: [diagnostic(CATEGORY.SYNTAX, error.message, error.span)],
+        span: error.span
+      };
+    }
+    throw error;
+  }
+}
+
+// A call in a statement: either Document(...) or target.method(...).
+function parseCallStatement(slice) {
+  const diagnostics = [];
+  if (slice.length === 0) {
+    return { statement: null, diagnostics };
+  }
+
+  const member = slice[1]?.type === TOKEN.PUNCT && slice[1].value === ".";
+  const callee = slice[member ? 2 : 0];
+  if (callee?.type !== TOKEN.IDENTIFIER) {
+    return {
+      statement: null,
+      diagnostics: [diagnostic(CATEGORY.SYNTAX, "Expected a call", callee?.span)]
+    };
+  }
+
+  const { close, inner } = callTokens(slice);
+  if (close === -1) {
+    return {
+      statement: null,
+      diagnostics: [
+        diagnostic(CATEGORY.SYNTAX, `Expected ')' to close the call to '${callee.value}'`, callee.span)
+      ]
+    };
+  }
+
+  const parsed = parseArgumentList(inner);
+  diagnostics.push(...parsed.diagnostics);
+
+  if (member) {
+    return {
+      statement: {
+        kind: "MethodCall",
+        target: slice[0].value,
+        method: callee.value,
+        arguments: parsed.args
+      },
+      diagnostics
+    };
+  }
+
+  return {
+    statement: { kind: "DocumentCall", arguments: parsed.args },
+    diagnostics
+  };
+}
+
+// Parse a document source: a program of statements.
+export function parseProgram(source) {
+  const { tokens, diagnostics } = tokenize(source);
+  const ranges = splitTopLevel(source);
+  const statements = [];
+  let index = 0;
+
+  for (const range of ranges) {
+    const slice = [];
+    while (index < tokens.length) {
+      const token = tokens[index];
+      if (token.type === TOKEN.EOF) break;
+      if (token.span.start.offset >= range.end) break;
+      slice.push(token);
+      index += 1;
+    }
+    if (slice.length === 0) continue;
+
+    const statement = parseStatement(slice);
+    if (statement) {
+      diagnostics.push(...(statement.diagnostics ?? []));
+      statements.push(statement);
+    }
+  }
+
+  return { statements, diagnostics, tokens };
+}
+
 export function parse(source) {
   const { tokens, diagnostics } = tokenize(source);
   const parser = new Parser(tokens);

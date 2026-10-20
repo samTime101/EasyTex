@@ -9,7 +9,7 @@
 import { CATEGORY, diagnostic } from "../diagnostics.js";
 import { validate } from "../validate.js";
 import { FUNCTIONS } from "../builtins.js";
-import { COMPONENTS } from "./components.js";
+import { COMPONENTS, CONTAINER_OF_METHOD, methodsFor } from "./components.js";
 import {
   TEMPLATES,
   TEMPLATE_NAMES,
@@ -21,56 +21,43 @@ import {
   resolvePage
 } from "./templates.js";
 
-export const HANDLED_COMPONENTS = new Set([
-  "document",
-  "page",
-  "section",
-  "subsection",
-  "subsubsection",
-  "label",
-  "page_break",
-  "text",
-  "bold",
-  "italic",
-  "underline",
-  "emphasis",
-  "code_text",
-  "inline",
-  "ref",
-  "cite",
-  "quote",
-  "bullets",
-  "numbered",
-  "equation",
-  "aligned",
-  "table",
-  "figure",
-  "image",
-  "listing",
-  "theorem",
-  "lemma",
-  "definition",
-  "corollary",
-  "proof",
-  "bibliography"
-]);
+// Every method the catalogue declares, and the named arguments each one
+// accepts. The catalogue is the single source of truth.
+export const HANDLED_COMPONENTS = new Set(Object.keys(COMPONENTS));
 
-export const NAMED_ARGUMENTS = {
-  section: new Set(["label"]),
-  subsection: new Set(["label"]),
-  subsubsection: new Set(["label"]),
-  equation: new Set(["number", "label"]),
-  aligned: new Set(["number", "label"]),
-  table: new Set(["caption", "label", "align"]),
-  figure: new Set(["caption", "label"]),
-  image: new Set(["width", "height", "alt"]),
-  listing: new Set(["language", "caption", "label"]),
-  theorem: new Set(["label"]),
-  lemma: new Set(["label"]),
-  definition: new Set(["label"]),
-  corollary: new Set(["label"]),
-  proof: new Set(["title"])
-};
+export const NAMED_ARGUMENTS = Object.fromEntries(
+  Object.entries(COMPONENTS).map(([name, component]) => [
+    name,
+    new Set((component.named ?? []).map((argument) => argument.name))
+  ])
+);
+
+// How many positional arguments each method takes, and whether it takes any
+// number of them. The parser and the builder use this to decide, by
+// position, whether an "=" is the equality relation or a named argument.
+export const METHOD_ARITY = Object.fromEntries(
+  Object.entries(COMPONENTS).map(([name, component]) => {
+    const counts = component.positional ?? [];
+    return [
+      name,
+      {
+        max: counts.length ? Math.max(...counts) : 0,
+        counts,
+        variadic: component.variadic === true
+      }
+    ];
+  })
+);
+
+// The reference types, which are the methods of a reference list.
+const REFERENCE_TYPES = new Set(
+  Object.values(COMPONENTS)
+    .filter((component) => component.role === "reference")
+    .map((component) => component.name)
+);
+
+// The kind of container a method may be called on.
+const CONTAINER_OF_BLOCK = CONTAINER_OF_METHOD;
 
 const INLINE_COMPONENTS = new Set([
   "bold",
@@ -109,7 +96,16 @@ const THEOREM_ENVIRONMENTS = new Map([
   ["corollary", "Corollary"]
 ]);
 
-export const PAGE_OPTIONS = new Set(["size", "orientation", "margins", "columns"]);
+export const PAGE_OPTIONS = new Set([
+  "size",
+  "orientation",
+  "columns",
+  "margin",
+  "margin_top",
+  "margin_right",
+  "margin_bottom",
+  "margin_left"
+]);
 
 export const MARGIN_SIDES = new Set(["top", "right", "bottom", "left"]);
 
@@ -123,19 +119,10 @@ const REF_NOUNS = {
   corollary: "Corollary"
 };
 
-export const KNOWN_METADATA = new Set([
-  "type",
-  "title",
-  "subtitle",
-  "author",
-  "date",
-  "language",
-  "keywords",
-  "abstract",
-  "affiliations",
-  "bibliography",
-  "content"
-]);
+// The metadata fields of a document are the named arguments of Document(...).
+export const KNOWN_METADATA = new Set(
+  (COMPONENTS.Document?.named ?? []).map((argument) => argument.name)
+);
 
 export const BIBLIOGRAPHY_TYPES = {
   article: {
@@ -208,7 +195,7 @@ function validateExpression(node, options) {
   return result.diagnostics;
 }
 
-export function buildDocument(ast, options = {}) {
+export function buildDocument(program, options = {}) {
   const diagnostics = [];
   const complex = options.complex !== false;
   const strict = options.strict === true;
@@ -267,35 +254,84 @@ export function buildDocument(ast, options = {}) {
     return null;
   }
 
+  // Split the arguments of a call into the positional ones and the named
+  // ones. The split is decided by position: while the positional slots are
+  // unfilled, an "=" is the equality relation; once they are filled, every
+  // remaining argument is a named argument, and an unknown name is an error.
   function splitArguments(node, componentName) {
     const namedNames = NAMED_ARGUMENTS[componentName] ?? new Set();
+    const arity = METHOD_ARITY[componentName] ?? { max: 0, variadic: false };
     const positional = [];
     const named = new Map();
-    let sawNamed = false;
+    let filled = 0;
+
     for (const arg of node.args) {
-      const isNamed =
-        arg.kind === "Relation" &&
-        arg.operator === "=" &&
-        arg.left.kind === "Identifier" &&
-        namedNames.has(arg.left.name);
-      if (isNamed) {
-        sawNamed = true;
-        if (named.has(arg.left.name)) {
-          fail(CATEGORY.ARITY, `Argument '${arg.left.name}' is given more than once`, arg);
-          continue;
-        }
-        named.set(arg.left.name, arg.right);
-        continue;
-      }
-      if (sawNamed) {
+      const relation =
+        arg.kind === "Relation" && arg.operator === "=" && arg.left.kind === "Identifier" ? arg : null;
+
+      // A named argument that arrives while the positional slots are still
+      // open is a mistake: the "=" is read as the equality relation.
+      if (
+        relation &&
+        namedNames.has(relation.left.name) &&
+        !arity.variadic &&
+        filled < arity.max
+      ) {
         fail(
           CATEGORY.ARITY,
-          `Positional arguments must come before named arguments in ${componentName}()`,
-          arg
+          `The named argument '${relation.left.name}' of ${componentName}() comes after the positional arguments`,
+          relation.left
         );
+      } else if (arity.variadic) {
+        // A variadic method takes no named arguments, so every argument is
+        // content. A name followed by a string or a boolean is a mistake, and
+        // the diagnostic says so.
+        if (
+          relation &&
+          namedNames.size === 0 &&
+          (relation.right.kind === "String" || relation.right.kind === "Boolean")
+        ) {
+          fail(
+            CATEGORY.ARITY,
+            `${componentName}() takes no named arguments; every argument is content`,
+            relation.left
+          );
+          continue;
+        }
+        positional.push(arg);
+        filled += 1;
+        continue;
+      } else if (filled < arity.max) {
+        positional.push(arg);
+        filled += 1;
         continue;
       }
-      positional.push(arg);
+
+      if (relation) {
+        const name = relation.left.name;
+        if (!namedNames.has(name)) {
+          const expected = [...namedNames];
+          fail(
+            CATEGORY.ARITY,
+            `Unknown named argument '${name}' for ${componentName}(); expected ${
+              expected.length ? expected.join(", ") : "none"
+            }`,
+            arg.left
+          );
+          continue;
+        }
+        if (named.has(name)) {
+          fail(CATEGORY.ARITY, `Argument '${name}' is given more than once`, arg);
+          continue;
+        }
+        named.set(name, arg.right);
+        continue;
+      }
+      fail(
+        CATEGORY.ARITY,
+        `Expected a named argument for ${componentName}() after the positional arguments`,
+        arg
+      );
     }
     return { positional, named };
   }
@@ -357,27 +393,11 @@ export function buildDocument(ast, options = {}) {
     return [value];
   }
 
-  function interpretMetadata(object) {
-    let contentNode = null;
-    const seen = new Set();
-
-    for (const entry of object.entries) {
-      const key = entry.key;
-      if (seen.has(key)) {
-        warn(CATEGORY.DOCUMENT, `Duplicate metadata field '${key}'; the last value is used`, { span: entry.keySpan });
-      }
-      seen.add(key);
-
-      if (!KNOWN_METADATA.has(key)) {
-        const hint = key === "page"
-          ? " Use the page({ ... }) block for layout."
-          : key === "sections"
-            ? " Content blocks belong in the content field."
-            : "";
-        warn(CATEGORY.NAME, `Unknown document metadata field '${key}'.${hint}`, { span: entry.keySpan });
-        continue;
-      }
-
+  // The metadata of a document arrives as the named arguments of
+  // Document(...).
+  function interpretMetadata(named, node) {
+    for (const [key, value] of named) {
+      const entry = { key, value, keySpan: value?.span ?? node?.span };
       switch (key) {
         case "type": {
           const value = stringValue(entry.value);
@@ -441,20 +461,10 @@ export function buildDocument(ast, options = {}) {
           state.metadata.abstract = interpretInlineList(entry.value, "metadata field 'abstract'");
           break;
         }
-        case "bibliography": {
-          for (const item of interpretBibliographyEntries(entry.value)) state.bibliography.push(item);
-          break;
-        }
-        case "content": {
-          contentNode = entry.value;
-          break;
-        }
         default:
           break;
       }
     }
-
-    return contentNode;
   }
 
   // ------------------------------------------------------------- labels
@@ -484,37 +494,6 @@ export function buildDocument(ast, options = {}) {
     }
     return label;
   }
-
-  function attachLabel(blocks, owner, call) {
-    const args = call.args;
-    if (args.length !== 1 || args[0].kind !== "String" || args[0].value.trim() === "") {
-      fail(CATEGORY.ARITY, 'label() expects a single non-empty string such as label("eq:series")', call);
-      return;
-    }
-    const name = args[0].value;
-    const target = blocks.length === 0 ? owner : blocks[blocks.length - 1];
-    if (!target) {
-      fail(CATEGORY.REFERENCE, `label("${name}") has no block to label`, call);
-      return;
-    }
-    if (!LABELABLE.has(target.kind)) {
-      fail(CATEGORY.REFERENCE, `A label cannot be attached to a ${target.kind} block`, call);
-      return;
-    }
-    if (target.label) {
-      fail(CATEGORY.REFERENCE, `The preceding block already has the label '${target.label}'`, call);
-      return;
-    }
-    const number = target.kind === "section" ? target.refNumber : target.number;
-    if (!number) {
-      fail(CATEGORY.REFERENCE, `The block labelled '${name}' is not numbered and cannot be referenced`, call);
-      return;
-    }
-    target.label = name;
-    registerLabel(name, target.kind, number, target.id, call);
-  }
-
-  // --------------------------------------------------------------- inline
 
   function interpretInlineList(node, owner) {
     if (node.kind === "List") {
@@ -625,7 +604,7 @@ export function buildDocument(ast, options = {}) {
   function interpretHeading(call, level, context) {
     const name = call.callee.name;
     const { positional, named } = splitArguments(call, name);
-    if (!expectBlockCount(name, positional, [2], call)) return null;
+    if (!expectBlockCount(name, positional, [1, 2], call)) return null;
 
     const title = interpretInlineList(positional[0], `${name}() title`);
     if (title.length === 0) {
@@ -660,7 +639,14 @@ export function buildDocument(ast, options = {}) {
     }
 
     state.toc.push({ level, number: displayNumber, title, id });
-    section.blocks = interpretBlocks(positional[1], section, { level });
+    const content = named.get("content");
+    if (content) {
+      const paragraph = paragraphFrom(content, `${name}() content`);
+      if (paragraph) {
+        section.blocks.push(paragraph);
+        state.blockCount += 1;
+      }
+    }
     return section;
   }
 
@@ -859,19 +845,12 @@ export function buildDocument(ast, options = {}) {
 
   function interpretFigure(call) {
     const { positional, named } = splitArguments(call, "figure");
-    if (!expectBlockCount("figure", positional, [1], call)) return null;
-    const imageNode = positional[0];
-    if (imageNode.kind !== "Call" || imageNode.callee.name !== "image") {
-      fail(CATEGORY.STRUCTURE, 'figure() expects an image such as image("plot.png")', imageNode);
-      return null;
-    }
-    const image = interpretImage(imageNode);
-    if (!image) return null;
+    if (!expectBlockCount("figure", positional, [0], call)) return null;
 
     const caption = interpretCaption(named, "figure");
     const labelName = namedString(named, "label", "figure()");
     const numbered = Boolean(caption || labelName);
-    const block = { kind: "figure", image, caption, number: null, label: null, id: null };
+    const block = { kind: "figure", image: null, caption, number: null, label: null, id: null };
     if (!numbered) return block;
     block.number = String((counters.figure += 1));
     block.label = labelName ? requireNumber(labelName, block.number, named.get("label"), "figure()") : null;
@@ -908,17 +887,12 @@ export function buildDocument(ast, options = {}) {
     const { positional, named } = splitArguments(call, typeName);
     if (!expectBlockCount(typeName, positional, [1, 2], call)) return null;
 
-    let title = null;
-    let contentNode = positional[0];
-    if (positional.length === 2) {
-      title = interpretInlineList(positional[0], `${typeName}() title`);
-      contentNode = positional[1];
-    }
-
-    const blocks = interpretBlocks(contentNode, null, { level: 0 });
-    if (blocks.length === 0) {
-      fail(CATEGORY.STRUCTURE, `${typeName}() needs a statement`, contentNode);
-      return null;
+    const title = interpretInlineList(positional[0], `${typeName}() title`);
+    const blocks = [];
+    const contentNode = named.get("content");
+    if (contentNode) {
+      const paragraph = paragraphFrom(contentNode, `${typeName}() content`);
+      if (paragraph) blocks.push(paragraph);
     }
 
     const number = String((counters[typeName] += 1));
@@ -937,12 +911,13 @@ export function buildDocument(ast, options = {}) {
   }
 
   function interpretQuote(call) {
-    const { positional } = splitArguments(call, "quote");
-    if (!expectBlockCount("quote", positional, [1], call)) return null;
-    const blocks = interpretBlocks(positional[0], null, { level: 0 });
-    if (blocks.length === 0) {
-      fail(CATEGORY.STRUCTURE, "quote() needs content", positional[0]);
-      return null;
+    const { named } = splitArguments(call, "quote");
+    if (!expectBlockCount("quote", [], [0], call)) return null;
+    const blocks = [];
+    const content = named.get("content");
+    if (content) {
+      const paragraph = paragraphFrom(content, "quote() content");
+      if (paragraph) blocks.push(paragraph);
     }
     return { kind: "quote", blocks };
   }
@@ -979,64 +954,57 @@ export function buildDocument(ast, options = {}) {
   }
 
   function interpretProof(call) {
-    const { positional, named } = splitArguments(call, "proof");
-    if (!expectBlockCount("proof", positional, [1], call)) return null;
-    const blocks = interpretBlocks(positional[0], null, { level: 0 });
-    if (blocks.length === 0) {
-      fail(CATEGORY.STRUCTURE, "proof() needs content", positional[0]);
-      return null;
+    const { named } = splitArguments(call, "proof");
+    if (!expectBlockCount("proof", [], [0], call)) return null;
+    const blocks = [];
+    const content = named.get("content");
+    if (content) {
+      const paragraph = paragraphFrom(content, "proof() content");
+      if (paragraph) blocks.push(paragraph);
     }
     return { kind: "proof", title: namedString(named, "title", "proof()"), blocks };
   }
 
   function interpretPage(call) {
-    const { positional } = splitArguments(call, "page");
-    if (!expectBlockCount("page", positional, [1], call)) return null;
-    const object = positional[0];
-    if (object.kind !== "Object") {
-      fail(CATEGORY.TYPE, "page() expects an object such as page({ size: \"A4\" })", object);
-      return null;
-    }
+    const { named } = splitArguments(call, "page");
     if (state.pageConfigured) {
       warn(CATEGORY.DOCUMENT, "Duplicate page() configuration; the last configuration wins", call);
     }
     if (state.blockCount > 0) {
-      warn(CATEGORY.DOCUMENT, "page() should be the first content block", call);
+      warn(CATEGORY.DOCUMENT, "page() should come before the content", call);
     }
 
-    const known = PAGE_OPTIONS;
     const page = JSON.parse(JSON.stringify(state.page));
-    for (const entry of object.entries) {
-      if (!known.has(entry.key)) {
-        fail(CATEGORY.NAME, `Unknown page option '${entry.key}'. Expected size, orientation, margins, or columns`, { span: entry.keySpan });
-        continue;
-      }
-      switch (entry.key) {
+    for (const [key, value] of named) {
+      switch (key) {
         case "size": {
-          const value = stringValue(entry.value);
-          if (value === null) {
-            fail(CATEGORY.TYPE, "Page size expects a string such as \"A4\"", entry.value);
+          const text = stringValue(value);
+          if (text === null) {
+            fail(CATEGORY.TYPE, "Page size expects a string such as \"A4\"", value);
             break;
           }
-          const name = normalizeSizeName(value);
+          const name = normalizeSizeName(text);
           if (!PAGE_SIZES[name]) {
-            fail(CATEGORY.DOCUMENT, `Unknown page size '${value}'. Expected one of: A3, A4, A5, Letter, Legal`, entry.value);
+            fail(
+              CATEGORY.DOCUMENT,
+              `Unknown page size '${text}'. Expected one of: A3, A4, A5, Letter, Legal`,
+              value
+            );
             break;
           }
           page.size = name;
           break;
         }
         case "orientation": {
-          const value = stringValue(entry.value);
-          if (value !== "portrait" && value !== "landscape") {
-            fail(CATEGORY.DOCUMENT, "Page orientation must be \"portrait\" or \"landscape\"", entry.value);
+          const text = stringValue(value);
+          if (text !== "portrait" && text !== "landscape") {
+            fail(CATEGORY.DOCUMENT, "Page orientation must be \"portrait\" or \"landscape\"", value);
             break;
           }
-          page.orientation = value;
+          page.orientation = text;
           break;
         }
         case "columns": {
-          const value = entry.value;
           const number = value.kind === "Number" ? value.value : null;
           if (number === null || !Number.isInteger(number) || number < 1 || number > 3) {
             fail(CATEGORY.DOMAIN, "Page columns must be a whole number between 1 and 3", value);
@@ -1045,25 +1013,26 @@ export function buildDocument(ast, options = {}) {
           page.columns = number;
           break;
         }
-        case "margins": {
-          if (entry.value.kind !== "Object") {
-            fail(CATEGORY.TYPE, "Page margins expect an object such as { top: \"25mm\", bottom: \"25mm\" }", entry.value);
+        case "margin":
+        case "margin_top":
+        case "margin_right":
+        case "margin_bottom":
+        case "margin_left": {
+          const text = stringValue(value);
+          const parsed =
+            text === null
+              ? { ok: false, reason: "a margin must be a string such as \"25mm\"" }
+              : parseLength(text);
+          if (!parsed.ok) {
+            fail(CATEGORY.TYPE, `Page margin '${key}': ${parsed.reason}`, value);
             break;
           }
-          const sides = MARGIN_SIDES;
-          for (const margin of entry.value.entries) {
-            if (!sides.has(margin.key)) {
-              fail(CATEGORY.NAME, `Unknown margin '${margin.key}'. Expected top, right, bottom, or left`, { span: margin.keySpan });
-              continue;
-            }
-            const value = stringValue(margin.value);
-            const parsed = value === null ? { ok: false, reason: "a margin must be a string such as \"25mm\"" } : parseLength(value);
-            if (!parsed.ok) {
-              fail(CATEGORY.TYPE, `Page margin '${margin.key}': ${parsed.reason}`, margin.value);
-              continue;
-            }
-            page.margins[margin.key] = value;
+          if (key === "margin") {
+            for (const side of MARGIN_SIDES) page.margins[side] = text;
+            break;
           }
+          const side = key.slice("margin_".length);
+          page.margins[side] = text;
           break;
         }
         default:
@@ -1078,88 +1047,64 @@ export function buildDocument(ast, options = {}) {
 
   // --------------------------------------------------------- bibliography
 
-  function interpretBibliographyEntries(node) {
-    if (node.kind !== "List") {
-      fail(CATEGORY.TYPE, "bibliography() expects a list of entries", node);
-      return [];
+  // A reference entry. The type is the method name, the key is the first
+  // positional argument, and the rest are the fields of that type.
+  function interpretReferenceEntry(type, call) {
+    const { positional, named } = splitArguments(call, type);
+    const spec = BIBLIOGRAPHY_TYPES[type];
+    if (!spec) {
+      fail(CATEGORY.DOCUMENT, `Unknown reference type '${type}'`, call);
+      return null;
     }
-    const entries = [];
-    for (const element of node.elements) {
-      if (element.kind !== "Object") {
-        fail(CATEGORY.TYPE, "Each bibliography entry must be an object such as { key: \"smith2024\", ... }", element);
+    if (positional.length !== 1) {
+      fail(
+        CATEGORY.ARITY,
+        `${type}() expects the key of the entry as its only positional argument`,
+        call
+      );
+      return null;
+    }
+
+    const key = stringValue(positional[0]);
+    if (key === null || key.trim() === "") {
+      fail(CATEGORY.TYPE, "A reference entry needs a non-empty key", positional[0]);
+      return null;
+    }
+    if (state.bibliographyKeys.has(key)) {
+      fail(CATEGORY.REFERENCE, `Duplicate bibliography key '${key}'`, positional[0]);
+      return null;
+    }
+    state.bibliographyKeys.add(key);
+
+    const fields = new Map();
+    for (const [name, value] of named) {
+      const text = stringValue(value);
+      if (text === null) {
+        fail(CATEGORY.TYPE, `Bibliography field '${name}' expects a string or number`, value);
         continue;
       }
-      const fields = new Map();
-      let key = null;
-      let type = "misc";
-      for (const field of element.entries) {
-        const value = stringValue(field.value);
-        if (field.key === "key") {
-          if (value === null || value.trim() === "") {
-            fail(CATEGORY.TYPE, "A bibliography entry needs a non-empty 'key'", field.value);
-            continue;
-          }
-          key = value;
-          continue;
-        }
-        if (field.key === "type") {
-          if (value === null || !BIBLIOGRAPHY_TYPES[value]) {
-            fail(
-              CATEGORY.DOCUMENT,
-              `Unknown bibliography type '${value ?? ""}'. Expected one of: ${BIBLIOGRAPHY_TYPE_NAMES.join(", ")}`,
-              field.value
-            );
-            continue;
-          }
-          type = value;
-          continue;
-        }
-        if (value === null) {
-          fail(CATEGORY.TYPE, `Bibliography field '${field.key}' expects a string or number`, field.value);
-          continue;
-        }
-        fields.set(field.key, value);
-      }
-
-      if (key === null) {
-        fail(CATEGORY.DOCUMENT, "Every bibliography entry needs a unique 'key'", element);
+      if (!spec.fields.includes(name)) {
+        warn(
+          CATEGORY.NAME,
+          `Field '${name}' is not used by bibliography type '${type}'`,
+          value
+        );
         continue;
       }
-      if (state.bibliographyKeys.has(key)) {
-        fail(CATEGORY.REFERENCE, `Duplicate bibliography key '${key}'`, element);
-        continue;
-      }
-      state.bibliographyKeys.add(key);
-
-      const spec = BIBLIOGRAPHY_TYPES[type];
-      for (const required of spec.required) {
-        if (!fields.has(required)) {
-          fail(
-            CATEGORY.DOCUMENT,
-            `Bibliography entry '${key}' is missing the required field '${required}' for type '${type}'`,
-            element
-          );
-        }
-      }
-      for (const name of fields.keys()) {
-        if (!spec.fields.includes(name)) {
-          warn(CATEGORY.NAME, `Field '${name}' is not used by bibliography type '${type}'`, element);
-        }
-      }
-      entries.push({ key, type, fields: Object.fromEntries(fields), node: element });
+      fields.set(name, text);
     }
-    return entries;
-  }
 
-  function interpretBibliographyBlock(call) {
-    const { positional } = splitArguments(call, "bibliography");
-    if (!expectBlockCount("bibliography", positional, [1], call)) return null;
-    for (const entry of interpretBibliographyEntries(positional[0])) state.bibliography.push(entry);
-    if (state.bibliographySeen) {
-      warn(CATEGORY.DOCUMENT, "Duplicate bibliography block; entries are merged", call);
+    for (const required of spec.required) {
+      if (!fields.has(required)) {
+        fail(
+          CATEGORY.DOCUMENT,
+          `Reference entry '${key}' is missing the required field '${required}' for type '${type}'`,
+          call
+        );
+      }
     }
-    state.bibliographySeen = true;
-    return { kind: "bibliography" };
+
+    return { key, type, fields: Object.fromEntries(fields), node: call };
   }
 
   // ------------------------------------------------------------- dispatch
@@ -1179,11 +1124,6 @@ export function buildDocument(ast, options = {}) {
   function interpretBlockCall(call, context) {
     const name = call.callee.name;
     const component = COMPONENTS[name];
-
-    if (name === "document") {
-      fail(CATEGORY.DOCUMENT, "A document cannot contain another document() call", call);
-      return null;
-    }
 
     if (!component) {
       if (FUNCTIONS[name]) {
@@ -1208,7 +1148,7 @@ export function buildDocument(ast, options = {}) {
     }
 
     if (HEADING_COMPONENTS.has(name)) return interpretHeading(call, HEADING_COMPONENTS.get(name), context);
-    if (name === "text") return interpretText(call);
+    if (name === "paragraph") return interpretParagraph(call);
     if (name === "equation") return interpretEquation(call);
     if (name === "aligned") return interpretAligned(call);
     if (name === "table") return interpretTable(call);
@@ -1228,18 +1168,28 @@ export function buildDocument(ast, options = {}) {
       if (call.args.length > 0) fail(CATEGORY.ARITY, "page_break() takes no arguments", call);
       return { kind: "page_break" };
     }
-    if (name === "bibliography") return interpretBibliographyBlock(call);
-    if (name === "label") return null; // handled by interpretBlocks
     return null;
   }
 
-  function interpretText(call) {
-    if (call.args.length === 0) {
-      fail(CATEGORY.ARITY, "text() expects at least one string or inline component", call);
+  // One paragraph of prose, from a string or from inline content.
+  function paragraphFrom(node, owner) {
+    if (!node) return null;
+    if (node.kind === "String") {
+      return { kind: "paragraph", content: [{ kind: "text", value: node.value }] };
+    }
+    const content = interpretInline(node, owner);
+    if (content.length === 0) return null;
+    return { kind: "paragraph", content };
+  }
+
+  function interpretParagraph(call) {
+    const { positional } = splitArguments(call, "paragraph");
+    if (positional.length === 0) {
+      fail(CATEGORY.ARITY, "paragraph() expects at least one string or inline component", call);
       return null;
     }
     const content = [];
-    for (const arg of call.args) content.push(...interpretInline(arg, "text()"));
+    for (const arg of positional) content.push(...interpretInline(arg, "paragraph()"));
     if (content.length === 0) return null;
     return { kind: "paragraph", content };
   }
@@ -1272,10 +1222,6 @@ export function buildDocument(ast, options = {}) {
     const blocks = [];
     const items = node.kind === "List" ? node.elements : [node];
     for (const item of items) {
-      if (item.kind === "Call" && item.callee.name === "label") {
-        attachLabel(blocks, owner, item);
-        continue;
-      }
       const block = interpretBlock(item, owner, context);
       if (block) {
         blocks.push(block);
@@ -1287,59 +1233,222 @@ export function buildDocument(ast, options = {}) {
 
   // ---------------------------------------------------------------- root
 
-  function interpretDocumentCall(node) {
-    const { positional } = splitArguments(node, "document");
-    if (positional.length !== 1 || positional[0].kind !== "Object") {
+  // ---------------------------------------------------------------- program
+
+  // A document is a program of statements. Each statement names a document or
+  // a block, and the blocks are folded into the same tree the renderer has
+  // always used. Nothing is executed.
+  const bindings = new Map();
+
+  function bindingFor(kind, node, blocks) {
+    return { kind, node, blocks };
+  }
+
+  function resolveTarget(name, node) {
+    const binding = bindings.get(name);
+    if (!binding) {
       fail(
         CATEGORY.DOCUMENT,
-        'document() expects a single object argument, for example document({ type: "article", content: [ ... ] })',
+        `Unknown name '${name}'; a name must stand for a document or a block`,
         node
       );
-      return false;
+      return null;
     }
+    return binding;
+  }
 
-    const contentNode = interpretMetadata(positional[0]);
-    if (!contentNode) {
-      fail(CATEGORY.DOCUMENT, "document() is missing the required 'content' field", positional[0]);
-      return false;
-    }
-
-    state.blocks = interpretBlocks(contentNode, null, { level: 0 });
+  function interpretDocumentStatement(statement) {
+    const call = {
+      kind: "Call",
+      callee: { name: "Document" },
+      args: statement.call?.arguments ?? []
+    };
+    const { named } = splitArguments(call, "Document");
+    interpretMetadata(named, statement);
 
     if (!state.metadata.title) {
-      warn(CATEGORY.DOCUMENT, "This document has no title; add title: \"...\" to the metadata", positional[0]);
+      warn(
+        CATEGORY.DOCUMENT,
+        'This document has no title; add title="..." to Document(...)',
+        statement
+      );
     }
     if (state.metadata.author.length === 0) {
-      warn(CATEGORY.DOCUMENT, "This document has no author; add author: \"...\" to the metadata", positional[0]);
+      warn(
+        CATEGORY.DOCUMENT,
+        'This document has no author; add author="..." to Document(...)',
+        statement
+      );
+    }
+    return bindingFor("document", null, state.blocks);
+  }
+
+  // A method call on a bound name.
+  function applyMethod(binding, call, statement) {
+    const method = call.method;
+    const component = COMPONENTS[method];
+
+    if (!component || component.role === "inline") {
+      const expected = methodsFor(binding.kind).map((entry) => entry.name);
+      fail(
+        CATEGORY.NAME,
+        `Unknown method '${method}' on ${describeContainer(binding.kind)}; expected ${
+          expected.length ? expected.join(", ") : "none"
+        }`,
+        statement
+      );
+      return null;
+    }
+
+    if (!component.containers.includes(binding.kind)) {
+      const expected = methodsFor(binding.kind).map((entry) => entry.name);
+      fail(
+        CATEGORY.STRUCTURE,
+        `'${method}' cannot be used on ${describeContainer(binding.kind)}; expected ${
+          expected.length ? expected.join(", ") : "none"
+        }`,
+        statement
+      );
+      return null;
+    }
+
+    const node = { kind: "Call", callee: { name: method }, args: call.arguments ?? [] };
+
+    if (method === "page") {
+      interpretPage(node);
+      return null;
+    }
+    if (method === "bibliography") {
+      if (binding.kind !== "document") {
+        fail(CATEGORY.STRUCTURE, "A bibliography belongs to the document", statement);
+        return null;
+      }
+      return bindingFor("references", null, null);
+    }
+    if (REFERENCE_TYPES.has(method)) {
+      if (binding.kind !== "references") {
+        fail(
+          CATEGORY.STRUCTURE,
+          `'${method}' is a reference entry; it belongs to a bibliography`,
+          statement
+        );
+        return null;
+      }
+      const entry = interpretReferenceEntry(method, node);
+      if (entry) state.bibliography.push(entry);
+      return null;
+    }
+    if (method === "image") {
+      if (binding.kind !== "figure") {
+        fail(CATEGORY.STRUCTURE, "An image belongs to a figure", statement);
+        return null;
+      }
+      const image = interpretImage(node);
+      if (image && binding.node) binding.node.image = image;
+      return null;
+    }
+
+    const block = interpretBlockCall(node, { level: levelOfContainer(binding.kind) });
+    if (!block) return null;
+    if (binding.blocks) {
+      binding.blocks.push(block);
+      state.blockCount += 1;
+    }
+    const kind = kindOfBlock(block);
+    if (!kind) return null;
+    return bindingFor(kind, block, block.blocks ?? null);
+  }
+
+  // The kind of container a block stands for. A heading keeps its level, so a
+  // subsection is not a section.
+  function kindOfBlock(block) {
+    if (block.kind !== "section") return CONTAINER_OF_BLOCK[block.kind] ?? null;
+    if (block.level === 2) return "subsection";
+    if (block.level === 3) return "subsubsection";
+    return "section";
+  }
+
+  // The heading level of a container, so a subsection knows it is nested.
+  function levelOfContainer(kind) {
+    if (kind === "section") return 1;
+    if (kind === "subsection") return 2;
+    if (kind === "subsubsection") return 3;
+    return 0;
+  }
+
+  function describeContainer(kind) {
+    return kind === "document"
+      ? "a document"
+      : kind === "section"
+        ? "a section"
+        : kind === "subsection"
+          ? "a subsection"
+          : kind === "subsubsection"
+            ? "a subsubsection"
+            : kind === "theorem"
+              ? "a theorem"
+              : kind === "proof"
+                ? "a proof"
+                : kind === "quote"
+                  ? "a quotation"
+                  : kind === "figure"
+                    ? "a figure"
+                    : "a reference list";
+  }
+
+  function interpretProgram(statements) {
+    let created = false;
+
+    for (const statement of statements) {
+      if (statement.kind === "Binding") {
+        if (statement.call.kind === "DocumentCall") {
+          if (created) {
+            fail(CATEGORY.DOCUMENT, "A document may only be created once", statement);
+            continue;
+          }
+          const binding = interpretDocumentStatement(statement);
+          created = true;
+          bindings.set(statement.name, binding);
+          continue;
+        }
+        const target = resolveTarget(statement.call.target, statement);
+        if (!target) continue;
+        const result = applyMethod(target, statement.call, statement);
+        if (result) bindings.set(statement.name, result);
+        continue;
+      }
+
+      if (statement.kind === "MethodCall") {
+        const target = resolveTarget(statement.target, statement);
+        if (!target) continue;
+        applyMethod(target, statement, statement);
+        continue;
+      }
+
+      if (statement.kind === "DocumentCall") {
+        fail(
+          CATEGORY.DOCUMENT,
+          "A document must be bound to a name, for example: document = Document(...)",
+          statement
+        );
+        continue;
+      }
+    }
+
+    if (!created) {
+      fail(
+        CATEGORY.DOCUMENT,
+        "A document needs a Document(...) call, for example: document = Document(type=\"article\")",
+        statements[0] ?? null
+      );
+      return false;
     }
     return true;
   }
 
   function build() {
-    if (!ast) return null;
-
-    let ok = false;
-    if (ast.kind === "Call" && ast.callee.name === "document") {
-      ok = interpretDocumentCall(ast);
-    } else if (
-      ast.kind === "Call" &&
-      COMPONENTS[ast.callee.name] &&
-      COMPONENTS[ast.callee.name].role !== "inline"
-    ) {
-      warn(
-        CATEGORY.DOCUMENT,
-        "This source is not wrapped in document({ ... }); it is rendered as a default article",
-        ast
-      );
-      state.blocks = interpretBlocks(ast, null, { level: 0 });
-      ok = true;
-    } else {
-      fail(
-        CATEGORY.DOCUMENT,
-        'A document must be a single document({ ... }) call, for example document({ type: "article", content: [ text("Hello") ] })',
-        ast
-      );
-    }
+    if (!program) return null;
+    const ok = interpretProgram(program.statements ?? []);
     if (!ok) return null;
 
     // Resolve references now that every label exists, including forward

@@ -19,7 +19,6 @@ import { TEMPLATES, PAGE_SIZES, DEFAULT_PAGE } from "./document/templates.js";
 import {
   BIBLIOGRAPHY_TYPES,
   KNOWN_METADATA,
-  MARGIN_SIDES,
   NAMED_ARGUMENTS,
   PAGE_OPTIONS
 } from "./document/build.js";
@@ -46,6 +45,9 @@ function components() {
     category: component.category,
     status: component.status,
     signature: component.signature,
+    containers: component.containers ?? [],
+    positional: component.positional ?? [],
+    variadic: component.variadic === true,
     args: (component.args ?? []).map((arg) => ({
       name: arg.name,
       type: arg.type,
@@ -147,7 +149,9 @@ export function engineManifest() {
     fields: fields(),
     metadata: sorted(KNOWN_METADATA),
     pageOptions: sorted(PAGE_OPTIONS),
-    marginSides: sorted(MARGIN_SIDES),
+    marginSides: sorted(
+      [...PAGE_OPTIONS].filter((option) => option === "margin" || option.startsWith("margin_"))
+    ),
     namedArguments: namedArguments(),
     bibliographyTypes: bibliographyTypes(),
     templates: templates(),

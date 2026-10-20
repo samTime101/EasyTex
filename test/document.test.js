@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { tokenize, compileDocument, parse } from "../src/index.js";
+import { tokenize, compileDocument, parseProgram } from "../src/index.js";
 import {
   COMPONENTS,
   COMPONENT_DOCS,
@@ -15,7 +15,6 @@ import {
 import {
   KNOWN_METADATA,
   PAGE_OPTIONS,
-  MARGIN_SIDES,
   BIBLIOGRAPHY_TYPES
 } from "../src/document/build.js";
 import { DEFAULT_PAGE } from "../src/document/templates.js";
@@ -35,28 +34,29 @@ function errors(result) {
   return result.diagnostics.filter((entry) => entry.severity !== "warning");
 }
 
-const FULL_DOCUMENT = `document({
-  type: "report",
-  title: "Summation Identities",
-  author: "A. Author",
-  abstract: "We collect standard finite-sum identities.",
-  content: [
-    page({ size: "A4", columns: 1 }),
-    section("Introduction", [
-      text("The series ", inline(sum(i, 1, n, i)), " is quadratic in ", n, "."),
-      equation(sum(i, 1, n, i^2) = frac(n*(n + 1)*(2*n + 1), 6), number=true, label="eq:series"),
-      text("See ", ref("eq:series"), " and ", cite("smith2024"), "."),
-      bullets(["First item", "Second item"]),
-      table(["Name", "Score"], [["Alice", 90], ["Bob", 85]], caption="Exam scores", label="tab:scores"),
-      theorem("Pythagoras", [text("In a right triangle, ", inline(a^2 + b^2 = c^2), ".")], label="thm:pyth"),
-      proof([text("Expand both sides and collect terms.")])
-    ]),
-    bibliography([{ key: "smith2024", type: "article", author: "J. Smith", title: "On series", journal: "J. Math.", year: 2024 }])
-  ]
-})`;
+// A document with the given statements, plus the usual preamble.
+function documentWith(...statements) {
+  return [
+    'document = Document(type="article", title="A Note", author="A")',
+    ...statements
+  ].join("\n");
+}
+
+const FULL_DOCUMENT = `document = Document(type="report", title="Summation Identities", author="A. Author", abstract="We collect standard finite-sum identities.")
+document.page(size="A4", columns=1)
+main = document.section("Introduction")
+main.paragraph("The series ", inline(sum(i, 1, n, i)), " is quadratic in ", n, ".")
+main.equation(sum(i, 1, n, i^2) = frac(n*(n + 1)*(2*n + 1), 6), number=true, label="eq:series")
+main.paragraph("See ", ref("eq:series"), " and ", cite("smith2024"), ".")
+main.bullets(["First item", "Second item"])
+main.table(["Name", "Score"], [["Alice", 90], ["Bob", 85]], caption="Exam scores", label="tab:scores")
+th = main.theorem("Pythagoras", content="In a right triangle, ", label="thm:pyth")
+main.proof(content="Expand both sides and collect terms.")
+refs = document.bibliography()
+refs.article("smith2024", author="J. Smith", title="On series", journal="J. Math.", year=2024)`;
 
 test("the lexer reads strings, escapes, and block comments", () => {
-  const { tokens, diagnostics } = tokenize('text("a \\"quoted\\" value\\nnext") /* comment */ 42');
+  const { tokens, diagnostics } = tokenize('paragraph("a \\"quoted\\" value\\nnext") /* comment */ 42');
   assert.deepEqual(diagnostics, []);
   assert.equal(tokens[0].type, "identifier");
   assert.equal(tokens[1].type, "punct");
@@ -74,18 +74,24 @@ test("the lexer reads strings, escapes, and block comments", () => {
   assert.ok(escape.diagnostics.some((entry) => entry.message.includes("Unsupported escape")));
 });
 
-test("strings, booleans, and objects parse as document values", () => {
-  const { ast, diagnostics } = parse('document({ toc: true, title: "Hi", content: [text("x")] })');
+test("a program of statements parses into statements", () => {
+  const { statements, diagnostics } = parseProgram(
+    'document = Document(type="article", title="Hi")\nmain = document.section("Introduction")\nmain.paragraph("x")'
+  );
   assert.deepEqual(diagnostics, []);
-  const object = ast.args[0];
-  assert.equal(object.kind, "Object");
-  assert.equal(object.entries[0].value.kind, "Boolean");
-  assert.equal(object.entries[0].value.value, true);
-  assert.equal(object.entries[1].value.kind, "String");
+  assert.deepEqual(
+    statements.map((statement) => statement.kind),
+    ["Binding", "Binding", "MethodCall"]
+  );
+  assert.equal(statements[0].name, "document");
+  assert.equal(statements[1].call.method, "section");
+  assert.equal(statements[2].method, "paragraph");
 });
 
 test("a string in a mathematical expression is a type error", () => {
-  const result = compileDocument('document({ type: "article", content: [ equation(sqrt("hello")) ] })');
+  const result = compileDocument(
+    documentWith('main = document.section("S")', 'main.equation(sqrt("hello"), number=true)')
+  );
   assert.ok(
     result.diagnostics.some((entry) => entry.category === "type" && entry.message.includes("scalar")),
     messages(result).join("\n")
@@ -116,21 +122,21 @@ test("a full document compiles, renders, and exports", () => {
 });
 
 test("sections, equations, figures, and tables are numbered automatically", () => {
-  const result = compileDocument(`document({
-    type: "article",
-    title: "Numbering",
-    author: "A",
-    content: [
-      section("One", [
-        subsection("One point one", [text("Body.")]),
-        equation(x = 1, number=true),
-        equation(x = 2, number=true)
-      ]),
-      section("Two", [text("Body.")]),
-      figure(image("plot.png"), caption="A plot"),
-      figure(image("plot.png"), caption="Another plot")
-    ]
-  })`);
+  const result = compileDocument(
+    documentWith(
+      'one = document.section("One")',
+      'sub = one.subsection("One point one")',
+      'sub.paragraph("Body.")',
+      'one.equation(x = 1, number=true)',
+      'one.equation(x = 2, number=true)',
+      'two = document.section("Two")',
+      'two.paragraph("Body.")',
+      'figA = document.figure(caption="A plot")',
+      'figA.image("plot.png")',
+      'figB = document.figure(caption="Another plot")',
+      'figB.image("plot.png")'
+    )
+  );
   assert.deepEqual(messages(result), []);
   const html = result.html;
   assert.ok(html.includes('<span class="ms-section-number">1</span>'));
@@ -141,104 +147,119 @@ test("sections, equations, figures, and tables are numbered automatically", () =
 });
 
 test("references resolve forward and backwards", () => {
-  const result = compileDocument(`document({
-    type: "article",
-    title: "Refs",
-    author: "A",
-    content: [
-      section("First", [
-        text("See ", ref("eq:later"), "."),
-        equation(x = 1, number=true, label="eq:later"),
-        text("And ", ref("sec:second"), ".")
-      ]),
-      section("Second", [text("Body.")], label="sec:second")
-    ]
-  })`);
+  const result = compileDocument(
+    documentWith(
+      'first = document.section("First")',
+      'first.paragraph("See ", ref("eq:later"), ".")',
+      'first.equation(x = 1, number=true, label="eq:later")',
+      'first.paragraph("And ", ref("sec:second"), ".")',
+      'document.section("Second", label="sec:second")'
+    )
+  );
   assert.deepEqual(messages(result), []);
   assert.ok(result.html.includes(">(1)</a>"));
   assert.ok(result.html.includes(">2</a>"));
 });
 
 test("broken references, duplicate labels, and unnumbered labels are diagnostics", () => {
-  const missing = compileDocument('document({ content: [ text("See ", ref("nope"), ".") ] })');
+  const missing = compileDocument(
+    documentWith('main = document.section("S")', 'main.paragraph("See ", ref("nope"), ".")')
+  );
   assert.ok(messages(missing).some((entry) => entry.includes("Unresolved reference 'nope'")));
   assert.ok((missing.html ?? "").includes("??") || missing.html === null);
 
-  const duplicate = compileDocument(`document({
-    type: "article", title: "T", author: "A",
-    content: [
-      equation(x = 1, number=true, label="eq:same"),
-      equation(x = 2, number=true, label="eq:same")
-    ]
-  })`);
+  const duplicate = compileDocument(
+    documentWith(
+      'main = document.section("Results")',
+      'main.equation(x = 1, number=true, label="eq:same")',
+      'main.equation(x = 2, number=true, label="eq:same")'
+    )
+  );
   assert.ok(messages(duplicate).some((entry) => entry.includes("Duplicate label 'eq:same'")));
 
-  const unnumbered = compileDocument(`document({
-    type: "article", title: "T", author: "A",
-    content: [ equation(x = 1, label="eq:loose") ]
-  })`);
+  const unnumbered = compileDocument(
+    documentWith('main = document.section("Results")', 'main.equation(x = 1, label="eq:loose")')
+  );
   assert.ok(messages(unnumbered).some((entry) => entry.includes("add number=true")));
 });
 
 test("metadata is validated with helpful diagnostics", () => {
-  const unknown = compileDocument('document({ type: "article", title: "T", author: "A", nope: 1, content: [text("x")] })');
-  assert.ok(messages(unknown).some((entry) => entry.startsWith("warning name: Unknown document metadata field 'nope'")));
-  assert.ok(unknown.html, "warnings do not stop rendering");
-
-  const badType = compileDocument('document({ type: "paper", content: [text("x")] })');
+  const badType = compileDocument('document = Document(type="paper", title="T", author="A")');
   assert.ok(messages(badType).some((entry) => entry.includes("Unknown document type 'paper'")));
 
-  const missingContent = compileDocument('document({ type: "article", title: "T" })');
-  assert.ok(messages(missingContent).some((entry) => entry.includes("missing the required 'content' field")));
-  assert.equal(missingContent.document, null);
-
-  const missingTitle = compileDocument('document({ type: "article", content: [text("x")] })');
+  const missingTitle = compileDocument('document = Document(type="article")');
   assert.ok(messages(missingTitle).some((entry) => entry.startsWith("warning document: This document has no title")));
+
+  const unknown = compileDocument('document = Document(type="article", title="T", author="A", nope=1)');
+  assert.ok(
+    messages(unknown).some((entry) => entry.includes("Unknown named argument 'nope'")),
+    messages(unknown).join("\n")
+  );
+  assert.equal(unknown.html, null, "an unknown named argument stops the rendering");
+
+  const warned = compileDocument('document = Document(type="article")');
+  assert.ok(warned.html, "warnings do not stop rendering");
 });
 
-test("unknown components are named with suggestions", () => {
-  const result = compileDocument('document({ content: [ sectoin("T", [text("x")]) ] })');
+test("unknown methods are named with suggestions", () => {
+  const result = compileDocument(documentWith('main = document.chapter("T")'));
   const all = messages(result).join("\n");
-  assert.ok(all.includes("Unknown document component 'sectoin'"), all);
-  assert.ok(all.includes("'section'"), all);
+  assert.ok(all.includes("Unknown method 'chapter'"), all);
+  assert.ok(all.includes("section"), all);
 });
 
-test("component argument rules are enforced", () => {
-  const arity = compileDocument('document({ content: [ text() ] })');
-  assert.ok(messages(arity).some((entry) => entry.includes("text() expects at least one")));
+test("method argument rules are enforced", () => {
+  const arity = compileDocument(documentWith('main = document.section("S")', "main.paragraph()"));
+  assert.ok(messages(arity).some((entry) => entry.includes("paragraph() expects at least one")));
 
-  const badBlock = compileDocument('document({ content: [ bold("x") ] })');
-  assert.ok(messages(badBlock).some((entry) => entry.includes("inline component")));
-
-  const badInline = compileDocument('document({ content: [ text(section("x", [text("y")])) ] })');
+  const badInline = compileDocument(
+    documentWith('main = document.section("S")', 'main.paragraph("See ", section("x"), ".")')
+  );
   assert.ok(messages(badInline).some((entry) => entry.includes("block component")));
 
   const namedAfterPositional = compileDocument(
-    'document({ type: "article", title: "T", author: "A", content: [ equation(x = 1, label="eq:a", number=true) ] })'
+    documentWith(
+      'main = document.section("S")',
+      'main.equation(x = 1, label="eq:a", number=true)'
+    )
   );
   assert.deepEqual(messages(namedAfterPositional), [], "named arguments in any order are fine");
 
-  const misplaced = compileDocument('document({ content: [ equation(number=true, x = 1) ] })');
-  assert.ok(messages(misplaced).some((entry) => entry.includes("Positional arguments must come before named arguments")));
+  const misplaced = compileDocument(
+    documentWith('main = document.section("S")', "main.equation(number=true, x = 1)")
+  );
+  assert.ok(
+    messages(misplaced).some((entry) =>
+      entry.includes("The named argument 'number' of equation() comes after the positional arguments")
+    ),
+    messages(misplaced).join("\n")
+  );
 });
 
 test("tables validate their shape", () => {
-  const ragged = compileDocument('document({ content: [ table(["A", "B"], [["1"]]) ] })');
+  const ragged = compileDocument(
+    documentWith('main = document.section("S")', 'main.table(["A", "B"], [["1"]])')
+  );
   assert.ok(messages(ragged).some((entry) => entry.includes("same number of cells")));
 
-  const empty = compileDocument("document({ content: [ table([]) ] })");
+  const empty = compileDocument(documentWith('main = document.section("S")', "main.table([])"));
   assert.ok(messages(empty).some((entry) => entry.includes("at least one row")));
 
-  const badAlign = compileDocument('document({ content: [ table([["1"]], align="middle") ] })');
+  const badAlign = compileDocument(
+    documentWith('main = document.section("S")', 'main.table(["A"], [["1"]], align="middle")')
+  );
   assert.ok(messages(badAlign).some((entry) => entry.includes("Alignment must be")));
 });
 
 test("aligned() requires relations", () => {
-  const bad = compileDocument("document({ content: [ aligned([x + y]) ] })");
+  const bad = compileDocument(documentWith('main = document.section("S")', "main.aligned([x + y])"));
   assert.ok(messages(bad).some((entry) => entry.includes("must be a relation")));
 
   const good = compileDocument(
-    'document({ type: "article", title: "T", author: "A", content: [ aligned([x + y = 5, x - y = 1], number=true) ] })'
+    documentWith(
+      'main = document.section("S")',
+      "main.aligned([x + y = 5, x - y = 1], number=true)"
+    )
   );
   assert.deepEqual(messages(good), []);
   assert.ok(good.latex.includes("\\begin{aligned}"));
@@ -246,57 +267,56 @@ test("aligned() requires relations", () => {
 });
 
 test("bibliography entries are validated and citations resolve", () => {
-  const missingField = compileDocument(`document({
-    type: "article", title: "T", author: "A",
-    content: [
-      text("See ", cite("a"), "."),
-      bibliography([{ key: "a", type: "article", author: "A", year: 2024 }])
-    ]
-  })`);
+  const missingField = compileDocument(
+    documentWith(
+      'refs = document.bibliography()',
+      'refs.article("a", author="A", year=2024)',
+      'main = document.section("S")',
+      'main.paragraph("See ", cite("a"), ".")'
+    )
+  );
   assert.ok(messages(missingField).some((entry) => entry.includes("missing the required field 'title'")));
 
-  const duplicate = compileDocument(`document({
-    type: "article", title: "T", author: "A",
-    content: [ bibliography([{ key: "a", type: "misc", author: "A", title: "T", year: 1 }, { key: "a", type: "misc", author: "B", title: "U", year: 2 }]) ]
-  })`);
+  const duplicate = compileDocument(
+    documentWith(
+      'refs = document.bibliography()',
+      'refs.misc("a", author="A", title="T", year=1)',
+      'refs.misc("a", author="B", title="U", year=2)'
+    )
+  );
   assert.ok(messages(duplicate).some((entry) => entry.includes("Duplicate bibliography key 'a'")));
 
-  const unknownType = compileDocument(`document({
-    type: "article", title: "T", author: "A",
-    content: [ bibliography([{ key: "a", type: "tweet", author: "A", title: "T", year: 1 }]) ]
-  })`);
-  assert.ok(messages(unknownType).some((entry) => entry.includes("Unknown bibliography type 'tweet'")));
-
-  const unknownKey = compileDocument(`document({
-    type: "article", title: "T", author: "A",
-    content: [ text("See ", cite("ghost"), ".") ]
-  })`);
+  const unknownKey = compileDocument(
+    documentWith(
+      'main = document.section("S")',
+      'main.paragraph("See ", cite("ghost"), ".")'
+    )
+  );
   assert.ok(messages(unknownKey).some((entry) => entry.includes("No bibliography entry with the key 'ghost'")));
 
-  const auto = compileDocument(`document({
-    type: "article", title: "T", author: "A",
-    content: [
-      text("See ", cite("b"), "."),
-      bibliography([{ key: "b", type: "book", author: "A", title: "T", year: 2001, publisher: "P" }])
-    ]
-  })`);
+  const auto = compileDocument(
+    documentWith(
+      'refs = document.bibliography()',
+      'refs.book("b", author="A", title="T", year=2001, publisher="P")',
+      'main = document.section("S")',
+      'main.paragraph("See ", cite("b"), ".")'
+    )
+  );
   assert.deepEqual(messages(auto), []);
   assert.ok(auto.html.includes("References"));
 });
 
 test("templates change numbering and table of contents", () => {
-  const report = compileDocument(`document({
-    type: "report", title: "R", author: "A",
-    content: [ section("One", [text("x")]), section("Two", [text("y")]) ]
-  })`);
+  const report = compileDocument(
+    'document = Document(type="report", title="R", author="A")\ndocument.section("One")\ndocument.section("Two")'
+  );
   assert.deepEqual(messages(report), []);
   assert.ok(report.html.includes('class="ms-toc"'));
   assert.ok(report.latex.includes("\\tableofcontents"));
 
-  const letter = compileDocument(`document({
-    type: "letter", title: "Dear reader", author: "A",
-    content: [ section("Subject", [text("Hello.")]) ]
-  })`);
+  const letter = compileDocument(
+    'document = Document(type="letter", title="Dear reader", author="A")\nmain = document.section("Subject")\nmain.paragraph("Hello.")'
+  );
   assert.deepEqual(errors(letter), []);
   assert.ok(!letter.html.includes("ms-section-number"), "letters are unnumbered");
   assert.ok(!letter.html.includes("ms-toc"));
@@ -305,43 +325,52 @@ test("templates change numbering and table of contents", () => {
 });
 
 test("page configuration is validated and exported", () => {
-  const landscape = compileDocument(`document({
-    type: "presentation", title: "S", author: "A",
-    content: [ text("Slide content.") ]
-  })`);
+  const landscape = compileDocument(
+    'document = Document(type="presentation", title="S", author="A")\ndocument.paragraph("Slide content.")'
+  );
   assert.deepEqual(errors(landscape), []);
   assert.equal(landscape.document.page.orientation, "landscape");
   assert.ok(messages(landscape).some((entry) => entry.includes("presentation template exports as a landscape article")));
 
-  const columns = compileDocument(`document({
-    type: "article", title: "T", author: "A",
-    content: [ page({ size: "A5", columns: 2, margins: { top: "10mm", right: "10mm", bottom: "10mm", left: "10mm" } }), text("Two columns.") ]
-  })`);
+  const columns = compileDocument(
+    documentWith(
+      'document.page(size="A5", columns=2, margin="10mm")',
+      'main = document.section("S")',
+      'main.paragraph("Two columns.")'
+    )
+  );
   assert.deepEqual(messages(columns), []);
   assert.equal(columns.document.page.size, "A5");
   assert.ok(columns.html.includes("--ms-columns: 2"));
   assert.ok(columns.latex.includes("\\begin{multicols}{2}"));
   assert.ok(columns.latex.includes("margin=10.00mm"));
 
-  const badSize = compileDocument('document({ content: [ page({ size: "B5" }) ] })');
+  const badSize = compileDocument(documentWith('document.page(size="B5")'));
   assert.ok(messages(badSize).some((entry) => entry.includes("Unknown page size 'B5'")));
 
-  const badMargin = compileDocument('document({ content: [ page({ margins: { top: "big" } }) ] })');
+  const badMargin = compileDocument(documentWith('document.page(margin="big")'));
   assert.ok(messages(badMargin).some((entry) => entry.includes("not a valid length")));
 
-  const badColumns = compileDocument("document({ content: [ page({ columns: 0 }) ] })");
+  const badColumns = compileDocument(documentWith("document.page(columns=0)"));
   assert.ok(messages(badColumns).some((entry) => entry.includes("between 1 and 3")));
 });
 
 test("images validate their source and dimensions", () => {
-  const badScheme = compileDocument('document({ content: [ figure(image("javascript:alert(1)")) ] })');
+  const badScheme = compileDocument(
+    documentWith('fig = document.figure()', 'fig.image("javascript:alert(1)")')
+  );
   assert.ok(messages(badScheme).some((entry) => entry.includes("unsupported scheme")));
 
-  const badWidth = compileDocument('document({ content: [ figure(image("plot.png", width="wide")) ] })');
+  const badWidth = compileDocument(
+    documentWith('fig = document.figure()', 'fig.image("plot.png", width="wide")')
+  );
   assert.ok(messages(badWidth).some((entry) => entry.includes("not a valid length")));
 
   const ok = compileDocument(
-    'document({ type: "article", title: "T", author: "A", content: [ figure(image("https://example.com/p.png", width="80%", alt="Plot"), caption="A plot") ] })'
+    documentWith(
+      'fig = document.figure(caption="A plot")',
+      'fig.image("https://example.com/p.png", width="80%", alt="Plot")'
+    )
   );
   assert.deepEqual(messages(ok), []);
   assert.ok(ok.html.includes('src="https://example.com/p.png"'));
@@ -351,7 +380,7 @@ test("images validate their source and dimensions", () => {
 
 test("text escapes HTML and LaTeX special characters", () => {
   const result = compileDocument(
-    'document({ type: "article", title: "T", author: "A", content: [ text("50% of {a} & b_1 # x") ] })'
+    documentWith('main = document.section("S")', 'main.paragraph("50% of {a} & b_1 # x")')
   );
   assert.deepEqual(messages(result), []);
   assert.ok(result.html.includes("50% of {a} &amp; b_1 # x"));
@@ -359,10 +388,12 @@ test("text escapes HTML and LaTeX special characters", () => {
 });
 
 test("code listings carry captions and languages", () => {
-  const result = compileDocument(`document({
-    type: "article", title: "T", author: "A",
-    content: [ listing("const x = 1;", language="javascript", caption="A listing", label="lst:one") ]
-  })`);
+  const result = compileDocument(
+    documentWith(
+      'main = document.section("S")',
+      'main.listing("const x = 1;", language="javascript", caption="A listing", label="lst:one")'
+    )
+  );
   assert.deepEqual(messages(result), []);
   assert.ok(result.html.includes("Listing 1"));
   assert.ok(result.latex.includes("\\usepackage{listings}"));
@@ -371,17 +402,23 @@ test("code listings carry captions and languages", () => {
 });
 
 test("page_break renders a separator and a newpage", () => {
-  const result = compileDocument('document({ type: "article", title: "T", author: "A", content: [ text("One."), page_break(), text("Two.") ] })');
+  const result = compileDocument(
+    documentWith(
+      'main = document.section("S")',
+      'main.paragraph("One.")',
+      "main.page_break()",
+      'main.paragraph("Two.")'
+    )
+  );
   assert.deepEqual(messages(result), []);
   assert.ok(result.html.includes("ms-page-break"));
   assert.ok(result.latex.includes("\\newpage"));
 });
 
-test("a bare block is wrapped in a default article", () => {
-  const result = compileDocument('section("Introduction", [text("Hello.")])');
-  assert.ok(messages(result).some((entry) => entry.startsWith("warning document: This source is not wrapped")));
-  assert.ok(result.html.includes("Hello."));
-  assert.ok(result.latex.includes("\\section{Introduction}"));
+test("a source without a Document call is not a document", () => {
+  const result = compileDocument('main = document.section("Introduction")\nmain.paragraph("Hello.")');
+  assert.ok(messages(result).some((entry) => entry.includes("needs a Document")));
+  assert.equal(result.document, null);
 });
 
 test("standalone HTML export embeds the styles", () => {
@@ -401,7 +438,7 @@ test("every documented component exists, is handled, and has examples", () => {
     assert.ok(documented.has(name), `'${name}' is handled but not documented`);
   }
   for (const doc of COMPONENT_DOCS) {
-    assert.ok(doc.signature.startsWith(`${doc.name}(`) || doc.signature.startsWith(`${doc.name}({`), `${doc.name} signature`);
+    assert.ok(doc.signature.startsWith(`${doc.name}(`), `${doc.name} signature`);
     assert.ok(doc.summary.length > 0, `${doc.name} summary`);
     assert.ok(doc.category, `${doc.name} category`);
     assert.ok(doc.status === "implemented", `${doc.name} status`);
@@ -417,8 +454,13 @@ test("every documented component exists, is handled, and has examples", () => {
 test("every documented example builds a document without errors", () => {
   const wrap = (source) => {
     const trimmed = source.trim();
-    if (trimmed.startsWith("document(")) return trimmed;
-    return `document({ type: "article", title: "Example", author: "Docs", content: [\n${trimmed}\n] })`;
+    if (trimmed.startsWith("document = Document(")) return trimmed;
+    return [
+      'document = Document(type="article", title="Example", author="Docs")',
+      'main = document.section("Example")',
+      'refs = document.bibliography()',
+      trimmed
+    ].join("\n");
   };
   for (const doc of COMPONENT_DOCS) {
     for (const example of doc.examples) {
@@ -478,15 +520,18 @@ test("document writer examples compile as advertised", () => {
 
 // ------------------------------------------------------------------ snippets
 
-const SNIPPET_WRAPPERS = {
-  subsection: (source) => `section("Outer", [\n${source}\n])`,
-  subsubsection: (source) => `section("Outer", [\n  subsection("Inner", [\n${source}\n  ])\n])`
-};
+// A snippet is a statement, so it needs a document, a section, a figure, and
+// a reference list to stand on.
+const SNIPPET_PREAMBLE = [
+  'document = Document(type="article", title="Snippet", author="Docs")',
+  'main = document.section("Outer")',
+  'fig = main.figure()',
+  'refs = document.bibliography()'
+].join("\n");
 
 function wrapSnippet(name, source) {
-  const inner = SNIPPET_WRAPPERS[name] ? SNIPPET_WRAPPERS[name](source) : source;
-  if (name === "document") return inner;
-  return `document({ type: "article", title: "Snippet", author: "Docs", content: [\n${inner}\n] })`;
+  if (name === "Document") return source;
+  return `${SNIPPET_PREAMBLE}\n${source}`;
 }
 
 test("component snippets are valid starter documents", () => {
@@ -496,10 +541,6 @@ test("component snippets are valid starter documents", () => {
   for (const doc of snippets) {
     const markers = doc.snippet.match(/\$0/g) ?? [];
     assert.ok(markers.length <= 1, `${doc.name} snippet has more than one caret marker`);
-    assert.ok(
-      doc.snippet.trimStart().startsWith(`${doc.name}(`),
-      `${doc.name} snippet should start with '${doc.name}('`
-    );
 
     const prepared = prepareSnippet(doc.snippet);
     assert.ok(!prepared.text.includes("$0"), `${doc.name} snippet still contains the caret marker`);
@@ -515,24 +556,19 @@ test("component snippets are valid starter documents", () => {
 });
 
 test("the document snippet scaffolds a complete default document", () => {
-  const prepared = prepareSnippet(COMPONENTS.document.snippet);
-  assert.equal(
-    prepared.text.slice(prepared.caret - 1, prepared.caret + 1),
-    '""',
-    'the caret lands inside text("")'
-  );
-
+  const prepared = prepareSnippet(COMPONENTS.Document.snippet);
   const result = compileDocument(prepared.text);
   assert.deepEqual(messages(result), [], "the scaffold compiles without diagnostics");
+  assert.ok(result.document, "the scaffold builds a document");
 });
 
 test("snippet insertion indents continuation lines and places the caret", () => {
-  const prepared = prepareSnippet(COMPONENTS.section.snippet, "  ");
-  assert.equal(prepared.text, 'section("", [\n    text("")\n  ])');
-  assert.equal(prepared.text.slice(prepared.caret - 1, prepared.caret + 1), '""');
+  const prepared = prepareSnippet('main.paragraph("",\n  "")', "  ");
+  assert.equal(prepared.text, 'main.paragraph("",\n    "")');
+  assert.equal(prepared.caret, prepared.text.length);
 
-  const plain = prepareSnippet("page_break()");
-  assert.equal(plain.text, "page_break()");
+  const plain = prepareSnippet("main.page_break()");
+  assert.equal(plain.text, "main.page_break()");
   assert.equal(plain.caret, plain.text.length);
 
   assert.equal(lineIndent("  section(", 10), "  ");
@@ -549,7 +585,6 @@ test("every document field has hover documentation", () => {
   const expected = new Set([
     ...KNOWN_METADATA,
     ...PAGE_OPTIONS,
-    ...MARGIN_SIDES,
     ...Object.values(NAMED_ARGUMENTS).flatMap((names) => [...names]),
     ...Object.values(BIBLIOGRAPHY_TYPES).flatMap((type) => type.fields),
     "key"
@@ -624,8 +659,9 @@ test("field defaults name one of their own options and match the engine", () => 
   assert.equal(byName.get("size").defaultValue, DEFAULT_PAGE.size);
   assert.equal(byName.get("orientation").defaultValue, DEFAULT_PAGE.orientation);
   assert.equal(byName.get("columns").defaultValue, String(DEFAULT_PAGE.columns));
-  for (const side of ["top", "right", "bottom", "left"]) {
-    assert.equal(byName.get(side).defaultValue, DEFAULT_PAGE.margins[side]);
+  for (const side of ["margin_top", "margin_right", "margin_bottom", "margin_left"]) {
+    const key = side.slice("margin_".length);
+    assert.equal(byName.get(side).defaultValue, DEFAULT_PAGE.margins[key]);
   }
   assert.equal(byName.get("align").defaultValue, "left");
   assert.equal(byName.get("number").defaultValue, "false");

@@ -1026,39 +1026,45 @@ language:
 
 #### 10.6.1 Source model
 
-A document source is UTF-8 text using the same call syntax as the language:
+A document source is UTF-8 text: a **program of statements**.
 
 ```text
-document({
-  type: "article",
-  title: "Summing Squares",
-  author: "A. Author",
-  content: [
-    section("Result", [
-      equation(sum(i, 1, n, i^2) = frac(n*(n+1)*(2*n+1), 6), number=true, label="eq:series"),
-      text("Equation ", ref("eq:series"), " gives the closed form.")
-    ])
-  ]
-})
+document = Document(type="article", title="Summing Squares", author="A. Author")
+main = document.section("Result")
+main.equation(sum(i, 1, n, i^2) = frac(n*(n+1)*(2*n+1), 6), number=true, label="eq:series")
+main.paragraph("Equation ", ref("eq:series"), " gives the closed form.")
 ```
 
-- A document is one `document({ ... })` call at the top level. A single block without the wrapper is
-  accepted and wrapped in a default `article` with a warning.
+A statement has exactly one of four shapes:
+
+1. `name = Document(...)` — the document itself, bound to a name.
+2. `name = target.method(...)` — a block, bound to a name.
+3. `target.method(...)` — a block added to the target, not bound.
+4. Anything else — a diagnostic. An expression on its own is not a document.
+
+- A statement ends at a newline when the brackets are balanced. A call may therefore be written over
+  several lines, and a trailing comma is allowed.
 - `//` line comments and `/* */` block comments use the same syntax as expressions.
+- **A name stands for a document or a block, never for a value.** A name may only be used before a
+  dot. So `n = 5` is not an assignment, and a section named `e` never hides the constant `e`.
+- A **method** belongs to the containers it may be called on. The document accepts sections, prose,
+  mathematics, tables, figures, listings, theorem-like blocks, proofs, quotations, lists, page
+  breaks, the page configuration, and the reference list. A section accepts the same blocks, and a
+  subsection accepts only what a section does at its own level. A figure accepts an image, and a
+  reference list accepts the typed reference entries.
+- **Arguments are decided by position, not by name.** Every method declares how many positional
+  arguments it takes. While those slots are open, `=` is the equality relation; once they are
+  filled, `name = value` is a named argument, and an unknown name is an error that lists the names
+  the method accepts. A method that takes any number of arguments (a paragraph) has no named
+  arguments, so `=` there is always a relation.
+- The arguments of a block are expressions, and they are validated by the same rules as any other
+  expression. A string, a boolean, or an object literal is a type error inside an expression.
 - Document sources extend the literal grammar with **strings** (with `\"`, `\\`, `\n`, `\t`, `\r`
-  escapes), **booleans** (`true`, `false`), and **object literals** (`{ key: value, ... }`).
-  Matrices and vectors are unchanged. These three literal forms MUST be rejected when they appear
-  inside a mathematical expression.
-- Metadata is an object. Content is a list of blocks. Blocks nest: sections contain blocks, list items
-  may contain blocks, and prose may contain inline components.
-- Component calls are ordinary calls: `section("Title", [blocks])`, `table(headers, rows)`,
-  `equation(expression, ...)`. Mathematical arguments are parsed by the expression grammar and
-  validated by the same validation rules as any other expression.
-- **Named arguments** (`number=true`, `caption="..."`, `label="eq:x"`, `width="80%"`) are an
-  extension of the call syntax used only by document components. A named argument is written
-  `name = value` after the positional arguments; it is recognised only for names declared by that
-  component. Positional arguments MUST precede named arguments. Elsewhere, `=` remains the relation
-  operator.
+  escapes) and **booleans** (`true`, `false`). Matrices and vectors are unchanged. These two literal
+  forms MUST be rejected when they appear inside a mathematical expression.
+- The blocks of a container are appended in the order their statements stand. A container may take
+  one opening paragraph of prose as a named argument, and the paragraphs that follow are added with
+  the paragraph method.
 
 #### 10.6.2 Numbering, labels, and references
 
@@ -1067,20 +1073,24 @@ document({
 - `equation(..., number=true)` numbers a display equation. A label without a number is an error.
 - Tables, figures, and listings are numbered when they carry a caption or a label. Theorems, lemmas,
   definitions, and corollaries are numbered per type.
-- `label("eq:series")` registers a target; `ref("eq:series")` resolves it. Unresolved references and
+- `label="eq:series"` registers a target; `ref("eq:series")` resolves it. Unresolved references and
   duplicate labels are errors; reference text is derived from the target's number.
-- Bibliography entries are numbered in definition order. `cite("key")` renders a numbered, linked
-  citation and unknown keys are errors. When a document cites sources without a bibliography block,
-  a references section is appended. Required fields are validated per entry type.
+- A reference list is created with the bibliography method, and every entry is added with the method
+  named after its type (`book`, `article`, `inproceedings`, `website`, `techreport`, `misc`). The
+  key of an entry is its first positional argument. `cite("key")` renders a numbered, linked
+  citation, and unknown keys are errors. When a document cites sources without a reference list, a
+  references section is appended. Required fields are validated per entry type.
 
 #### 10.6.3 Templates and page layout
 
-- `type` selects a template: `article`, `report`, `academic_report`, `thesis`, `book`,
-  `presentation`, `technical_document`, or `letter`. A template controls heading numbering, whether a
-  table of contents and abstract are shown, and the LaTeX document class.
-- `page({ size, orientation, margins, columns })` configures geometry: A3, A4, A5, Letter, or Legal;
-  portrait or landscape; per-side margins in `mm`, `cm`, `in`, `pt`, or `px`; one to three columns.
-  Documents without a `page({ ... })` block use A4, portrait, 25 mm margins, and one column.
+- The `type` named argument of `Document(...)` selects a template: `article`, `report`,
+  `academic_report`, `thesis`, `book`, `presentation`, `technical_document`, or `letter`. A template
+  controls heading numbering, whether a table of contents and abstract are shown, and the LaTeX
+  document class.
+- `document.page(size="A4", orientation="portrait", columns=1, margin="25mm")` configures geometry:
+  A3, A4, A5, Letter, or Legal; portrait or landscape; per-side margins in `mm`, `cm`, `in`, `pt`,
+  or `px`; one to three columns. Documents without a page configuration use A4, portrait, 25 mm
+  margins, and one column.
 - Style resolution order is fixed: engine, then template, then document, then section, then
   component.
 

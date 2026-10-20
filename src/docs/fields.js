@@ -52,7 +52,7 @@ export const FIELD_DOCS = [
       },
       { label: "Reference types", values: BIBLIOGRAPHY_TYPE_NAMES, defaultValue: "misc" }
     ],
-    example: 'type: "article"'
+    example: 'Document(type="article")'
   },
   {
     name: "title",
@@ -61,14 +61,14 @@ export const FIELD_DOCS = [
     summary: "The document title, shown on the title page.",
     description:
       "A document without a title is reported as a warning. Bibliography entries have their own required title, and proof(...) accepts title= to name the result being proved.",
-    example: 'title: "A Short Note"'
+    example: 'Document(title="A Short Note")'
   },
   {
     name: "subtitle",
     scope: "metadata",
     type: "string or inline content",
     summary: "An optional secondary line under the title.",
-    example: 'subtitle: "A worked example"'
+    example: 'Document(subtitle="A worked example")'
   },
   {
     name: "author",
@@ -77,14 +77,14 @@ export const FIELD_DOCS = [
     summary: "The author name or names.",
     description:
       "A document without an author is reported as a warning. Bibliography entries also have a required author field.",
-    example: 'author: ["A. One", "B. Two"]'
+    example: 'Document(author=["A. One", "B. Two"])'
   },
   {
     name: "affiliations",
     scope: "metadata",
     type: "string or list of strings",
     summary: "Institution(s) associated with the author(s).",
-    example: 'affiliations: "University of Example"'
+    example: 'Document(affiliations="University of Example")'
   },
   {
     name: "date",
@@ -92,7 +92,7 @@ export const FIELD_DOCS = [
     type: "string",
     summary: "A free-form date line such as \"2026\" or \"October 2026\".",
     description: "Defaults to nothing when omitted.",
-    example: 'date: "2026"'
+    example: 'Document(date="2026")'
   },
   {
     name: "language",
@@ -101,14 +101,14 @@ export const FIELD_DOCS = [
     summary: 'A language tag such as "en" or "de".',
     description:
       "Sets the document language in the HTML and LaTeX exports. In listing(...), the language named argument instead names the source language of the code.",
-    example: 'language: "en"'
+    example: 'Document(language="en")'
   },
   {
     name: "keywords",
     scope: "metadata",
     type: "string or list of strings",
     summary: "Keywords describing the document.",
-    example: 'keywords: ["series", "summation"]'
+    example: 'Document(keywords=["series", "summation"])'
   },
   {
     name: "abstract",
@@ -116,27 +116,8 @@ export const FIELD_DOCS = [
     type: "string or inline content",
     summary: "A summary paragraph shown before the first section.",
     description: "Templates decide whether the abstract is displayed.",
-    example: 'abstract: "We collect standard finite-sum identities."'
+    example: 'Document(abstract="We collect standard finite-sum identities.")'
   },
-  {
-    name: "bibliography",
-    scope: "metadata",
-    type: "list of objects",
-    summary: "Declare bibliography entries in the metadata.",
-    description:
-      "Accepts the same entry list as the bibliography(...) block; the two forms may be combined. The Reference types table in the field reference lists the fields each entry type requires.",
-    example: 'bibliography: [\n  { key: "smith2024", type: "article", author: "J. Smith", title: "On series", journal: "J. Math.", year: 2024 }\n]'
-  },
-  {
-    name: "content",
-    scope: "metadata",
-    type: "blocks",
-    summary: "The ordered list of content blocks.",
-    description:
-      "The body of the document: sections, paragraphs, equations, tables, figures, theorem-like blocks. A single block outside a document(...) call is wrapped in a default article instead.",
-    example: 'content: [ section("Introduction", [ text("…") ]) ]'
-  },
-
   // ---------------------------------------------------------- page options
   {
     name: "size",
@@ -146,7 +127,7 @@ export const FIELD_DOCS = [
     description: "Default A4.",
     values: PAGE_SIZE_VALUES,
     defaultValue: DEFAULT_PAGE.size,
-    example: 'page({ size: "A4" })'
+    example: 'page(size="A4")'
   },
   {
     name: "orientation",
@@ -156,16 +137,16 @@ export const FIELD_DOCS = [
     description: "Default portrait.",
     values: ["portrait", "landscape"],
     defaultValue: DEFAULT_PAGE.orientation,
-    example: 'orientation: "landscape"'
+    example: 'page(orientation="landscape")'
   },
   {
-    name: "margins",
+    name: "margin",
     scope: "page option",
-    type: "object",
-    summary: "Per-side page margins.",
+    type: "string",
+    summary: "The margin on every side of the page.",
     description:
-      'An object with any of top, right, bottom, and left lengths; omitted sides keep their default, for example { top: "25mm", right: "25mm", bottom: "25mm", left: "25mm" }. Units: mm, cm, in, pt, px. Default 25 mm on every side.',
-    example: 'margins: { top: "20mm", bottom: "20mm" }'
+      'A length such as "25mm". Units: mm, cm, in, pt, px. Default 25 mm on every side. A single side is changed with margin_top, margin_right, margin_bottom, or margin_left.',
+    example: 'page(margin="25mm")'
   },
   {
     name: "columns",
@@ -175,41 +156,41 @@ export const FIELD_DOCS = [
     description: "A whole number from 1 to 3. Default 1.",
     values: ["1", "2", "3"],
     defaultValue: String(DEFAULT_PAGE.columns),
-    example: "columns: 2"
+    example: 'page(columns=2)'
   },
 
   // --------------------------------------------------------------- margins
   {
-    name: "top",
+    name: "margin_top",
     scope: "margin",
     type: "string",
     summary: 'Top margin as a length such as "25mm".',
     defaultValue: DEFAULT_PAGE.margins.top,
-    example: 'top: "20mm"'
+    example: 'page(margin_top="20mm")'
   },
   {
-    name: "right",
+    name: "margin_right",
     scope: "margin",
     type: "string",
     summary: 'Right margin as a length such as "25mm".',
     defaultValue: DEFAULT_PAGE.margins.right,
-    example: 'right: "20mm"'
+    example: 'page(margin_right="20mm")'
   },
   {
-    name: "bottom",
+    name: "margin_bottom",
     scope: "margin",
     type: "string",
     summary: 'Bottom margin as a length such as "25mm".',
     defaultValue: DEFAULT_PAGE.margins.bottom,
-    example: 'bottom: "20mm"'
+    example: 'page(margin_bottom="20mm")'
   },
   {
-    name: "left",
+    name: "margin_left",
     scope: "margin",
     type: "string",
     summary: 'Left margin as a length such as "25mm".',
     defaultValue: DEFAULT_PAGE.margins.left,
-    example: 'left: "20mm"'
+    example: 'page(margin_left="20mm")'
   },
 
   // ------------------------------------------------------ named arguments
@@ -219,8 +200,17 @@ export const FIELD_DOCS = [
     type: "string",
     summary: "A stable label for cross-references.",
     description:
-      'Referenced with ref("…"). Labels must be unique in the document. Components that accept label= register the target directly; a separate label("…") block names the preceding block, or the enclosing section as its first block.',
+      'Referenced with ref("…"). Labels must be unique in the document. A block that accepts label= registers the target directly, and a label without number=true is an error, because an unnumbered target cannot be referenced.',
     example: 'label="eq:series"'
+  },
+  {
+    name: "content",
+    scope: "argument",
+    type: "string",
+    summary: "The opening paragraph of a container.",
+    description:
+      "A section, a theorem-like block, a proof, or a quotation takes its first paragraph as content. The paragraphs that follow are added with the paragraph method.",
+    example: 'main.theorem("Convergence", content="The sequence is bounded above.")'
   },
   {
     name: "number",
@@ -284,36 +274,36 @@ export const FIELD_DOCS = [
     type: "string",
     summary: "A unique citation key.",
     description:
-      'cite("key") refers to this entry. Required, and keys must be unique within the document.',
-    example: 'key: "smith2024"'
+      'cite("key") refers to this entry. The key is the first positional argument of the reference method, and keys must be unique within the document.',
+    example: 'refs.article("smith2024", author="J. Smith", title="On series", journal="J. Math.", year=2024)'
   },
   {
     name: "year",
     scope: "reference field",
     type: "number or string",
     summary: "Publication year. Required for every entry.",
-    example: "year: 2024"
+    example: "year=2024"
   },
   {
     name: "journal",
     scope: "reference field",
     type: "string",
     summary: 'Journal name; required for type "article".',
-    example: 'journal: "J. Math."'
+    example: 'journal="J. Math."'
   },
   {
     name: "volume",
     scope: "reference field",
     type: "string or number",
     summary: "Journal volume.",
-    example: 'volume: "12"'
+    example: 'volume=12'
   },
   {
     name: "issue",
     scope: "reference field",
     type: "string or number",
     summary: "Journal issue.",
-    example: 'issue: "3"'
+    example: 'issue=3'
   },
   {
     name: "pages",
@@ -334,7 +324,7 @@ export const FIELD_DOCS = [
     scope: "reference field",
     type: "string",
     summary: 'URL of the resource; required for type "website".',
-    example: 'url: "https://example.org"'
+    example: 'url="https://example.org"'
   },
   {
     name: "publisher",
@@ -348,7 +338,7 @@ export const FIELD_DOCS = [
     scope: "reference field",
     type: "string",
     summary: 'Edition such as "2nd".',
-    example: 'edition: "2nd"'
+    example: 'edition="2nd"'
   },
   {
     name: "address",

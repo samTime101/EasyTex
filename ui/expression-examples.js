@@ -36,7 +36,7 @@ export const EXPRESSION_EXAMPLES = [
   { label: "Error: implicit multiplication", source: "2x", error: true },
   { label: "Error: a constant used as a function", source: "pi(x)", error: true },
   { label: "Error: a missing bracket", source: "sum(i, 1, n", error: true },
-  { label: "Error: a string in an expression", source: 'text("oops', error: true }
+  { label: "Error: a string in an expression", source: 'sqrt("oops")', error: true }
 ];
 
 // The editor opens on a scratchpad of two equations: the sum of squares and

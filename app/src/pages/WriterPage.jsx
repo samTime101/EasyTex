@@ -357,7 +357,7 @@ export function WriterPage() {
             value={source}
             onChange={setSource}
             ariaLabel="MathScript document source"
-            placeholder='document({ type: "article", content: [ text("Hello") ] })'
+            placeholder={'document = Document(type="article", title="A Note")\nmain = document.section("Introduction")\nmain.paragraph("Hello.")'}
             autocompleteKinds={WRITER_KINDS}
             hoverKinds={HOVER_KINDS}
             contextual
@@ -472,8 +472,9 @@ export function WriterPage() {
                   <>
                     <p>Start writing a document.</p>
                     <p className="muted">
-                      Every document is one <code>{"document({ ... })"}</code> call. Try an example, or
-                      read the{" "}
+                      Every document is a program of statements: one{" "}
+                      <code>{"Document(...)"}</code> call, then a method on each bound name. Try an
+                      example, or read the{" "}
                       <a href="/docs#document-authoring">document authoring guide</a>.
                     </p>
                   </>

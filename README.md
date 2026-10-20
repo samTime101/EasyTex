@@ -11,9 +11,17 @@ sum(i, 1, n, i^2)
 ```
 
 See it rendered instantly as professional notation, and export clean LaTeX when you need it. Put the
-same expression in a `document({ ... })` source to get a full sheet with sections, numbered equations,
-figures, references, and citations. See [`APPLICATION.md`](./APPLICATION.md) for the complete feature
-list and update log.
+same expression in a document — a program of statements — to get a full sheet with sections, numbered
+equations, figures, references, and citations:
+
+```text
+document = Document(type="article", title="Summing Squares")
+main = document.section("Result")
+main.equation(sum(i, 1, n, i^2) = frac(n*(n + 1)*(2*n + 1), 6), number=true, label="eq:series")
+main.paragraph("Equation ", ref("eq:series"), " gives the closed form.")
+```
+
+See [`APPLICATION.md`](./APPLICATION.md) for the complete feature list and update log.
 
 ## Quick start
 
@@ -55,8 +63,10 @@ them to.
 - **Live preview** using native MathML, with no third-party rendering library.
 - **A scratchpad, not a single slot**: the expression editor takes one expression per line and checks and renders each on its own, so a broken line never hides the ones around it.
 - **A mode switch in the header** moves between the expression editor and the document writer, so both are one click away.
-- **Document writer** for `document({ ... })` sources: templates, page geometry, sections, numbered
+- **Document writer** for programs of statements: templates, page geometry, sections, numbered
   equations, tables, figures, listings, theorems, cross-references, citations, and bibliographies.
+  A name stands for a document or a block and never for a value, so there is no assignment in the
+  language.
 - **LaTeX and standalone HTML export** of documents, plus Print/PDF that prints the document
   alone — its own stylesheet, its real paper size and margins — through the print-js library, so the
   browser's "Save as PDF" gives a vector copy of the mathematics. The last valid preview stays
@@ -66,7 +76,7 @@ them to.
 - **Logarithms with an explicit base**: `log(x)` is base 10, `ln(x)` is natural, and `logbase(x, b)` takes the value first and the base second.
 - **Expanded symbol vocabulary**: lowercase, variant, and uppercase Greek names, plus named ordinary symbols such as `aleph`, `hbar`, `emptyset`, `forall`, and `ell`. These stay ordinary free variables and add no new syntax or dependency.
 - **Diagnostics** with source positions and categories. Click a diagnostic to select the offending range in the editor.
-- **Function suggestions** while typing: an autocomplete list with signatures, keyboard navigation, and correct insertion of calls and constants. In the writer, document components are suggested too, and structured components insert starter snippets — `document` expands to a complete scaffold. Inside document objects, completion offers only the fields for that object (`document`, `page`, `margins`, or a bibliography entry); typing `""` for a field with allowed values or a default opens the value list, with the default marked.
+- **Function suggestions** while typing: an autocomplete list with signatures, keyboard navigation, and correct insertion of calls and constants. In the writer, the methods of the container around the caret are suggested, and each method inserts a starter snippet — `Document` expands to a complete scaffold. Inside a call, completion offers only the named arguments that method accepts; typing `""` for an argument with allowed values or a default opens the value list, with the default marked.
 - **Hover documentation** in the editor: signatures, argument descriptions, and a rendered example for the function or documented symbol under the pointer, with scope-aware handling of bound variables. The writer also explains components and fields (metadata keys, named arguments, and bibliography entries). The card is highlighted like the editor and shows allowed values with the default marked.
 - **Syntax highlighting** in both editors: comments, strings, numbers, booleans, functions, constants, operators, document components, and field names each get their own color, in light and dark themes. The reference page uses the same highlighter, so every sample on it is colored too.
 - **Editing assistance**: brackets and quotes auto-close around a selection or step over their partner, `Backspace` removes an empty pair, `Enter` keeps indentation and expands bracket pairs into a block, and `Tab` / `Shift` + `Tab` indent lines. `Shift` + `Alt` + `F` or the **Format** button re-indents source from bracket depth.
@@ -164,16 +174,9 @@ console.log(result.latex);   // \sum_{i = 1}^{n} i^{2}
 console.log(result.mathml);  // <math ...>...</math>
 console.log(result.diagnostics);
 
-const document = compileDocument(`document({
-  type: "article",
-  title: "Summing Squares",
-  author: "A. Author",
-  content: [
-    section("Result", [
-      equation(sum(i, 1, n, i^2) = frac(n*(n + 1)*(2*n + 1), 6), number=true, label="eq:series")
-    ])
-  ]
-})`);
+const document = compileDocument(`document = Document(type="article", title="Summing Squares", author="A. Author")
+main = document.section("Result")
+main.equation(sum(i, 1, n, i^2) = frac(n*(n + 1)*(2*n + 1), 6), number=true, label="eq:series")`);
 
 console.log(document.html);  // rendered sheet markup
 console.log(document.latex); // complete LaTeX file

@@ -38,7 +38,7 @@ any language, on any platform, can be written against it.
 | Export | Purpose |
 | --- | --- |
 | `compile(source, options)` | Compile one expression. Returns `{ ok, mathml, latex, ast, diagnostics, tokens }`. |
-| `compileDocument(source, options)` | Compile one document. Returns `{ ok, html, latex, ast, diagnostics, tokens }`. |
+| `compileDocument(source, options)` | Compile one document — a program of statements. Returns `{ ok, html, latex, ast, diagnostics, tokens }`. |
 | `parse(source)` | Parse only. Returns `{ ast, diagnostics, tokens }`. |
 | `validate(ast, options)` | Validate a parsed tree. Returns `{ diagnostics }`. |
 | `renderMathML(ast, options)` | Render a tree as MathML. |
@@ -174,10 +174,10 @@ $ printf '{"id":"1","command":"compile","source":"pi"}\n' | node tools/easytex-e
 ## 4. The manifest
 
 `engineManifest()` returns the whole language surface as JSON: functions with
-their arities, constants, Greek names, named symbols, operators, document
-components with their arguments, every field with its scope and allowed
-values, the metadata names, the page options, the margin sides, the named
-arguments per component, the bibliography types, the templates, the page
+their arities, constants, Greek names, named symbols, operators, the document
+methods with their containers and arguments, every field with its scope and
+allowed values, the metadata names, the page options, the margin sides, the
+named arguments per method, the bibliography types, the templates, the page
 sizes, the default page, and the LaTeX compatibility catalog.
 
 ```console

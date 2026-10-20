@@ -11,7 +11,7 @@ export const TOKEN = {
 
 const TWO_CHAR = new Set(["!=", "<=", ">="]);
 const ONE_CHAR_OPERATOR = new Set(["+", "-", "*", "/", "%", "^", "=", "<", ">"]);
-const PUNCT = new Set(["(", ")", "[", "]", "{", "}", ":", ","]);
+const PUNCT = new Set(["(", ")", "[", "]", "{", "}", ":", ",", "."]);
 const STRING_ESCAPES = { '"': '"', "\\": "\\", n: "\n", t: "\t", r: "\r" };
 
 function isDigit(ch) {
@@ -296,6 +296,16 @@ export function tokenize(source) {
     }
 
     if (PUNCT.has(ch)) {
+      // A dot is the member access of the document language, so it is a
+      // punctuation mark when a name follows it. Anywhere else it is the
+      // stray character the expression language has always rejected.
+      if (ch === "." && !/[A-Za-z_]/.test(source[offset + 1] ?? "")) {
+        diagnostics.push(
+          diagnostic(CATEGORY.LEXICAL, `Unexpected character '${ch}'`, makeSpan(here()))
+        );
+        advance();
+        continue;
+      }
       const start = here();
       advance();
       tokens.push({ type: TOKEN.PUNCT, value: ch, span: makeSpan(start, here()) });

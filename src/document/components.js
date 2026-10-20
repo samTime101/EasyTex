@@ -1,48 +1,89 @@
-// Document component catalog.
+// The document method catalogue.
 //
-// This catalog is the shared source of truth for the document builder, the
-// documentation page, hover help, and editor completion. Every entry in
+// This catalogue is the shared source of truth for the document builder, the
+// reference page, hover help, and editor completion. Every entry in
 // COMPONENTS must be interpreted by src/document/build.js; the test suite
 // enforces that they do not drift apart.
 //
-// Entries may carry a `snippet`: the starter source inserted when the
-// component is accepted from autocomplete. A snippet may contain one "$0"
-// marker; the editor removes it and places the caret there. Every snippet is
-// a valid fragment of a document, checked by the test suite.
+// A document is a program of statements:
+//
+//   document = Document(type="article", title="…")
+//   main = document.section("Introduction")
+//   main.paragraph("The sum is ", inline(sum(i, 1, n, i^2)), ".")
+//
+// A method belongs to the containers listed in `containers`, takes the number
+// of positional arguments listed in `positional`, and accepts the named
+// arguments listed in `named`. The `containers` and `positional` fields are
+// what let the parser decide, by position, whether an `=` is the equality
+// relation or a named argument.
+//
+// Entries may carry a `snippet`: the starter source inserted when the method
+// is accepted from autocomplete. A snippet may contain one "$0" marker; the
+// editor removes it and places the caret there. Every snippet is a valid
+// fragment of a document, checked by the test suite.
 
 export const COMPONENT_CATEGORY_ORDER = [
   "Document",
   "Document structure",
-  "Text and inline",
+  "Prose",
   "Mathematics blocks",
   "Tables and figures",
-  "Academic structures"
+  "Academic structures",
+  "References"
+];
+
+// The kinds of node a method may be called on.
+export const CONTAINER_KINDS = {
+  document: "the document",
+  section: "a section",
+  subsection: "a subsection",
+  subsubsection: "a subsubsection",
+  theorem: "a theorem",
+  proof: "a proof",
+  quote: "a quotation",
+  figure: "a figure",
+  references: "a reference list"
+};
+
+const EVERY_CONTAINER = ["document", "section", "subsection", "subsubsection"];
+const PROSE_CONTAINERS = [
+  "document",
+  "section",
+  "subsection",
+  "subsubsection",
+  "theorem",
+  "proof",
+  "quote"
 ];
 
 export const COMPONENTS = {
-  document: {
-    name: "document",
+  Document: {
+    name: "Document",
     category: "Document",
     role: "document",
-    signature: "document({ type, title, author, content })",
+    containers: [],
+    positional: [0],
+    signature: 'Document(type="article", title="…", author="…")',
     summary: "The top-level declaration of a document: metadata plus ordered content blocks.",
     description:
-      "Every MathScript document is one document(...) call at the top level. Metadata fields are written as object entries; content is a list of block components.",
-    args: [
-      {
-        name: "metadata",
-        type: "object",
-        description:
-          "Document metadata. Supported fields: type, title, subtitle, author, date, language, keywords, abstract, affiliations, bibliography, content."
-      }
+      "Every MathScript document is one Document(...) call, bound to a name. The metadata is written as named arguments; the blocks are appended to the document with methods.",
+    args: [],
+    named: [
+      { name: "type", type: "string", description: "The template: article, report, academic_report, thesis, book, presentation, technical_document, or letter." },
+      { name: "title", type: "string", description: "The document title." },
+      { name: "subtitle", type: "string", description: "A subtitle, shown under the title." },
+      { name: "author", type: "string", description: "An author. Give it more than once for several authors." },
+      { name: "date", type: "string", description: "The date, written as you want it to read." },
+      { name: "language", type: "string", description: "The document language, used by the HTML and LaTeX exports." },
+      { name: "keywords", type: "list of strings", description: "Keywords, for the metadata of the export." },
+      { name: "abstract", type: "string", description: "The abstract. Give it more than once for several paragraphs." },
+      { name: "affiliations", type: "string", description: "An affiliation. Give it more than once for several." }
     ],
-    named: [],
-    snippet:
-      'document({\n  type: "article",\n  title: "Untitled document",\n  author: "Author",\n  content: [\n    section("Introduction", [\n      text("$0")\n    ])\n  ]\n})',
+    snippet: 'document = Document(type="article", title="Untitled document", author="Your Name")',
     examples: [
       {
-        note: "Smallest complete document",
-        source: 'document({\n  type: "article",\n  title: "A Short Note",\n  author: "Example Author",\n  content: [\n    section("Introduction", [\n      text("MathScript documents are built from content blocks."),\n      equation(sum(i, 1, n, i^2), number=true, label="eq:series")\n    ])\n  ]\n})'
+        note: "A document with metadata",
+        source: 'document = Document(type="article", title="A Short Note", author="Example Author")'
       }
     ],
     status: "implemented"
@@ -51,23 +92,29 @@ export const COMPONENTS = {
   page: {
     name: "page",
     category: "Document",
-    role: "block",
-    signature: 'page({ size, orientation, margins, columns })',
+    role: "setting",
+    containers: ["document"],
+    positional: [0],
+    signature: 'page(size="A4", orientation="portrait", columns=1, margin="25mm")',
     summary: "Page geometry for the whole document.",
     description:
-      "Document layout is declarative. Page configuration should appear as the first content block. Defaults are A4, portrait, 25 mm margins, one column.",
-    args: [
-      {
-        name: "configuration",
-        type: "object",
-        description: 'Supported fields: size ("A4", "A5", "A3", "Letter", "Legal"), orientation ("portrait", "landscape"), margins ({ top, right, bottom, left } with mm, cm, in, pt, or px units), and columns (1-3).'
-      }
+      "Document layout is declarative. Page configuration appears on the document; the defaults are usable without any configuration. Layout never changes the mathematical meaning of an expression.",
+    args: [],
+    named: [
+      { name: "size", type: "string", description: "The paper size: A3, A4, A5, Letter, or Legal." },
+      { name: "orientation", type: "string", description: "portrait or landscape." },
+      { name: "columns", type: "number", description: "The number of text columns, from 1 to 3." },
+      { name: "margin", type: "string", description: "The margin on every side, written as a length such as \"25mm\"." },
+      { name: "margin_top", type: "string", description: "The top margin, when it differs from the others." },
+      { name: "margin_right", type: "string", description: "The right margin, when it differs from the others." },
+      { name: "margin_bottom", type: "string", description: "The bottom margin, when it differs from the others." },
+      { name: "margin_left", type: "string", description: "The left margin, when it differs from the others." }
     ],
-    named: [],
+    snippet: 'document.page(size="A4", orientation="portrait", margin="25mm")',
     examples: [
       {
-        note: "A two-column A4 report",
-        source: 'page({ size: "A4", orientation: "portrait", margins: { top: "20mm", right: "20mm", bottom: "20mm", left: "20mm" }, columns: 2 })'
+        note: "A4 with wide margins",
+        source: 'document.page(size="A4", margin="30mm")'
       }
     ],
     status: "implemented"
@@ -77,20 +124,25 @@ export const COMPONENTS = {
     name: "section",
     category: "Document structure",
     role: "block",
-    signature: 'section("Title", [blocks])',
-    summary: "A numbered top-level section with nested content blocks.",
+    containers: EVERY_CONTAINER,
+    positional: [1],
+    signature: 'section("Introduction", content="…")',
+    summary: "A numbered section of the document.",
+    description:
+      "Sections are numbered by the engine and collected in the table of contents. A section may hold a paragraph of prose as its content, or be filled with blocks afterwards.",
     args: [
-      { name: "title", type: "string or inline content", description: "The heading text." },
-      { name: "content", type: "blocks", description: "The blocks of the section, in order." }
+      { name: "title", type: "string", description: "The section title." },
+      { name: "content", type: "string", description: "The opening paragraph of the section." }
     ],
     named: [
-      { name: "label", type: "string", description: "A label such as \"sec:introduction\" for cross-references." }
+      { name: "content", type: "string", description: "The opening paragraph of the section." },
+      { name: "label", type: "string", description: "A stable name, so the section can be referenced." }
     ],
-    snippet: 'section("$0", [\n  text("")\n])',
+    snippet: 'main = document.section("Section title")',
     examples: [
       {
-        note: "A section with a paragraph and an equation",
-        source: 'section("Introduction", [\n  text("Calculus studies change and accumulation."),\n  equation(derivative(x, x^2 + 1), number=true)\n])'
+        note: "A section with an opening paragraph",
+        source: 'main = document.section("Introduction")\nmain.paragraph("The sum of the first ", n, " squares is written ", inline(sum(i, 1, n, i^2)), ".")'
       }
     ],
     status: "implemented"
@@ -100,21 +152,25 @@ export const COMPONENTS = {
     name: "subsection",
     category: "Document structure",
     role: "block",
-    signature: 'subsection("Title", [blocks])',
-    summary: "A second-level heading inside a section.",
-    description: "Numbering is automatic: 1, 1.1, 1.1.1. Do not type numbers into headings.",
+    containers: ["section"],
+    positional: [1],
+    signature: 'subsection("Title", content="…")',
+    summary: "A numbered subsection of a section.",
+    description:
+      "Subsections are numbered under their section and collected in the table of contents. Never type numbers into a heading; the template manages the counters.",
     args: [
-      { name: "title", type: "string or inline content", description: "The heading text." },
-      { name: "content", type: "blocks", description: "The blocks of the subsection, in order." }
+      { name: "title", type: "string", description: "The subsection title." },
+      { name: "content", type: "string", description: "The opening paragraph of the subsection." }
     ],
     named: [
-      { name: "label", type: "string", description: "A label for cross-references." }
+      { name: "content", type: "string", description: "The opening paragraph of the subsection." },
+      { name: "label", type: "string", description: "A stable name, so the subsection can be referenced." }
     ],
-    snippet: 'subsection("$0", [\n  text("")\n])',
+    snippet: 'sub = main.subsection("Subsection title")',
     examples: [
       {
-        note: "A subsection nested in a section",
-        source: 'section("Methods", [\n  subsection("Data", [text("The sample is described by ", mu, " and ", sigma, ".")])\n])'
+        note: "A subsection",
+        source: 'sub = main.subsection("Convergence")\nsub.equation(integral(x, 0, n, x^2) = frac(n^3, 3), number=true, label="eq:integral")\nsub.paragraph("Equation ", ref("eq:integral"), " shows the cubic behaviour.")'
       }
     ],
     status: "implemented"
@@ -124,249 +180,54 @@ export const COMPONENTS = {
     name: "subsubsection",
     category: "Document structure",
     role: "block",
-    signature: 'subsubsection("Title", [blocks])',
-    summary: "A third-level heading inside a subsection.",
+    containers: ["subsection"],
+    positional: [1],
+    signature: 'subsubsection("Title", content="…")',
+    summary: "A numbered subsubsection of a subsection.",
+    description:
+      "Subsubsections are the third level of the heading hierarchy. The template manages the numbering.",
     args: [
-      { name: "title", type: "string or inline content", description: "The heading text." },
-      { name: "content", type: "blocks", description: "The blocks of the subsubsection, in order." }
+      { name: "title", type: "string", description: "The subsubsection title." },
+      { name: "content", type: "string", description: "The opening paragraph of the subsubsection." }
     ],
     named: [
-      { name: "label", type: "string", description: "A label for cross-references." }
+      { name: "content", type: "string", description: "The opening paragraph of the subsubsection." },
+      { name: "label", type: "string", description: "A stable name, so the subsubsection can be referenced." }
     ],
-    snippet: 'subsubsection("$0", [\n  text("")\n])',
+    snippet: 'sub = main.subsection("Inner")\ndeep = sub.subsubsection("Subsubsection title")',
     examples: [
       {
-        note: "Three heading levels",
-        source: 'section("A", [subsection("B", [subsubsection("C", [text("Nested content.")])])])'
+        note: "A subsubsection",
+        source: 'sub = main.subsection("Inner")\ndeep = sub.subsubsection("Details")\ndeep.paragraph("The details follow.")'
       }
     ],
     status: "implemented"
   },
 
-  label: {
-    name: "label",
-    category: "Document structure",
+  paragraph: {
+    name: "paragraph",
+    category: "Prose",
     role: "block",
-    signature: 'label("eq:series")',
-    summary: "Attach a stable label to the block before it, or to the enclosing section.",
+    containers: PROSE_CONTAINERS,
+    positional: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+    variadic: true,
+    signature: 'paragraph("…", inline(x), "…")',
+    summary: "A paragraph of prose, with mathematics mixed in.",
     description:
-      "As the first block of a section, label() names the section itself. Otherwise it names the preceding block. Components that accept a label= argument do not need a separate label() call.",
+      "A paragraph takes any number of pieces: text strings and inline expressions, in the order they should read. It takes no named arguments.",
     args: [
-      { name: "name", type: "string", description: "The label text. Labels must be unique in the document." }
-    ],
-    named: [],
-    examples: [
       {
-        note: "Labelling the preceding equation",
-        source:
-          'document({\n  type: "article",\n  title: "Labels",\n  author: "Example",\n  content: [\n    equation(sum(i, 1, n, i), number=true),\n    label("eq:sum")\n  ]\n})'
+        name: "content",
+        type: "string, inline component, or expression",
+        description: "The pieces of the paragraph, in reading order."
       }
     ],
-    status: "implemented"
-  },
-
-  page_break: {
-    name: "page_break",
-    category: "Document structure",
-    role: "block",
-    signature: "page_break()",
-    summary: "Start a new page at this point.",
-    args: [],
     named: [],
+    snippet: 'main.paragraph("")',
     examples: [
       {
-        note: "Break before an appendix",
-        source:
-          'document({\n  type: "article",\n  title: "Breaks",\n  author: "Example",\n  content: [\n    text("Main matter."),\n    page_break(),\n    section("Appendix", [text("Additional material.")])\n  ]\n})'
-      }
-    ],
-    status: "implemented"
-  },
-
-  text: {
-    name: "text",
-    category: "Text and inline",
-    role: "block",
-    signature: 'text("A paragraph.", inline(x^2), " and more.")',
-    summary: "A paragraph of prose, mixing plain text, inline components, and inline mathematics.",
-    description:
-      "Each argument is a string, an inline component such as bold(...), or a mathematical expression. Strings are plain text; use inline(...) or a bare expression for mathematics.",
-    args: [
-      { name: "content", type: "string, inline component, or expression", description: "The paragraph content, in order." }
-    ],
-    named: [],
-    snippet: 'text("$0")',
-    examples: [
-      {
-        note: "Prose with inline mathematics",
-        source: 'text("The series ", inline(sum(i, 1, n, i)), " grows quadratically with ", n, ".")'
-      }
-    ],
-    status: "implemented"
-  },
-
-  bold: {
-    name: "bold",
-    category: "Text and inline",
-    role: "inline",
-    signature: 'bold("Important text")',
-    summary: "Bold (strong) inline text.",
-    args: [{ name: "content", type: "string or inline content", description: "The text to emphasize with weight." }],
-    named: [],
-    examples: [{ note: "Inside a paragraph", source: 'text("This is ", bold("important"), ".")' }],
-    status: "implemented"
-  },
-
-  italic: {
-    name: "italic",
-    category: "Text and inline",
-    role: "inline",
-    signature: 'italic("Emphasized text")',
-    summary: "Italic inline text.",
-    args: [{ name: "content", type: "string or inline content", description: "The text to italicize." }],
-    named: [],
-    examples: [{ note: "Inside a paragraph", source: 'text("The term ", italic("entropy"), " has many meanings.")' }],
-    status: "implemented"
-  },
-
-  underline: {
-    name: "underline",
-    category: "Text and inline",
-    role: "inline",
-    signature: 'underline("Underlined text")',
-    summary: "Underlined inline text.",
-    args: [{ name: "content", type: "string or inline content", description: "The text to underline." }],
-    named: [],
-    examples: [{ note: "Inside a paragraph", source: 'text("See ", underline("chapter 2"), " for details.")' }],
-    status: "implemented"
-  },
-
-  emphasis: {
-    name: "emphasis",
-    category: "Text and inline",
-    role: "inline",
-    signature: 'emphasis("Emphasized content")',
-    summary: "Semantic emphasis, rendered in italics and exported as an emphasis command.",
-    args: [{ name: "content", type: "string or inline content", description: "The emphasized text." }],
-    named: [],
-    examples: [{ note: "Inside a paragraph", source: 'text("This matters ", emphasis("a great deal"), ".")' }],
-    status: "implemented"
-  },
-
-  code_text: {
-    name: "code_text",
-    category: "Text and inline",
-    role: "inline",
-    signature: 'code_text("source code")',
-    summary: "Inline code or literal text in a monospace font.",
-    args: [{ name: "content", type: "string or inline content", description: "The literal text." }],
-    named: [],
-    examples: [{ note: "Inside a paragraph", source: 'text("Call ", code_text("compile()"), " to parse.")' }],
-    status: "implemented"
-  },
-
-  inline: {
-    name: "inline",
-    category: "Text and inline",
-    role: "inline",
-    signature: "inline(sum(i, 1, n, i^2))",
-    summary: "Inline mathematics inside a paragraph.",
-    description: "A bare mathematical expression inside text() is also rendered inline; inline(...) is explicit.",
-    args: [{ name: "expression", type: "expression", description: "The mathematical expression to set inline." }],
-    named: [],
-    examples: [{ note: "Inside a paragraph", source: 'text("We use ", inline(frac(a, b)), " throughout.")' }],
-    status: "implemented"
-  },
-
-  ref: {
-    name: "ref",
-    category: "Text and inline",
-    role: "inline",
-    signature: 'ref("eq:series")',
-    summary: "A cross-reference to a labelled block.",
-    description:
-      "The renderer replaces the reference with the number of the target: sections by number, equations in parentheses, figures and tables with their label word. Broken references are reported as diagnostics.",
-    args: [{ name: "label", type: "string", description: "The label of the target block." }],
-    named: [],
-    examples: [
-      {
-        note: "Referring to an equation",
-        source:
-          'document({\n  type: "article",\n  title: "References",\n  author: "Example",\n  content: [\n    equation(sum(i, 1, n, i^2), number=true, label="eq:series"),\n    text("Equation ", ref("eq:series"), " gives the closed form.")\n  ]\n})'
-      }
-    ],
-    status: "implemented"
-  },
-
-  cite: {
-    name: "cite",
-    category: "Text and inline",
-    role: "inline",
-    signature: 'cite("smith2024")',
-    summary: "A citation of one or more bibliography entries.",
-    description: "Several keys may be given: cite(\"smith2024\", \"jones2025\") renders as [1, 2].",
-    args: [{ name: "keys", type: "string", description: "One or more bibliography keys." }],
-    named: [],
-    examples: [
-      {
-        note: "Citing a source",
-        source:
-          'document({\n  type: "article",\n  title: "Citations",\n  author: "Example",\n  content: [\n    text("This follows Smith ", cite("smith2024"), "."),\n    bibliography([\n      { key: "smith2024", type: "article", author: "J. Smith", title: "On series", journal: "J. Math.", year: 2024 }\n    ])\n  ]\n})'
-      }
-    ],
-    status: "implemented"
-  },
-
-  quote: {
-    name: "quote",
-    category: "Text and inline",
-    role: "block",
-    signature: 'quote([text("Quoted words")])',
-    summary: "A block quotation.",
-    args: [{ name: "content", type: "blocks", description: "The quoted blocks." }],
-    named: [],
-    examples: [
-      {
-        note: "A short quotation",
-        source: 'quote([text("Mathematics is the queen of the sciences.")])'
-      }
-    ],
-    status: "implemented"
-  },
-
-  bullets: {
-    name: "bullets",
-    category: "Text and inline",
-    role: "block",
-    signature: 'bullets(["First item", "Second item"])',
-    summary: "A bulleted list.",
-    description: "Items may be strings or block components. Nested lists are written as nested items.",
-    args: [{ name: "items", type: "list", description: "The list items." }],
-    named: [],
-    snippet: 'bullets([\n  "$0",\n  ""\n])',
-    examples: [
-      {
-        note: "A list with a nested list",
-        source: 'bullets([\n  "First item",\n  "Second item",\n  bullets(["Nested item"])\n])'
-      }
-    ],
-    status: "implemented"
-  },
-
-  numbered: {
-    name: "numbered",
-    category: "Text and inline",
-    role: "block",
-    signature: 'numbered(["First step", "Second step"])',
-    summary: "A numbered list.",
-    description: "Numbering is automatic. Items may be strings or block components.",
-    args: [{ name: "items", type: "list", description: "The list items, in order." }],
-    named: [],
-    snippet: 'numbered([\n  "$0",\n  ""\n])',
-    examples: [
-      {
-        note: "A numbered list",
-        source: 'numbered([\n  "Choose a template",\n  "Write the content",\n  "Export to LaTeX"\n])'
+        note: "Prose with mathematics",
+        source: 'main.paragraph("The series ", inline(sum(i, 1, n, i^2)), " grows cubically.")'
       }
     ],
     status: "implemented"
@@ -376,19 +237,22 @@ export const COMPONENTS = {
     name: "equation",
     category: "Mathematics blocks",
     role: "block",
-    signature: "equation(expression, number=true, label=\"eq:name\")",
-    summary: "A display equation, optionally numbered and labelled.",
+    containers: PROSE_CONTAINERS,
+    positional: [1],
+    signature: "equation(expression, number=true, label=\"eq:…\")",
+    summary: "A display equation.",
     description:
-      "Equations are unnumbered unless number=true. A labelled equation must be numbered so that references resolve. A bare expression or relation in content is also rendered as an unnumbered display equation.",
-    args: [{ name: "expression", type: "expression", description: "The expression or relation to display." }],
+      "An equation is numbered by the engine. Never type a number into it; the template manages the counter, and a label gives the equation a name that ref(...) can point at.",
+    args: [{ name: "expression", type: "expression", description: "The mathematics, which may be a relation such as a = b." }],
     named: [
       { name: "number", type: "boolean", description: "Number the equation (default false)." },
-      { name: "label", type: "string", description: "A label such as \"eq:series\" for cross-references." }
+      { name: "label", type: "string", description: "A stable name, so the equation can be referenced." }
     ],
+    snippet: 'main.equation(x = 1, number=true)',
     examples: [
       {
-        note: "A numbered, labelled equation",
-        source: 'equation(sum(i, 1, n, i^2) = frac(n*(n + 1)*(2*n + 1), 6), number=true, label="eq:series")'
+        note: "A numbered equation",
+        source: 'main.equation(sum(i, 1, n, i^2) = frac(n*(n + 1)*(2*n + 1), 6), number=true, label="eq:series")'
       }
     ],
     status: "implemented"
@@ -398,20 +262,22 @@ export const COMPONENTS = {
     name: "aligned",
     category: "Mathematics blocks",
     role: "block",
-    signature: "aligned([x + y = 5, x - y = 1], number=true)",
-    summary: "A block of equations aligned at their relation signs.",
-    description: "Each row must be a relation. The renderer aligns the rows at the relation operator; no manual spacing is used.",
-    args: [
-      { name: "rows", type: "list of relations", description: "The rows to align." }
-    ],
+    containers: EVERY_CONTAINER,
+    positional: [1],
+    signature: 'aligned([a = b, c = d], number=true)',
+    summary: "Several equations, aligned on their relation signs.",
+    description:
+      "Every row of an aligned block must be a relation. The renderer aligns the rows on the relation signs.",
+    args: [{ name: "rows", type: "list of relations", description: "The equations of the block." }],
     named: [
       { name: "number", type: "boolean", description: "Number the block (default false)." },
-      { name: "label", type: "string", description: "A label for cross-references." }
+      { name: "label", type: "string", description: "A stable name, so the block can be referenced." }
     ],
+    snippet: 'main.aligned([x + y = 5, x - y = 1], number=true)',
     examples: [
       {
-        note: "A system of two equations",
-        source: "aligned([\n  x + y = 5,\n  x - y = 1\n], number=true)"
+        note: "A system of equations",
+        source: 'main.aligned([x + y = 5, 2*x - y = 4], number=true, label="eq:lin")'
       }
     ],
     status: "implemented"
@@ -421,23 +287,26 @@ export const COMPONENTS = {
     name: "table",
     category: "Tables and figures",
     role: "block",
-    signature: 'table(["Name", "Score"], [[ "Alice", 90 ], [ "Bob", 85 ]], caption="Scores")',
-    summary: "A table with an optional header row, caption, and label.",
-    description: "Rows must all have the same number of cells as the header. Cells may be strings, numbers, inline components, or mathematical expressions.",
+    containers: EVERY_CONTAINER,
+    positional: [2],
+    signature: 'table(["A", "B"], [[1, 2]], caption="…")',
+    summary: "A table with a header row.",
+    description:
+      "A table takes a header list and a list of rows. Cells may be strings or mathematical expressions.",
     args: [
-      { name: "header", type: "list of cells", description: "Optional header cells. When omitted, the single list argument is the body." },
-      { name: "rows", type: "list of rows", description: "The body rows. Every row must match the header width." }
+      { name: "header", type: "list of cells", description: "The header row." },
+      { name: "rows", type: "list of rows", description: "The body of the table." }
     ],
     named: [
-      { name: "caption", type: "string or inline content", description: "The caption shown below the table." },
-      { name: "label", type: "string", description: "A label for cross-references." },
-      { name: "align", type: "string or list", description: "Column alignment: \"left\", \"center\", or \"right\", for one column or a list per column." }
+      { name: "caption", type: "string", description: "The caption under the table." },
+      { name: "label", type: "string", description: "A stable name, so the table can be referenced." },
+      { name: "align", type: "list of strings", description: "The alignment of each column: left, center, or right." }
     ],
-    snippet: 'table(\n  ["Column 1", "Column 2"],\n  [\n    ["", ""]\n  ]\n)',
+    snippet: 'main.table(["A", "B"], [[1, 2]], caption="A table")',
     examples: [
       {
-        note: "A table with a caption",
-        source: 'table(\n  ["Name", "Score"],\n  [["Alice", 90], ["Bob", 85]],\n  caption="Exam scores",\n  label="tab:scores"\n)'
+        note: "A small table",
+        source: 'main.table(["n", "sum(i, 1, n, i^2)"], [[1, 1], [2, 5]], caption="Small values", label="tab:values", align=["center", "right"])'
       }
     ],
     status: "implemented"
@@ -447,18 +316,22 @@ export const COMPONENTS = {
     name: "figure",
     category: "Tables and figures",
     role: "block",
-    signature: 'figure(image("plot.png", width="80%"), caption="A plot", label="fig:plot")',
-    summary: "A captioned, numbered figure.",
-    args: [{ name: "image", type: "image", description: "The image to show, written as image(...)." }],
+    containers: EVERY_CONTAINER,
+    positional: [0],
+    signature: 'figure(caption="…", label="fig:…")',
+    summary: "A figure, holding one image.",
+    description:
+      "A figure is a container: bind it, then add its image with the image method.",
+    args: [],
     named: [
-      { name: "caption", type: "string or inline content", description: "The caption shown below the figure." },
-      { name: "label", type: "string", description: "A label for cross-references." }
+      { name: "caption", type: "string", description: "The caption under the figure." },
+      { name: "label", type: "string", description: "A stable name, so the figure can be referenced." }
     ],
-    snippet: 'figure(\n  image("figure.png", width="70%", alt=""),\n  caption="Caption"\n)',
+    snippet: 'fig = main.figure(caption="A figure")',
     examples: [
       {
-        note: "A captioned figure",
-        source: 'figure(\n  image("results.png", width="70%", alt="Convergence plot"),\n  caption="Convergence of the series",\n  label="fig:convergence"\n)'
+        note: "A figure with an image",
+        source: 'fig = main.figure(caption="Growth of the sum of squares", label="fig:growth")\nfig.image("assets/sum-of-squares.svg", width="70%", alt="Growth of the sum of squares")'
       }
     ],
     status: "implemented"
@@ -468,22 +341,23 @@ export const COMPONENTS = {
     name: "image",
     category: "Tables and figures",
     role: "block",
-    signature: 'image("results.png", width="80%", alt="Results")',
-    summary: "An image asset, normally placed inside figure(...).",
+    containers: ["figure"],
+    positional: [1],
+    signature: 'image("assets/plot.svg", width="70%", alt="…")',
+    summary: "An image inside a figure.",
     description:
-      "Asset paths must be relative paths or https URLs; other schemes are rejected. Relative paths resolve against the document location.",
-    args: [
-      { name: "src", type: "string", description: "The image path or https URL." }
-    ],
+      "The path is relative to the page that holds it. A missing image is reported as a readable placeholder instead of a broken icon.",
+    args: [{ name: "src", type: "string", description: "The path of the image." }],
     named: [
-      { name: "width", type: "string", description: "A percentage such as \"80%\" or a length such as \"100mm\"." },
-      { name: "height", type: "string", description: "A length such as \"60mm\"." },
-      { name: "alt", type: "string", description: "Alternative text for accessibility." }
+      { name: "width", type: "string", description: "The width, for example \"70%\"." },
+      { name: "height", type: "string", description: "The height, for example \"4cm\"." },
+      { name: "alt", type: "string", description: "The description of the image for anyone who cannot see it." }
     ],
+    snippet: 'fig.image("assets/plot.svg", alt="A plot")',
     examples: [
       {
-        note: "Standalone image",
-        source: 'image("diagram.svg", width="50%", alt="A block diagram")'
+        note: "An image with a caption",
+        source: 'fig = main.figure(caption="Growth", label="fig:growth")\nfig.image("assets/sum-of-squares.svg", width="70%", alt="Growth of the sum of squares")'
       }
     ],
     status: "implemented"
@@ -491,21 +365,25 @@ export const COMPONENTS = {
 
   listing: {
     name: "listing",
-    category: "Tables and figures",
+    category: "Mathematics blocks",
     role: "block",
-    signature: 'listing("source code", language="text", caption="A listing")',
-    summary: "A code listing block.",
-    args: [{ name: "source", type: "string", description: "The literal code text." }],
+    containers: EVERY_CONTAINER,
+    positional: [1],
+    signature: 'listing("code", language="javascript", caption="…")',
+    summary: "A block of code.",
+    description:
+      "The source is written as a string, with \\n for a line break. The language is only used to label the block.",
+    args: [{ name: "source", type: "string", description: "The code, with \\n for a line break." }],
     named: [
-      { name: "language", type: "string", description: "A language name such as \"mathscript\" or \"javascript\"." },
-      { name: "caption", type: "string or inline content", description: "The caption for the listing." },
-      { name: "label", type: "string", description: "A label for cross-references." }
+      { name: "language", type: "string", description: "The language of the code, for the caption." },
+      { name: "caption", type: "string", description: "The caption under the listing." },
+      { name: "label", type: "string", description: "A stable name, so the listing can be referenced." }
     ],
-    snippet: 'listing("$0", language="text")',
+    snippet: 'main.listing("")',
     examples: [
       {
-        note: "A short listing",
-        source: 'listing("sum(i, 1, n, i^2)", language="mathscript", caption="A summation")'
+        note: "A listing of code",
+        source: 'main.listing("let total = 0;\\nfor (let i = 1; i <= n; i += 1) total += i * i;", language="javascript", caption="Summing squares in linear time", label="lst:sum")'
       }
     ],
     status: "implemented"
@@ -515,19 +393,25 @@ export const COMPONENTS = {
     name: "theorem",
     category: "Academic structures",
     role: "block",
-    signature: 'theorem("Title", [blocks])',
-    summary: "A numbered theorem environment.",
-    description: "Theorems, lemmas, definitions, and corollaries are numbered independently and can be labelled for cross-references.",
+    containers: EVERY_CONTAINER,
+    positional: [1],
+    signature: 'theorem("Title", content="…", label="thm:…")',
+    summary: "A numbered theorem.",
+    description:
+      "A theorem is a container: bind it, then add its paragraphs and equations. The environment is numbered by the engine.",
     args: [
-      { name: "title", type: "string", description: "An optional short title, or the content when no title is needed." },
-      { name: "content", type: "blocks or string", description: "The statement." }
+      { name: "title", type: "string", description: "The title of the theorem." },
+      { name: "content", type: "string", description: "The statement of the theorem." }
     ],
-    named: [{ name: "label", type: "string", description: "A label for cross-references." }],
-    snippet: 'theorem("$0", [\n  text("")\n])',
+    named: [
+      { name: "content", type: "string", description: "The opening paragraph of the theorem." },
+      { name: "label", type: "string", description: "A stable name, so the theorem can be referenced." }
+    ],
+    snippet: 'th = main.theorem("Title")',
     examples: [
       {
-        note: "A labelled theorem",
-        source: 'theorem("Pythagoras", [text("In a right triangle, ", inline(a^2 + b^2 = c^2), ".")], label="thm:pythagoras")'
+        note: "A theorem with a proof",
+        source: 'th = main.theorem("Convergence", content="The sequence is bounded above.", label="thm:conv")\npr = main.proof(content="Compare with the telescoping series.")\nmain.paragraph("Theorem ", ref("thm:conv"), " settles the question.")'
       }
     ],
     status: "implemented"
@@ -537,16 +421,26 @@ export const COMPONENTS = {
     name: "lemma",
     category: "Academic structures",
     role: "block",
-    signature: 'lemma("Title", [blocks])',
-    summary: "A numbered lemma environment.",
+    containers: EVERY_CONTAINER,
+    positional: [1],
+    signature: 'lemma("Title", content="…", label="lem:…")',
+    summary: "A numbered lemma.",
+    description:
+      "A lemma is numbered in its own sequence, separately from the theorems.",
     args: [
-      { name: "title", type: "string", description: "An optional short title." },
-      { name: "content", type: "blocks or string", description: "The statement." }
+      { name: "title", type: "string", description: "The title of the lemma." },
+      { name: "content", type: "string", description: "The statement of the lemma." }
     ],
-    named: [{ name: "label", type: "string", description: "A label for cross-references." }],
-    snippet: 'lemma("$0", [\n  text("")\n])',
+    named: [
+      { name: "content", type: "string", description: "The opening paragraph of the lemma." },
+      { name: "label", type: "string", description: "A stable name, so the lemma can be referenced." }
+    ],
+    snippet: 'lem = main.lemma("Title")',
     examples: [
-      { note: "A lemma", source: 'lemma("Monotonicity", [text("The sequence is non-decreasing.")])' }
+      {
+        note: "A lemma",
+        source: 'lem = main.lemma("Bounded terms", content="Each term of the sum is at most the reciprocal square.")'
+      }
     ],
     status: "implemented"
   },
@@ -555,18 +449,25 @@ export const COMPONENTS = {
     name: "definition",
     category: "Academic structures",
     role: "block",
-    signature: 'definition("Title", [blocks])',
-    summary: "A numbered definition environment.",
+    containers: EVERY_CONTAINER,
+    positional: [1],
+    signature: 'definition("Title", content="…", label="def:…")',
+    summary: "A numbered definition.",
+    description:
+      "A definition is numbered in its own sequence, separately from the theorems.",
     args: [
-      { name: "title", type: "string", description: "An optional short title." },
-      { name: "content", type: "blocks or string", description: "The definition." }
+      { name: "title", type: "string", description: "The title of the definition." },
+      { name: "content", type: "string", description: "The statement of the definition." }
     ],
-    named: [{ name: "label", type: "string", description: "A label for cross-references." }],
-    snippet: 'definition("$0", [\n  text("")\n])',
+    named: [
+      { name: "content", type: "string", description: "The opening paragraph of the definition." },
+      { name: "label", type: "string", description: "A stable name, so the definition can be referenced." }
+    ],
+    snippet: 'd = main.definition("Title")',
     examples: [
       {
         note: "A definition",
-        source: 'definition("Limit", [text("The value approached by ", inline(sin(x)/x), " as ", inline(x), " tends to ", inline(a), ".")])'
+        source: 'd = main.definition("Partial sums", content="For a positive integer n, write S(n) for the partial sum of the reciprocal squares.")'
       }
     ],
     status: "implemented"
@@ -576,15 +477,27 @@ export const COMPONENTS = {
     name: "corollary",
     category: "Academic structures",
     role: "block",
-    signature: 'corollary("Title", [blocks])',
-    summary: "A numbered corollary environment.",
+    containers: EVERY_CONTAINER,
+    positional: [1],
+    signature: 'corollary("Title", content="…", label="cor:…")',
+    summary: "A numbered corollary.",
+    description:
+      "A corollary is numbered in its own sequence, separately from the theorems.",
     args: [
-      { name: "title", type: "string", description: "An optional short title." },
-      { name: "content", type: "blocks or string", description: "The statement." }
+      { name: "title", type: "string", description: "The title of the corollary." },
+      { name: "content", type: "string", description: "The statement of the corollary." }
     ],
-    named: [{ name: "label", type: "string", description: "A label for cross-references." }],
-    snippet: 'corollary("$0", [\n  text("")\n])',
-    examples: [{ note: "A corollary", source: 'corollary("A consequence", [text("The bound follows immediately.")])' }],
+    named: [
+      { name: "content", type: "string", description: "The opening paragraph of the corollary." },
+      { name: "label", type: "string", description: "A stable name, so the corollary can be referenced." }
+    ],
+    snippet: 'c = main.corollary("Title")',
+    examples: [
+      {
+        note: "A corollary",
+        source: 'c = main.corollary("A consequence", content="The bound follows from the theorem.")'
+      }
+    ],
     status: "implemented"
   },
 
@@ -592,15 +505,110 @@ export const COMPONENTS = {
     name: "proof",
     category: "Academic structures",
     role: "block",
-    signature: "proof([blocks])",
-    summary: "A proof, closed with the end-of-proof symbol.",
-    args: [{ name: "content", type: "blocks or string", description: "The proof body." }],
-    named: [{ name: "title", type: "string", description: "Alternative title, for example a reference to the result proved." }],
-    snippet: 'proof([\n  text("$0")\n])',
+    containers: EVERY_CONTAINER,
+    positional: [0],
+    signature: 'proof(content="…", title="Proof")',
+    summary: "The proof of a theorem.",
+    description:
+      "A proof is a container: bind it, then add its steps. It takes an optional opening paragraph of prose.",
+    args: [{ name: "content", type: "string", description: "The opening line of the proof." }],
+    named: [
+      { name: "content", type: "string", description: "The opening line of the proof." },
+      { name: "title", type: "string", description: "The heading of the proof, for example \"Proof by induction\"." }
+    ],
+    snippet: 'pr = main.proof()',
     examples: [
       {
         note: "A proof",
-        source: 'proof([text("Expand both sides and collect terms.")])'
+        source: 'pr = main.proof(content="Compare the series with a telescoping one, whose terms are smaller.")'
+      }
+    ],
+    status: "implemented"
+  },
+
+  quote: {
+    name: "quote",
+    category: "Prose",
+    role: "block",
+    containers: EVERY_CONTAINER,
+    positional: [0],
+    signature: 'quote(content="…")',
+    summary: "A quotation, set apart from the prose.",
+    description:
+      "A quote is a container: bind it, then add its paragraphs.",
+    args: [],
+    named: [{ name: "content", type: "string", description: "The quoted text." }],
+    snippet: 'q = main.quote()',
+    examples: [
+      {
+        note: "A quotation",
+        source: 'q = main.quote()\nq.paragraph("The purpose of computing is insight, not numbers.")'
+      }
+    ],
+    status: "implemented"
+  },
+
+  bullets: {
+    name: "bullets",
+    category: "Prose",
+    role: "block",
+    containers: EVERY_CONTAINER,
+    positional: [1],
+    signature: 'bullets(["First item", "Second item"])',
+    summary: "A list of bullet points.",
+    description:
+      "Each item of the list is one piece of prose. A list item that mixes prose and mathematics is a paragraph, not a list item.",
+    args: [{ name: "items", type: "list of strings", description: "The items of the list." }],
+    named: [],
+    snippet: 'main.bullets(["First item"])',
+    examples: [
+      {
+        note: "A bullet list",
+        source: 'main.bullets(["Numbering is automatic.", "References are checked.", "Exports are plain LaTeX."])'
+      }
+    ],
+    status: "implemented"
+  },
+
+  numbered: {
+    name: "numbered",
+    category: "Prose",
+    role: "block",
+    containers: EVERY_CONTAINER,
+    positional: [1],
+    signature: 'numbered(["First item", "Second item"])',
+    summary: "A list numbered by the engine.",
+    description:
+      "Each item of the list is one piece of prose. The engine numbers the items.",
+    args: [{ name: "items", type: "list of strings", description: "The items of the list." }],
+    named: [],
+    snippet: 'main.numbered(["First item"])',
+    examples: [
+      {
+        note: "A numbered list",
+        source: 'main.numbered(["The identity holds for n = 1.", "The right-hand side is a polynomial of degree three."])'
+      }
+    ],
+    status: "implemented"
+  },
+
+  page_break: {
+    name: "page_break",
+    category: "Document structure",
+    role: "block",
+    containers: EVERY_CONTAINER,
+    positional: [0],
+    signature: "page_break()",
+    summary: "A page break.",
+    description:
+      "The break is placed where the statement stands. It takes no arguments.",
+    args: [],
+    named: [],
+    snippet: "main.page_break()",
+    examples: [
+      {
+        note: "A page break",
+        source: 'main.page_break()\nmain.paragraph("The appendix starts here.")'
       }
     ],
     status: "implemented"
@@ -608,26 +616,341 @@ export const COMPONENTS = {
 
   bibliography: {
     name: "bibliography",
-    category: "Academic structures",
-    role: "block",
-    signature: 'bibliography([{ key: "smith2024", type: "article", ... }])',
-    summary: "The reference database for citations.",
+    category: "References",
+    role: "setting",
+    containers: ["document"],
+    positional: [0],
+    signature: 'bibliography()',
+    summary: "The reference list of the document.",
     description:
-      "Entries are structured objects with a required key and type-specific metadata. Supported types: article, book, inproceedings, website, techreport, misc.",
-    args: [
-      {
-        name: "entries",
-        type: "list of objects",
-        description: "Each entry needs a unique key; author, title, and year are required for every type, plus journal for articles, publisher for books, booktitle for inproceedings, url for websites, and institution for technical reports."
-      }
-    ],
+      "A bibliography is a container: bind it, then add one entry per reference, with the method named after the type.",
+    args: [],
     named: [],
-    snippet:
-      'bibliography([\n  {\n    key: "ref1",\n    type: "article",\n    author: "Author",\n    title: "Title",\n    journal: "Journal",\n    year: 2026\n  }\n])',
+    snippet: 'refs = document.bibliography()',
     examples: [
       {
-        note: "One entry and a citation",
-        source: 'bibliography([\n  { key: "smith2024", type: "article", author: "J. Smith", title: "On series", journal: "J. Math.", year: 2024 }\n])'
+        note: "A bibliography with two entries",
+        source: 'refs = document.bibliography()\nrefs.book("euler1748", author="L. Euler", title="Introductio in analysin infinitorum", publisher="Bousquet", year=1748)\nrefs.article("smith2024", author="J. Smith", title="On a series identity", journal="Journal of Examples", volume=12, pages="34-56", year=2024)'
+      }
+    ],
+    status: "implemented"
+  },
+
+  book: {
+    name: "book",
+    category: "References",
+    role: "reference",
+    containers: ["references"],
+    positional: [1],
+    signature: 'book("key", author="…", title="…", publisher="…", year=…)',
+    summary: "A book in the reference list.",
+    description:
+      "The key is the name cite(...) uses. A book needs an author, a title, a year, and a publisher.",
+    args: [{ name: "key", type: "string", description: "The name of the entry, used by cite(...). It must be unique." }],
+    named: [
+      { name: "author", type: "string", description: "The author of the book." },
+      { name: "title", type: "string", description: "The title of the book." },
+      { name: "year", type: "number", description: "The year of publication." },
+      { name: "publisher", type: "string", description: "The publisher." },
+      { name: "edition", type: "string", description: "The edition." },
+      { name: "address", type: "string", description: "The place of publication." },
+      { name: "doi", type: "string", description: "The digital object identifier." },
+      { name: "url", type: "string", description: "A link to the book." }
+    ],
+    snippet: 'refs.book("key", author="…", title="…", publisher="…", year=2026)',
+    examples: [
+      {
+        note: "A book",
+        source: 'refs.book("euler1748", author="L. Euler", title="Introductio in analysin infinitorum", publisher="Bousquet", year=1748)'
+      }
+    ],
+    status: "implemented"
+  },
+
+  article: {
+    name: "article",
+    category: "References",
+    role: "reference",
+    containers: ["references"],
+    positional: [1],
+    signature: 'article("key", author="…", title="…", journal="…", year=…)',
+    summary: "A journal article in the reference list.",
+    description:
+      "The key is the name cite(...) uses. An article needs an author, a title, a year, and a journal.",
+    args: [{ name: "key", type: "string", description: "The name of the entry, used by cite(...). It must be unique." }],
+    named: [
+      { name: "author", type: "string", description: "The author of the article." },
+      { name: "title", type: "string", description: "The title of the article." },
+      { name: "year", type: "number", description: "The year of publication." },
+      { name: "journal", type: "string", description: "The journal the article appeared in." },
+      { name: "volume", type: "number", description: "The volume of the journal." },
+      { name: "issue", type: "number", description: "The issue of the volume." },
+      { name: "pages", type: "string", description: "The page range." },
+      { name: "doi", type: "string", description: "The digital object identifier." },
+      { name: "url", type: "string", description: "A link to the article." }
+    ],
+    snippet: 'refs.article("key", author="…", title="…", journal="…", year=2026)',
+    examples: [
+      {
+        note: "An article",
+        source: 'refs.article("smith2024", author="J. Smith", title="On a series identity", journal="Journal of Examples", volume=12, pages="34-56", year=2024)'
+      }
+    ],
+    status: "implemented"
+  },
+
+  inproceedings: {
+    name: "inproceedings",
+    category: "References",
+    role: "reference",
+    containers: ["references"],
+    positional: [1],
+    signature: 'inproceedings("key", author="…", title="…", booktitle="…", year=…)',
+    summary: "A conference paper in the reference list.",
+    description:
+      "The key is the name cite(...) uses. A conference paper needs an author, a title, a year, and the proceedings it appeared in.",
+    args: [{ name: "key", type: "string", description: "The name of the entry, used by cite(...). It must be unique." }],
+    named: [
+      { name: "author", type: "string", description: "The author of the paper." },
+      { name: "title", type: "string", description: "The title of the paper." },
+      { name: "year", type: "number", description: "The year of the conference." },
+      { name: "booktitle", type: "string", description: "The proceedings the paper appeared in." },
+      { name: "pages", type: "string", description: "The page range." },
+      { name: "publisher", type: "string", description: "The publisher of the proceedings." },
+      { name: "doi", type: "string", description: "The digital object identifier." },
+      { name: "url", type: "string", description: "A link to the paper." }
+    ],
+    snippet: 'refs.inproceedings("key", author="…", title="…", booktitle="…", year=2026)',
+    examples: [
+      {
+        note: "A conference paper",
+        source: 'refs.inproceedings("knuth1984", author="D. E. Knuth", title="Literate programming", booktitle="The Computer Modern Typesetter", year=1984)'
+      }
+    ],
+    status: "implemented"
+  },
+
+  website: {
+    name: "website",
+    category: "References",
+    role: "reference",
+    containers: ["references"],
+    positional: [1],
+    signature: 'website("key", author="…", title="…", url="…", year=…)',
+    summary: "A website in the reference list.",
+    description:
+      "The key is the name cite(...) uses. A website needs an author, a title, a year, and a link.",
+    args: [{ name: "key", type: "string", description: "The name of the entry, used by cite(...). It must be unique." }],
+    named: [
+      { name: "author", type: "string", description: "The author of the page." },
+      { name: "title", type: "string", description: "The title of the page." },
+      { name: "year", type: "number", description: "The year of publication." },
+      { name: "url", type: "string", description: "The address of the page." },
+      { name: "note", type: "string", description: "A note about the entry." }
+    ],
+    snippet: 'refs.website("key", author="…", title="…", url="…", year=2026)',
+    examples: [
+      {
+        note: "A website",
+        source: 'refs.website("spec", author="The EasyTeX Team", title="The MathScript specification", url="https://example.org", year=2026)'
+      }
+    ],
+    status: "implemented"
+  },
+
+  techreport: {
+    name: "techreport",
+    category: "References",
+    role: "reference",
+    containers: ["references"],
+    positional: [1],
+    signature: 'techreport("key", author="…", title="…", institution="…", year=…)',
+    summary: "A technical report in the reference list.",
+    description:
+      "The key is the name cite(...) uses. A report needs an author, a title, a year, and the institution that published it.",
+    args: [{ name: "key", type: "string", description: "The name of the entry, used by cite(...). It must be unique." }],
+    named: [
+      { name: "author", type: "string", description: "The author of the report." },
+      { name: "title", type: "string", description: "The title of the report." },
+      { name: "year", type: "number", description: "The year of the report." },
+      { name: "institution", type: "string", description: "The institution that published the report." },
+      { name: "number", type: "string", description: "The report number." },
+      { name: "url", type: "string", description: "A link to the report." }
+    ],
+    snippet: 'refs.techreport("key", author="…", title="…", institution="…", year=2026)',
+    examples: [
+      {
+        note: "A technical report",
+        source: 'refs.techreport("knuth1984", author="D. E. Knuth", title="Literate programming", institution="Stanford University", number="CS-104", year=1984)'
+      }
+    ],
+    status: "implemented"
+  },
+
+  misc: {
+    name: "misc",
+    category: "References",
+    role: "reference",
+    containers: ["references"],
+    positional: [1],
+    signature: 'misc("key", author="…", title="…", year=…)',
+    summary: "A reference that fits no other type.",
+    description:
+      "The key is the name cite(...) uses. A miscellaneous reference needs an author, a title, and a year.",
+    args: [{ name: "key", type: "string", description: "The name of the entry, used by cite(...). It must be unique." }],
+    named: [
+      { name: "author", type: "string", description: "The author of the work." },
+      { name: "title", type: "string", description: "The title of the work." },
+      { name: "year", type: "number", description: "The year of the work." },
+      { name: "note", type: "string", description: "A note about the entry." },
+      { name: "url", type: "string", description: "A link to the work." }
+    ],
+    snippet: 'refs.misc("key", author="…", title="…", year=2026)',
+    examples: [
+      {
+        note: "A miscellaneous reference",
+        source: 'refs.misc("notes", author="The EasyTeX Team", title="Working notes", year=2026, note="Unpublished")'
+      }
+    ],
+    status: "implemented"
+  },
+
+  bold: {
+    name: "bold",
+    category: "Prose",
+    role: "inline",
+    containers: [],
+    positional: [1],
+    signature: 'bold("text")',
+    summary: "Bold text.",
+    description: "Inline content, written as a string or as another inline expression.",
+    args: [{ name: "content", type: "string or inline content", description: "The text to embolden." }],
+    named: [],
+    snippet: 'main.paragraph("Prose can be ", bold("text"), ".")',
+    examples: [{ note: "Bold text", source: 'main.paragraph("Prose can be ", bold("bold"), ".")' }],
+    status: "implemented"
+  },
+
+  italic: {
+    name: "italic",
+    category: "Prose",
+    role: "inline",
+    containers: [],
+    positional: [1],
+    signature: 'italic("text")',
+    summary: "Italic text.",
+    description: "Inline content, written as a string or as another inline expression.",
+    args: [{ name: "content", type: "string or inline content", description: "The text to italicise." }],
+    named: [],
+    snippet: 'main.paragraph("Prose can be ", italic("text"), ".")',
+    examples: [{ note: "Italic text", source: 'main.paragraph("Prose can be ", italic("italic"), ".")' }],
+    status: "implemented"
+  },
+
+  underline: {
+    name: "underline",
+    category: "Prose",
+    role: "inline",
+    containers: [],
+    positional: [1],
+    signature: 'underline("text")',
+    summary: "Underlined text.",
+    description: "Inline content, written as a string or as another inline expression.",
+    args: [{ name: "content", type: "string or inline content", description: "The text to underline." }],
+    named: [],
+    snippet: 'main.paragraph("Prose can be ", underline("text"), ".")',
+    examples: [{ note: "Underlined text", source: 'main.paragraph("Prose can be ", underline("underline"), ".")' }],
+    status: "implemented"
+  },
+
+  emphasis: {
+    name: "emphasis",
+    category: "Prose",
+    role: "inline",
+    containers: [],
+    positional: [1],
+    signature: 'emphasis("text")',
+    summary: "Emphasised text.",
+    description: "Inline content, written as a string or as another inline expression.",
+    args: [{ name: "content", type: "string or inline content", description: "The text to emphasise." }],
+    named: [],
+    snippet: 'main.paragraph("Prose can be ", emphasis("text"), ".")',
+    examples: [{ note: "Emphasised text", source: 'main.paragraph("Prose can be ", emphasis("emphasis"), ".")' }],
+    status: "implemented"
+  },
+
+  code_text: {
+    name: "code_text",
+    category: "Prose",
+    role: "inline",
+    containers: [],
+    positional: [1],
+    signature: 'code_text("text")',
+    summary: "Text in a monospaced face.",
+    description: "Use it for a name, a path, or a short piece of code inside a sentence.",
+    args: [{ name: "content", type: "string or inline content", description: "The text to show as code." }],
+    named: [],
+    snippet: 'main.paragraph("Use ", code_text("code_text"), ".")',
+    examples: [{ note: "Code in a sentence", source: 'main.paragraph("Use ", code_text("code_text"), " for a name.")' }],
+    status: "implemented"
+  },
+
+  inline: {
+    name: "inline",
+    category: "Mathematics blocks",
+    role: "inline",
+    containers: [],
+    positional: [1],
+    signature: "inline(expression)",
+    summary: "Mathematics inside a sentence.",
+    description:
+      "The expression is typeset in the line of the text, at the size of the text. Use a display equation for anything longer.",
+    args: [{ name: "expression", type: "expression", description: "The mathematics to set inline." }],
+    named: [],
+    snippet: 'main.paragraph("Mathematics sits inline, as in ", inline(x), ".")',
+    examples: [{ note: "Inline mathematics", source: 'main.paragraph("The series ", inline(sum(i, 1, n, i^2)), " is quadratic.")' }],
+    status: "implemented"
+  },
+
+  ref: {
+    name: "ref",
+    category: "Mathematics blocks",
+    role: "inline",
+    containers: [],
+    positional: [1],
+    signature: 'ref("label")',
+    summary: "A reference to a numbered block.",
+    description:
+      "The label is the name a block carries. The reference is replaced by the number of the block, with the matching noun for figures, tables, and theorems. An unresolved reference is a diagnostic, not a silent blank.",
+    args: [{ name: "label", type: "string", description: "The label of the block to point at." }],
+    named: [],
+    snippet: 'main.equation(x = 1, number=true, label="eq:series")\nmain.paragraph("See ", ref("eq:series"), ".")',
+    examples: [
+      {
+        note: "A reference",
+        source: 'main.equation(x = 1, number=true, label="eq:series")\nmain.paragraph("Equation ", ref("eq:series"), " gives the closed form.")'
+      }
+    ],
+    status: "implemented"
+  },
+
+  cite: {
+    name: "cite",
+    category: "References",
+    role: "inline",
+    containers: [],
+    positional: [1],
+    signature: 'cite("key")',
+    summary: "A citation of a reference.",
+    description:
+      "The key is the name of an entry in the reference list. Give several keys to cite several works at once.",
+    args: [{ name: "keys", type: "string", description: "The key of the entry, or several keys separated by commas." }],
+    named: [],
+    snippet: 'refs.book("smith2024", author="J. Smith", title="On series", publisher="Examples", year=2024)\nmain.paragraph("Following ", cite("smith2024"), ".")',
+    examples: [
+      {
+        note: "A citation",
+        source: 'refs.book("smith2024", author="J. Smith", title="On series", publisher="Examples", year=2024)\nmain.paragraph("Following Smith ", cite("smith2024"), ".")'
       }
     ],
     status: "implemented"
@@ -636,40 +959,67 @@ export const COMPONENTS = {
 
 export const COMPONENT_DOCS = Object.values(COMPONENTS);
 
+// The kind of block a method produces. A bound name stands for one of these.
+export const CONTAINER_OF_METHOD = {
+  section: "section",
+  subsection: "subsection",
+  subsubsection: "subsubsection",
+  theorem: "theorem",
+  lemma: "theorem",
+  definition: "theorem",
+  corollary: "theorem",
+  proof: "proof",
+  quote: "quote",
+  figure: "figure",
+  bibliography: "references"
+};
+
+// The methods that may be called on a container, by the kind of container.
+export function methodsFor(kind) {
+  return Object.values(COMPONENTS).filter(
+    (component) => component.role !== "inline" && component.containers.includes(kind)
+  );
+}
+
 export const DOCUMENT_NOTES = [
   {
-    title: "A document is a function call",
-    body: "Every document is one document(...) call. Metadata is an object; content is an ordered list of blocks. A single block on its own is accepted as a shortcut and wrapped in a default article.",
-    example: 'document({ type: "article", title: "Note", content: [ text("Hello.") ] })'
+    title: "A document is a program of statements",
+    body: "A document is one Document(...) call, bound to a name, followed by the statements that build it. Nothing is executed: the statements are folded into the same document tree the renderer has always used.",
+    example: 'document = Document(type="article", title="Note")'
   },
   {
     title: "Blocks and inline content",
-    body: "Blocks stand on their own: sections, paragraphs, equations, lists, tables, figures, theorems. Inline components live inside text(...): bold, italic, inline mathematics, references, and citations.",
-    example: 'text("The series ", inline(sum(i, 1, n, i)), " is quadratic.")'
+    body: "Blocks stand on their own: sections, paragraphs, equations, lists, tables, figures, theorems. Inline components live inside a paragraph: bold, italic, inline mathematics, references, and citations.",
+    example: 'main.paragraph("The series ", inline(sum(i, 1, n, i)), " is quadratic.")'
+  },
+  {
+    title: "A name is a block, never a value",
+    body: "A name may only stand for a document or a block, and may only be used before a dot. So n = 5 is never an assignment, and a section named e never hides the constant e.",
+    example: 'main = document.section("Introduction")\nmain.paragraph("The sum of the first ", n, " squares.")'
   },
   {
     title: "Numbering is automatic",
     body: "Sections, equations, figures, tables, and theorem environments are numbered by the engine. Never type numbers into a heading; the template manages counters and the table of contents.",
-    example: 'equation(frac(a, b) = c, number=true)'
+    example: 'main.equation(frac(a, b) = c, number=true)'
   },
   {
     title: "Labels and references",
-    body: "A label is a stable name for a block. ref(\"label\") is replaced by the target's number, with the matching noun for figures, tables, and theorems. Unresolved references are diagnostics, not silent blanks.",
-    example: 'text("See ", ref("eq:series"), " and ", ref("fig:results"), ".")'
+    body: "A label is a stable name for a block, written as a named argument. ref(\"label\") is replaced by the target's number, with the matching noun for figures, tables, and theorems. Unresolved references are diagnostics, not silent blanks.",
+    example: 'main.equation(frac(a, b) = c, number=true, label="eq:ratio")\nmain.paragraph("Equation ", ref("eq:ratio"), " gives the ratio.")'
   },
   {
-    title: "Citations and bibliography",
-    body: "cite(\"key\") refers to an entry in the bibliography block. Entries are structured objects; the engine validates required fields for each entry type and reports incomplete entries.",
-    example: 'text("Following Smith ", cite("smith2024"), ".")'
+    title: "Citations and references",
+    body: "cite(\"key\") refers to an entry in the reference list. Each entry is added with the method named after its type, and the engine checks that the type has the fields it needs.",
+    example: 'refs = document.bibliography()\nrefs.article("smith2024", author="J. Smith", title="On series", journal="J. Math.", year=2024)'
   },
   {
     title: "Page layout is declarative",
-    body: "page({ ... }) configures paper size, orientation, margins, and columns. Defaults are usable without any configuration. Layout never changes the mathematical meaning of an expression.",
-    example: 'page({ size: "A4", margins: { top: "25mm", right: "25mm", bottom: "25mm", left: "25mm" } })'
+    body: "page(...) configures paper size, orientation, margins, and columns. Defaults are usable without any configuration. Layout never changes the mathematical meaning of an expression.",
+    example: 'document.page(size="A4", margin="25mm")'
   },
   {
     title: "Presentation is separate from meaning",
     body: "The same expression renders as MathML in the preview, LaTeX in the export, or text in a diagnostic. The document tree describes structure; renderers decide appearance.",
-    example: 'integral(x, 0, 1, x^2)'
+    example: 'main.equation(integral(x, 0, 1, x^2) = frac(1, 3), number=true)'
   }
 ];

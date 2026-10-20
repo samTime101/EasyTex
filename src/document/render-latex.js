@@ -162,7 +162,7 @@ function renderBlock(block) {
       return [
         `\\begin{figure}[htbp]`,
         `\\centering`,
-        `\\includegraphics${renderImageOptions(block.image)}{${block.image.src}}`,
+        block.image ? `\\includegraphics${renderImageOptions(block.image)}{${block.image.src}}` : "",
         caption,
         label,
         `\\end{figure}`

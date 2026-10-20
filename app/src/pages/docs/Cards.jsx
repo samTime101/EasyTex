@@ -31,6 +31,12 @@ export const FunctionCard = memo(function FunctionCard({ doc }) {
       </div>
       <p className="function-summary">{doc.summary}</p>
       {doc.description ? <p className="function-description">{doc.description}</p> : null}
+      {doc.containers?.length ? (
+        <p className="function-description">
+          {"Called on: "}
+          {doc.containers.join(", ")}.
+        </p>
+      ) : null}
       {doc.args?.length ? <ArgsTable caption="Arguments" args={doc.args} /> : null}
       {doc.examples?.length ? (
         <div className="example-list">
@@ -54,6 +60,12 @@ export const ComponentCard = memo(function ComponentCard({ doc }) {
       </div>
       <p className="function-summary">{doc.summary}</p>
       {doc.description ? <p className="function-description">{doc.description}</p> : null}
+      {doc.containers?.length ? (
+        <p className="function-description">
+          {"Called on: "}
+          {doc.containers.join(", ")}.
+        </p>
+      ) : null}
       {doc.args?.length ? <ArgsTable caption="Arguments" args={doc.args} /> : null}
       {doc.named?.length ? <ArgsTable caption="Named arguments" args={doc.named} /> : null}
       {doc.examples?.length ? (

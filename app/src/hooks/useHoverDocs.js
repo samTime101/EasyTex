@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { docsFor, fieldDocsFor } from "../lib/engine.js";
+import { COMPONENT_DOCS, docsFor, fieldDocsFor } from "../lib/engine.js";
 import { analyzeSource, looksLikeField, wordAt } from "../lib/hover-analysis.js";
 import { TextareaMirror } from "@ui/textarea-geometry.js";
 
@@ -60,7 +60,9 @@ export function useHoverDocs({ textareaRef, shellRef, kinds = ["function", "cons
         hide();
         return;
       }
-      const callable = docsFor(word.name);
+      const component = COMPONENT_DOCS.find((doc) => doc.name === word.name);
+      const callable =
+        docsFor(word.name) ?? (component ? { ...component, kind: "component" } : null);
       const field = fieldDocsFor(word.name);
       if (!callable && !field) {
         hide();

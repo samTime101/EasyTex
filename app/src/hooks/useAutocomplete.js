@@ -15,6 +15,7 @@ function matchesPrefix(name, prefix) {
 function badgeFor(doc) {
   if (doc.kind === "constant") return "const";
   if (doc.kind === "component") return "doc";
+  if (doc.kind === "method") return "method";
   if (doc.kind === "symbol") return "sym";
   if (doc.kind === "field") return "field";
   if (doc.kind === "value") return doc.isDefault ? "default" : "option";
@@ -83,7 +84,7 @@ export function useAutocomplete({
         return;
       }
 
-      if (context?.type === "field" || context?.type === "value") {
+      if (context?.type === "field" || context?.type === "value" || context?.type === "method") {
         if (!allowOpen && !openRef.current) return;
         const prefix = force ? "" : context.prefix;
         const candidates = context.candidates.filter((doc) => matchesPrefix(doc.name, prefix));

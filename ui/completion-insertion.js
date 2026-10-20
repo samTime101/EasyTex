@@ -16,6 +16,10 @@ export function completionInsertion(doc, options = {}) {
     const inserted = nextChar === ":" || nextChar === "=" ? doc.name : `${doc.name}: `;
     return { inserted, caretOffset: inserted.length };
   }
+  if (doc.kind === "method") {
+    const inserted = `${doc.name}(`;
+    return { inserted, caretOffset: inserted.length };
+  }
   if (doc.kind === "value") {
     const inserted = doc.quote ? `"${doc.value}"` : doc.value;
     return { inserted, caretOffset: inserted.length };

@@ -132,7 +132,7 @@ test("the document writer renders the sheet and its statistics", async () => {
   const view = mount(WriterPage);
   await wait(COMPILE_DELAY);
   const editor = view.container.querySelector("#editor");
-  assert.match(editor.value, /^document\(\{/);
+  assert.match(editor.value, /^document = Document\(/);
   assert.ok(view.container.querySelector("#sheet .ms-sheet"), "the sheet is rendered");
   assert.match(view.container.querySelector("#doc-stats").textContent, /section/);
   assert.match(view.container.querySelector("#page-info").textContent, /margins/);
@@ -140,19 +140,36 @@ test("the document writer renders the sheet and its statistics", async () => {
   view.unmount();
 });
 
-test("the writer suggests the fields of the object around the caret", async () => {
+test("the writer suggests the named arguments around the caret", async () => {
   const view = mount(WriterPage);
   const editor = view.container.querySelector("#editor");
   act(() => {
     editor.focus();
   });
-  type(editor, "document({ ti");
+  editor.value = "";
+  type(editor, "document = Document(ti");
   await wait(150);
 
   const items = [...view.container.querySelectorAll(".autocomplete-item")];
   assert.equal(items.length, 1);
   assert.match(items[0].textContent, /^title/);
   assert.match(items[0].textContent, /field/i);
+  view.unmount();
+});
+
+test("the writer suggests the methods of the container around the caret", async () => {
+  const view = mount(WriterPage);
+  const editor = view.container.querySelector("#editor");
+  act(() => {
+    editor.focus();
+  });
+  editor.value = "";
+  type(editor, "document = Document(type=\"article\")\nmain = document.section(\"S\")\nmain.para");
+  await wait(150);
+
+  const items = [...view.container.querySelectorAll(".autocomplete-item")];
+  assert.equal(items.length, 1);
+  assert.match(items[0].textContent, /^paragraph/);
   view.unmount();
 });
 

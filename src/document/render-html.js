@@ -194,7 +194,7 @@ function renderBlock(block) {
       const caption = renderCaption("Figure", block);
       return (
         `<figure class="ms-figure"${block.id ? ` id="${esc(block.id)}"` : ""}>` +
-        renderImage(block.image) +
+        (block.image ? renderImage(block.image) : "") +
         caption +
         `</figure>`
       );

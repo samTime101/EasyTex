@@ -1,5 +1,5 @@
 export { tokenize, TOKEN } from "./lexer.js";
-export { parse } from "./parser.js";
+export { parse, parseProgram } from "./parser.js";
 export { validate } from "./validate.js";
 export { renderMathML } from "./render-mathml.js";
 export { renderLaTeX } from "./render-latex.js";

@@ -135,12 +135,16 @@ test("the manifest describes the whole language surface", () => {
   assert.ok(manifest.symbols.some((entry) => entry.name === "hbar"));
   assert.ok(manifest.operators.some((entry) => entry.symbol === "^"));
 
-  assert.ok(manifest.components.some((entry) => entry.name === "document"));
+  assert.ok(manifest.components.some((entry) => entry.name === "Document"));
+  assert.ok(manifest.components.some((entry) => entry.name === "paragraph"));
   assert.ok(manifest.fields.some((entry) => entry.name === "title"));
-  assert.ok(manifest.metadata.includes("content"));
+  assert.ok(manifest.metadata.includes("title"));
+  assert.ok(!manifest.metadata.includes("content"));
   assert.ok(manifest.pageOptions.includes("size"));
-  assert.ok(manifest.marginSides.includes("top"));
+  assert.ok(manifest.pageOptions.includes("margin_top"));
+  assert.ok(manifest.marginSides.includes("margin_top"));
   assert.deepEqual(manifest.namedArguments.equation, ["label", "number"]);
+  assert.deepEqual(manifest.namedArguments.paragraph, []);
   assert.deepEqual(manifest.bibliographyTypes.article.required, [
     "author",
     "title",

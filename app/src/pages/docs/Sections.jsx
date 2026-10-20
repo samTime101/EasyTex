@@ -57,19 +57,11 @@ function Section({ id, title, count, children, hidden = false }) {
 
 const HERO_SOURCE = "x = frac(-b + sqrt(b^2 - 4*a*c), 2*a)";
 
-export const DOCUMENT_SAMPLE = `document({
-  type: "article",
-  title: "Summing Squares",
-  author: "Ada Lovelace",
-  abstract: "A one-page note on sum(i, 1, n, i^2).",
-  content: [
-    section("The closed form", [
-      text("The sum of the first ", n, " squares is ", inline(sum(i, 1, n, i^2)), "."),
-      equation(sum(i, 1, n, i^2) = frac(n*(n + 1)*(2*n + 1), 6), number=true, label="eq:series"),
-      text("See ", ref("eq:series"), " for the closed form.")
-    ])
-  ]
-})`;
+export const DOCUMENT_SAMPLE = `document = Document(type="article", title="Summing Squares", author="Ada Lovelace", abstract="A one-page note on sum(i, 1, n, i^2).")
+main = document.section("The closed form")
+main.paragraph("The sum of the first ", n, " squares is ", inline(sum(i, 1, n, i^2)), ".")
+main.equation(sum(i, 1, n, i^2) = frac(n*(n + 1)*(2*n + 1), 6), number=true, label="eq:series")
+main.paragraph("See ", ref("eq:series"), " for the closed form.")`;
 
 export function Hero() {
   const result = compile(HERO_SOURCE);
@@ -467,11 +459,14 @@ export function DocumentAuthoringSection() {
   return (
     <Section id="document-authoring" title="Document authoring">
       <p className="docs-lede">
-        A document is a single {"document({ ... })"} call: metadata in an object, content in a list of
-        blocks. The type field chooses a template; an optional page(...) block sets geometry;
-        section, text, equation, table, figure, theorem, and friends build the body. Mathematics
-        inside text(...) and inline(...) is ordinary MathScript, checked by the same validator as the
-        expression editor.
+        A document is a <strong>program of statements</strong>. The first statement creates the
+        document and binds it to a name; every other statement is a method call on a bound name, and
+        the blocks appear in the order their statements stand. A name stands for a document or a
+        block, never for a value, so there is no assignment in the language. The named arguments of
+        {"Document(...)"} choose the template and the metadata, {"document.page(...)"} sets the
+        geometry, and section, paragraph, equation, table, figure, theorem, and friends build the
+        body. Mathematics inside paragraph(...) and inline(...) is ordinary MathScript, checked by
+        the same validator as the expression editor.
       </p>
       <div className="docs-doc-actions">
         <a
@@ -509,10 +504,10 @@ export function DocumentAuthoringSection() {
         ))}
       </div>
       <p className="docs-lede">
-        Components are the block and inline vocabulary of a document. Positional arguments come
-        first; the named arguments listed on each card (label, number, caption, width, and so on)
-        are an extension proposed by this implementation. Every component below is implemented and
-        exercised by the test suite.
+        Methods are the vocabulary of a document, and inline components are the vocabulary inside a
+        paragraph. Each method names the containers it may be called on, and takes the positional
+        arguments listed on its card; the named arguments (content, label, number, caption, width,
+        and so on) follow them. Every method below is implemented and exercised by the test suite.
       </p>
     </Section>
   );

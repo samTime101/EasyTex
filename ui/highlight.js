@@ -19,13 +19,13 @@ import { TEXTAREA_STYLE_PROPS } from "./textarea-geometry.js";
 
 const FUNCTION_NAMES = new Set(FUNCTION_DOCS.map((doc) => doc.name));
 const CONSTANT_NAMES = new Set(CONSTANT_DOCS.map((doc) => doc.name));
-const COMPONENT_NAMES = new Set(COMPONENT_DOCS.map((doc) => doc.name));
+const COMPONENT_NAMES = new Set([...COMPONENT_DOCS.map((doc) => doc.name), "Document"]);
 const FIELD_NAMES = new Set(FIELD_DOCS.map((doc) => doc.name));
 const BOOLEAN_NAMES = new Set(["true", "false"]);
 
 const OPERATOR_CHARS = new Set(["+", "-", "*", "/", "%", "^", "=", "<", ">", "!"]);
 const TWO_CHAR_OPERATORS = new Set(["!=", "<=", ">="]);
-const PUNCT_CHARS = new Set(["(", ")", "[", "]", "{", "}", ":", ","]);
+const PUNCT_CHARS = new Set(["(", ")", "[", "]", "{", "}", ":", ",", "."]);
 
 function isDigit(ch) {
   return ch >= "0" && ch <= "9";
@@ -159,6 +159,17 @@ function isFieldUse(tokens, index) {
   return false;
 }
 
+// True when the identifier names a method, that is, the next significant
+// token is a dot.
+function isMethodUse(tokens, index) {
+  for (let cursor = index + 1; cursor < tokens.length; cursor += 1) {
+    const token = tokens[cursor];
+    if (token.type === "space") continue;
+    return token.type === "punct" && token.text === ".";
+  }
+  return false;
+}
+
 function classFor(tokens, index, options = {}) {
   const token = tokens[index];
   switch (token.type) {
@@ -181,6 +192,9 @@ function classFor(tokens, index, options = {}) {
   const name = token.text;
   if (BOOLEAN_NAMES.has(name)) return "boolean";
   if (options.fields === true && FIELD_NAMES.has(name) && isFieldUse(tokens, index)) return "field";
+  if (options.components === true && isMethodUse(tokens, index) && COMPONENT_NAMES.has(name)) {
+    return "component";
+  }
   if (FUNCTION_NAMES.has(name)) return "function";
   if (CONSTANT_NAMES.has(name)) return "constant";
   if (options.components === true && COMPONENT_NAMES.has(name)) return "component";

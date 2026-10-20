@@ -6,7 +6,7 @@
 // expression pipeline, so a renderer never receives an invalid tree.
 
 import { CATEGORY, diagnostic } from "../diagnostics.js";
-import { parse } from "../parser.js";
+import { parseProgram } from "../parser.js";
 import { buildDocument } from "./build.js";
 import { renderDocumentHTML } from "./render-html.js";
 import { renderDocumentLaTeX } from "./render-latex.js";
@@ -16,28 +16,31 @@ export { renderDocumentHTML, renderInline } from "./render-html.js";
 export { renderDocumentLaTeX } from "./render-latex.js";
 export { renderStandaloneHTML } from "./export-html.js";
 export { SHEET_CSS } from "./styles.js";
-export { COMPONENTS, COMPONENT_DOCS, COMPONENT_CATEGORY_ORDER, DOCUMENT_NOTES } from "./components.js";
+export {
+  COMPONENTS,
+  COMPONENT_DOCS,
+  COMPONENT_CATEGORY_ORDER,
+  CONTAINER_OF_METHOD,
+  DOCUMENT_NOTES,
+  methodsFor
+} from "./components.js";
 export { TEMPLATES, TEMPLATE_NAMES, PAGE_SIZES, resolvePage, parseLength, parseDimension } from "./templates.js";
 
 export function compileDocument(source, options = {}) {
-  const parsed = parse(source);
+  const parsed = parseProgram(source);
   const diagnostics = [...parsed.diagnostics];
   const tokens = parsed.tokens;
 
-  if (!parsed.ast) {
-    return { document: null, diagnostics, html: null, latex: null, ast: null, tokens };
-  }
-
-  const built = buildDocument(parsed.ast, options);
+  const built = buildDocument(parsed, options);
   diagnostics.push(...built.diagnostics);
 
   if (!built.document) {
-    return { document: null, diagnostics, html: null, latex: null, ast: parsed.ast, tokens };
+    return { document: null, diagnostics, html: null, latex: null, ast: null, tokens };
   }
 
   const hasErrors = diagnostics.some((entry) => entry.severity !== "warning");
   if (hasErrors) {
-    return { document: built.document, diagnostics, html: null, latex: null, ast: parsed.ast, tokens };
+    return { document: built.document, diagnostics, html: null, latex: null, ast: null, tokens };
   }
 
   let html = null;
@@ -59,5 +62,5 @@ export function compileDocument(source, options = {}) {
     );
   }
 
-  return { document: built.document, diagnostics, html, latex, ast: parsed.ast, tokens };
+  return { document: built.document, diagnostics, html, latex, ast: null, tokens };
 }
