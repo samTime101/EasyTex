@@ -55,8 +55,6 @@ parsed into data and validated before rendering.
 - A **Maximize** toggle that hides the output pane so the source fills the workspace.
 - Examples library, complex-mode toggle for `i`, and a paper-and-ink light theme with a monochrome
   dark theme, persisted in `localStorage`.
-- A short intro strip distinguishes EasyTeX (the application) from MathScript (the language) and
-  links to the reference overview.
 - Keyboard-accessible output tabs (arrow keys, Home, and End); copy and download actions are disabled
   when there is no valid output.
 - Copy output and download a complete `.tex` document.
@@ -183,6 +181,13 @@ Node 18 or newer is required; there are no runtime dependencies. The dev server 
 static file server (`tools/serve.mjs`).
 
 ## Updates
+
+### 2026-10-20 — focused editor layout
+
+- Removed the introductory strip from the expression editor. Both editors now begin directly with
+  the source and output panels.
+- Adjusted the workspace grid so the panels fill the available height without an empty row, and
+  restored natural stacked rows on narrow screens. Removed the now-unused intro styles.
 
 ### 2026-10-20 — object-field completion and enumerated values
 
