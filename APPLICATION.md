@@ -31,7 +31,7 @@ parsed into data and validated before rendering.
 - First-order calculus: `derivative`, `partial`; higher orders and mixed partials are written by
   nesting.
 - Structures: `matrix([[1, 2], [3, 4]])` and `vector([x, y, z])`, with shape validation.
-- Constants include `pi`, `e`, `i`, and `infinity`; `log` is base 10 and `ln` is natural.
+- Constants include `pi`, `e`, `i`, and `infinity`; `log` is base 10, `ln` is natural, and `logbase(expression, base)` takes an explicit base.
 - Expanded Greek vocabulary: variant forms (`varepsilon`, `varphi`, `vartheta`, `varkappa`, `varpi`, `varrho`, `varsigma`), uppercase commands (`Gamma` through `Omega`), and `omicron` (whose LaTeX input is the ordinary letter `o`).
 - Named ordinary symbols such as `aleph`, `hbar`, `emptyset`, `nabla`, `forall`, `exists`, `ell`, `Re`, and `Im`; they are ordinary free variables that render upright.
 - **No implicit multiplication**: `2x` is an error with a diagnostic that suggests `2*x`.
@@ -48,7 +48,7 @@ parsed into data and validated before rendering.
 - Output tabs for **Preview**, **LaTeX**, **MathML**, and the raw **AST**.
 - Clickable diagnostics that select the offending source range.
 - Autocomplete (`Ctrl` + `Space`) with signatures and correct insertion of calls and constants.
-- Hover documentation for functions and constants, aware of bound-variable scope.
+- Hover documentation for functions, constants, and documented symbols, aware of bound-variable scope.
 - Syntax highlighting for comments, strings, numbers, booleans, functions, constants, and operators.
 - Auto-closing brackets and quotes, smart `Enter`, line indent/unindent, pair deletion, and a
   **Format** action (`Shift` + `Alt` + `F`) that re-indents the source from bracket depth.
@@ -113,7 +113,7 @@ parsed into data and validated before rendering.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
   help, including document components.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 76 conformance tests cover the language, the expression pipeline, the document layer, the
+- 77 conformance tests cover the language, the expression pipeline, the document layer, the
   documentation catalog, the writer examples, the authoring snippets, the field catalog, the syntax
   highlighter, the editing/formatting helpers, and the LaTeX mapping catalog.
 
@@ -165,6 +165,12 @@ Node 18 or newer is required; there are no runtime dependencies. The dev server 
 static file server (`tools/serve.mjs`).
 
 ## Updates
+
+### 2026-10-20 — arbitrary-base logarithms
+
+- Added `logbase(expression, base)`, with the value first and the base second. It requires two scalar arguments and renders as \(\log_b(x)\) in MathML and LaTeX.
+- `log` remains base 10 and `ln` remains natural. The reference page, hover help, autocomplete metadata, specification, and LaTeX catalog now describe `logbase`; the `\log_{b}(x)` mapping is native instead of a documented gap.
+- The suite grew from 76 to 77 tests.
 
 ### 2026-10-20 — Backspace removes empty auto-closed pairs
 

@@ -531,12 +531,13 @@ The standard library is divided into arithmetic and algebra, bounded operations,
 | `frac(numerator, denominator)` | fraction with the given numerator and denominator |
 | `pow(base, exponent)` | power; equivalent to `base^exponent` |
 | `log(expression)` | base-10 logarithm (provisional; see Appendix A, D2) |
+| `logbase(expression, base)` | logarithm with an explicit base; the value comes first and the base second |
 | `ln(expression)` | natural logarithm, base \(e\) |
 | `exp(expression)` | exponential function, equivalent to \(e^{\text{expression}}\) |
 
 `frac(a, b)` and `a/b` are both divisions. The function form makes the numerator and denominator explicit and is the preferred form when the intended structure is a built-up fraction. `pow(a, b)` and `a^b` have the same mathematical meaning. The syntax tree preserves which form the author wrote, so renderers MAY style them differently.
 
-`log`, `ln`, and `exp` have intrinsic mathematical meanings. Shadowing the identifier `e` in a local scope does not change what `exp` or `ln` mean. A renderer SHOULD avoid displaying `exp(x)` as \(e^x\) in a scope where `e` is bound to something else.
+`log`, `logbase`, `ln`, and `exp` have intrinsic mathematical meanings. `logbase(x, b)` takes the value first and the base second: it is the base-\(b\) logarithm of \(x\). Use `log(x)` for base 10 and `ln(x)` for base \(e\). When `logbase` is evaluated, the base must be positive and not equal to 1, and the value must be positive in a real-only environment. Shadowing the identifier `e` in a local scope does not change what `exp` or `ln` mean. A renderer SHOULD avoid displaying `exp(x)` as \(e^x\) in a scope where `e` is bound to something else.
 
 When `root` is evaluated, its degree must be a nonzero integer. For an even degree and a negative real radicand, real-only evaluation is a domain error; complex evaluation follows the environment's branch policy.
 
@@ -969,6 +970,7 @@ The following table gives the intended LaTeX representation of core constructs. 
 | `root(x, 3)` | `\sqrt[3]{x}` |
 | `abs(x - 3)` | `\left\lvert x-3 \right\rvert` |
 | `pow(x, n)` | `x^{n}` |
+| `logbase(x, 2)` | `\log_{2}(x)` |
 | `x^n` | `x^{n}` |
 | `sum(i, 1, n, i^2)` | `\sum_{i=1}^{n} i^{2}` |
 | `product(i, 1, n, i)` | `\prod_{i=1}^{n} i` |
@@ -1272,9 +1274,9 @@ This draft adopts provisional answers for three compatibility-sensitive question
 
 **Provisional answer.** Base 10. `ln(x)` is the natural logarithm.
 
-**Recommendation.** Ratify base 10. The language already provides `ln`, so making `log` natural would make the two names redundant and leave no concise common-logarithm notation. A future explicit form should use a distinct name, such as `logbase(expression, base)`, rather than overloading the fixed-arity `log` function. Such an addition must be specified before implementation.
+**Recommendation.** Ratify base 10. The language already provides `ln`, so making `log` natural would make the two names redundant and leave no concise common-logarithm notation. The language now provides `logbase(expression, base)` as the explicit arbitrary-base form, rather than overloading the fixed-arity `log` function. `logbase` takes the value first and the base second.
 
-**Impact.** This is a semantic decision; it does not change the grammar. Renderers should display `log` as \(\log\) and `ln` as \(\ln\). An implementation MUST document which base it uses rather than leaving the meaning implicit.
+**Impact.** The explicit form does not change the grammar. Renderers should display `log` as \(\log\), `ln` as \(\ln\), and `logbase(x, b)` as \(\log_b(x)\). An implementation MUST document which base it uses rather than leaving the meaning implicit.
 
 ### D3. Higher-order and multivariable calculus
 

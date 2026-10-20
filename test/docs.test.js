@@ -116,6 +116,11 @@ test("the LaTeX reference is ordered, complete, and internally consistent", () =
   for (const name of Object.keys(FUNCTIONS)) {
     assert.ok(targets.has(name), `no LaTeX reference row targets function '${name}'`);
   }
+  const logbase = LATEX_DOCS.find((doc) => doc.target === "logbase");
+  assert.ok(logbase, "the LaTeX reference is missing logbase");
+  assert.equal(logbase.status, "native");
+  assert.equal(logbase.mathscript, "logbase(x, b)");
+  assert.equal(logbase.latex, "\\log_{b}(x)");
   for (const name of CONSTANTS) {
     assert.ok(targets.has(name), `no LaTeX reference row targets constant '${name}'`);
   }

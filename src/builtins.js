@@ -5,6 +5,7 @@ export const FUNCTIONS = {
   frac: { arity: 2, kind: "scalar" },
   pow: { arity: 2, kind: "scalar" },
   log: { arity: 1, kind: "scalar" },
+  logbase: { arity: 2, kind: "scalar" },
   ln: { arity: 1, kind: "scalar" },
   exp: { arity: 1, kind: "scalar" },
   sin: { arity: 1, kind: "scalar" },

@@ -129,6 +129,11 @@ function renderCall(node, ctx) {
     case "log":
     case "ln":
       return `<mrow>${mi(name, false)}${paren(renderNode(args[0], ctx))}</mrow>`;
+    case "logbase": {
+      const base = renderNode(args[1], ctx);
+      const argument = renderNode(args[0], ctx);
+      return `<mrow><msub>${mi("log", false)}${base}</msub>${paren(argument)}</mrow>`;
+    }
     case "sin":
     case "cos":
     case "tan":

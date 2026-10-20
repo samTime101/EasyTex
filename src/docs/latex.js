@@ -155,7 +155,14 @@ const FUNCTION_ROWS = [
   row("Functions", L`\hom(A, B)`, "hom(A, B)", "approximate", null, "A free function application; it is not evaluated."),
   row("Functions", L`\sup(x)`, "sup(x)", "approximate", null, "A free function application; subscripted supremum forms are not supported."),
   row("Functions", L`\inf(x)`, "inf(x)", "approximate", null, "A free function application; subscripted infimum forms are not supported."),
-  none("Functions", L`\log_{b}(x)`, "MathScript log is base 10; use ln(x)/ln(b) for another base."),
+  row(
+    "Functions",
+    L`\log_{b}(x)`,
+    "logbase(x, b)",
+    "native",
+    "logbase",
+    "The value comes first and the base second; log(x) is base 10 and ln(x) is natural."
+  ),
   none("Functions", L`\binom{n}{k}`, "No binomial-coefficient function in this version."),
   none("Functions", L`\cfrac{a}{b}`, "No continued-fraction layout."),
   row("Functions", L`\dfrac{a}{b}`, "frac(a, b)", "approximate", "frac", "Same value; MathScript has one fraction size."),

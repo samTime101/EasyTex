@@ -25,6 +25,7 @@ const valid = [
   "integral(x, -infinity, infinity, exp(-x^2))",
   "sum(pi, 1, n, pi)",
   "root(abs(x - 3), 3)",
+  "logbase(x, 2)",
   "a % b",
   "f(x) + f(x - a)",
   "foo(x, y)"
@@ -49,6 +50,7 @@ const invalid = [
   ["2pi", "syntax"],
   ["(x + 1)(x - 1)", "syntax"],
   ["sum(i, 1, n)", "arity"],
+  ["logbase(x)", "arity"],
   ["sqrt(x + 1", "syntax"],
   ["a < b < c", "syntax"],
   ["matrix([[1, 2], [3]])", "structure"],
@@ -156,6 +158,20 @@ test("exp falls back to function notation when e is bound", () => {
 
   const free = compile("exp(x)");
   assert.ok(free.latex.includes("e^{x}"));
+});
+
+test("logbase renders the base as a subscript", () => {
+  const result = compile("logbase(x, 2)");
+  assert.deepEqual(result.diagnostics.map((diag) => diag.message), []);
+  assert.equal(result.latex, "\\log_{2}\\left(x\\right)");
+  assert.ok(
+    result.mathml.includes('<msub><mi mathvariant="normal">log</mi><mn>2</mn></msub>'),
+    "MathML should place 2 in a subscript on log"
+  );
+
+  const symbolic = compile("logbase(x^2 + 1, e)");
+  assert.equal(symbolic.latex, "\\log_{e}\\left(x^{2}+1\\right)");
+  assert.ok(symbolic.mathml.includes('<msub><mi mathvariant="normal">log</mi><mi>e</mi></msub>'));
 });
 
 test("comments and whitespace are ignored", () => {

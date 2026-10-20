@@ -14,6 +14,7 @@ const EXAMPLES = [
     source: "frac(1, sqrt(2*pi*sigma^2)) * exp(frac(-(x - mu)^2, 2*sigma^2))"
   },
   { label: "Definite integral", source: "integral(x, 0, 1, x^2)" },
+  { label: "Base-2 logarithm", source: "logbase(x, 2)" },
   { label: "Limit", source: "limit(x, 0, sin(x)/x)" },
   { label: "Derivative", source: "derivative(x, x^2 + 1)" },
   { label: "Partial derivative", source: "partial(x, x^2 + y^2)" },

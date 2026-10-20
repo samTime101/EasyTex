@@ -83,12 +83,29 @@ export const FUNCTION_DOCS = [
     signature: "log(expression)",
     summary: "Base-10 logarithm.",
     description:
-      "Uses base 10 in this version; this choice is provisional (see Appendix A, D2 of the specification). Use `ln` for the natural logarithm.",
+      "Uses base 10 in this version; this choice is provisional (see Appendix A, D2 of the specification). Use ln for the natural logarithm and logbase(expression, base) for any other base.",
     args: [{ name: "expression", type: "scalar", description: "A positive value when evaluated." }],
     returns: "scalar",
     examples: [
       { source: "log(1000)", note: "Base-10 logarithm of 1000." },
       { source: "log(x^2 + 1)", note: "A symbolic argument." }
+    ]
+  },
+  {
+    name: "logbase",
+    category: "Arithmetic and algebra",
+    signature: "logbase(expression, base)",
+    summary: "Logarithm with an explicit base.",
+    description:
+      "The value comes first and the base second, so logbase(x, 2) is the base-2 logarithm of x. When evaluated, the base must be positive and not equal to 1; in a real-only environment the value must be positive. Use log for base 10 and ln for base e.",
+    args: [
+      { name: "expression", type: "scalar", description: "The value whose logarithm is taken. Written first." },
+      { name: "base", type: "scalar", description: "The logarithm base, positive and not 1 when evaluated." }
+    ],
+    returns: "scalar",
+    examples: [
+      { source: "logbase(x, 2)", note: "Base-2 logarithm, written value first." },
+      { source: "logbase(8, 2)", note: "A numerical base-2 logarithm." }
     ]
   },
   {

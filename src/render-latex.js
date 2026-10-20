@@ -134,6 +134,8 @@ function renderCall(node, ctx) {
       return `e^{${renderNode(args[0], ctx)}}`;
     case "log":
       return functionCall("log", args[0], ctx);
+    case "logbase":
+      return `\\log_{${renderNode(args[1], ctx)}}${paren(renderNode(args[0], ctx))}`;
     case "ln":
       return functionCall("ln", args[0], ctx);
     case "sin":

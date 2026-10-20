@@ -42,6 +42,7 @@ npm test
   margins. The last valid preview stays visible while diagnostics are fixed.
 - **Structured parser** with a full lexer, recursive-descent parser, and AST.
 - **Validation** for built-in arity, free function application, bound variables, matrix shapes, relation nesting, list placement, document structure, labels, references, and bibliography entries.
+- **Logarithms with an explicit base**: `log(x)` is base 10, `ln(x)` is natural, and `logbase(x, b)` takes the value first and the base second.
 - **Expanded symbol vocabulary**: lowercase, variant, and uppercase Greek names, plus named ordinary symbols such as `aleph`, `hbar`, `emptyset`, `forall`, and `ell`. These stay ordinary free variables and add no new syntax or dependency.
 - **Diagnostics** with source positions and categories. Click a diagnostic to select the offending range in the editor.
 - **Function suggestions** while typing: an autocomplete list with signatures, keyboard navigation, and correct insertion of calls and constants. In the writer, document components are suggested too, and structured components insert starter snippets — `document` expands to a complete scaffold.
@@ -51,7 +52,7 @@ npm test
 - **Maximize** button in both editors hides the output pane so the source gets the full page width.
 - **Documentation page** at `/web/docs.html` covering every function, constant, Greek letter name, named symbol, operator, syntax rule, component, template, and document field — with allowed values, bibliography reference types, live previews, search, and links into both editors. A searchable **LaTeX → MathScript** reference maps standard LaTeX/AMS notation and marks every construct that has no native equivalent.
 - **Export** to LaTeX, MathML, or the raw AST. Download a complete `.tex` document with one click.
-- **Examples** for sums, products, fractions, integrals, limits, derivatives, matrices, vectors, and documents.
+- **Examples** for sums, products, fractions, logarithms, integrals, limits, derivatives, matrices, vectors, and documents.
 - **Complex mode** toggle for the imaginary unit `i`.
 - **Light and dark themes**, persisted in `localStorage`.
 - **Zero runtime dependencies.** Everything is plain ES modules.
