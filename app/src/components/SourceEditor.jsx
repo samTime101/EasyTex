@@ -265,6 +265,7 @@ export const SourceEditor = forwardRef(function SourceEditor(
           className="autocomplete"
           role="listbox"
           aria-label="Editor suggestions"
+          aria-activedescendant={`autocomplete-item-${autocomplete.selected}`}
           style={autocomplete.position ?? undefined}
         >
           {autocomplete.items.map((item, index) => (

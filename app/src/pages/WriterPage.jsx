@@ -313,7 +313,7 @@ export function WriterPage() {
         </label>
       </Header>
 
-      <main className={`workspace writer-workspace${maximized ? " editor-expanded" : ""}`}>
+      <main id="main" className={`workspace writer-workspace${maximized ? " editor-expanded" : ""}`}>
         <section className="panel editor-panel" aria-labelledby="doc-editor-title">
           <div className="panel-head">
             <div>
@@ -436,6 +436,7 @@ export function WriterPage() {
               id="doc-preview"
               className={tab === "document" ? "doc-preview" : "doc-preview hidden"}
               role="tabpanel"
+              aria-labelledby="tab-document"
               ref={previewRef}
             >
               <div id="sheet" className="sheet-mount" ref={sheetRefCallback} />
@@ -448,7 +449,12 @@ export function WriterPage() {
               ) : null}
             </div>
             {tab !== "document" ? (
-              <pre id="code-output" className="code-output" role="tabpanel">
+              <pre
+                id="code-output"
+                className="code-output"
+                role="tabpanel"
+                aria-labelledby={`tab-${tab}`}
+              >
                 {codeText}
               </pre>
             ) : null}

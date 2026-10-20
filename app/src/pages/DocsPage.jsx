@@ -84,8 +84,25 @@ function navGroups() {
   ];
 }
 
+// The search lives in the address bar, so a filtered reference can be
+// shared as a link.
+function useQueryParam(key) {
+  const [value, setValue] = useState(
+    () => new URLSearchParams(window.location.search).get(key) ?? ""
+  );
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (value) url.searchParams.set(key, value);
+    else url.searchParams.delete(key);
+    window.history.replaceState(null, "", url);
+  }, [key, value]);
+
+  return [value, setValue];
+}
+
 export function DocsPage() {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useQueryParam("q");
   const [navOpen, setNavOpen] = useState(false);
   const [active, setActive] = useState(null);
   const groups = useMemo(() => navGroups(), []);
@@ -138,7 +155,7 @@ export function DocsPage() {
         </label>
       </Header>
 
-      <main className="docs-layout">
+      <main id="main" className="docs-layout">
         <aside className={navOpen ? "docs-nav open" : "docs-nav"} aria-label="Reference sections">
           <button
             id="docs-nav-toggle"

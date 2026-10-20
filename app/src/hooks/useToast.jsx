@@ -10,7 +10,11 @@ export function useToast() {
     timer.current = setTimeout(() => setMessage(""), 1600);
   }, []);
 
-  const node = message ? <div className="toast visible">{message}</div> : null;
+  const node = message ? (
+    <div className="toast visible" role="status" aria-live="polite">
+      {message}
+    </div>
+  ) : null;
 
   return { message, show, node };
 }

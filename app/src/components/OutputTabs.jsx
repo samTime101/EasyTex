@@ -22,6 +22,7 @@ export function OutputTabs({ tabs, active, onChange, label = "Output format" }) 
         return (
           <button
             key={tab.id}
+            id={`tab-${tab.id}`}
             className={selected ? "tab active" : "tab"}
             role="tab"
             aria-selected={selected}

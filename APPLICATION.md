@@ -228,6 +228,23 @@ and standard output.
 
 ## Updates
 
+### 2026-10-20 — the interface against the web guidelines
+
+- Ran the interface against the Web Interface Guidelines, the accessibility rules, the metadata
+  rules, and the React performance rules.
+- **Accessibility:** a skip link to the content, `aria-activedescendant` on the suggestion list, the
+  output panels labelled by their tab, the toast announced with `role="status"`, the diagnostics
+  as a real list, and the anchors of the reference clear of the sticky header.
+- **Metadata:** the title, the description, the canonical link, and the social card now come from
+  one record per page, so they can never disagree. The app has a favicon and a web manifest.
+- **The reference page is loaded on demand** and its search lives in the address bar, so a
+  filtered reference can be shared as a link. The heavy tables are memoised, and the hundreds of
+  rows of the LaTeX catalog skip their layout while they are off the screen.
+- **Touch and safe areas:** the controls answer a double tap, the tap highlight is set on purpose,
+  the overlays keep the page from scrolling under them, and the header and the workspace respect
+  the safe area of a notched phone.
+- The suite still passes: 144 tests.
+
 ### 2026-10-20 — a typography and interface pass
 
 - Gave the app a **type scale**: named sizes from `--text-2xs` to `--text-xl`, each with its line

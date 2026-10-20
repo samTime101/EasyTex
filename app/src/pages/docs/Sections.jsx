@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import {
   BIBLIOGRAPHY_TYPES,
   DOCUMENT_NOTES,
@@ -290,7 +290,7 @@ const LATEX_STATUS_EXPLANATIONS = {
   none: "No native construct in this version; the note explains the gap."
 };
 
-function LatexTable({ rows }) {
+const LatexTable = memo(function LatexTable({ rows }) {
   return (
     <table className="operator-table latex-table">
       <thead>
@@ -323,7 +323,7 @@ function LatexTable({ rows }) {
       </tbody>
     </table>
   );
-}
+});
 
 export function LatexSection({ query }) {
   const matches = useMatcher(query);

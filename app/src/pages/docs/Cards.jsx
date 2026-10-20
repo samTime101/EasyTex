@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Example } from "./Example.jsx";
 
 export function ArgsTable({ caption, args }) {
@@ -19,7 +20,7 @@ export function ArgsTable({ caption, args }) {
   );
 }
 
-export function FunctionCard({ doc }) {
+export const FunctionCard = memo(function FunctionCard({ doc }) {
   return (
     <article className="function-card" id={`fn-${doc.name}`}>
       <div className="function-card-head">
@@ -40,9 +41,9 @@ export function FunctionCard({ doc }) {
       ) : null}
     </article>
   );
-}
+});
 
-export function ComponentCard({ doc }) {
+export const ComponentCard = memo(function ComponentCard({ doc }) {
   return (
     <article className="function-card" id={`component-${doc.name}`}>
       <div className="function-card-head">
@@ -64,4 +65,4 @@ export function ComponentCard({ doc }) {
       ) : null}
     </article>
   );
-}
+});

@@ -269,6 +269,8 @@ html[data-theme="dark"] {
 }
 
 .docs-section {
+  /* The header is sticky, so an anchor must not land under it. */
+  scroll-margin-top: 96px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -653,6 +655,13 @@ html[data-theme="dark"] .badge.latex-status-native {
 .operator-table tbody tr:hover,
 .precedence-table tbody tr:hover {
   background: var(--panel-2);
+}
+
+/* The LaTeX table has hundreds of rows. The browser skips the layout of the
+   rows that are off the screen. */
+.operator-table tbody tr {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 38px;
 }
 
 .operator-table thead th,

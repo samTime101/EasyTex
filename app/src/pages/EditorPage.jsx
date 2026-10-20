@@ -171,7 +171,7 @@ ${result.latex}
         </label>
       </Header>
 
-      <main className={maximized ? "workspace editor-expanded" : "workspace"}>
+      <main id="main" className={maximized ? "workspace editor-expanded" : "workspace"}>
         <section className="panel editor-panel" aria-labelledby="editor-title">
           <div className="panel-head">
             <div>
@@ -287,11 +287,17 @@ ${result.latex}
                 id="preview"
                 className="preview"
                 role="tabpanel"
+                aria-labelledby="tab-preview"
                 dangerouslySetInnerHTML={{ __html: result?.mathml ?? "" }}
               />
             ) : null}
             {!hasErrors && !isEmpty && tab !== "preview" ? (
-              <pre id="code-output" className="code-output" role="tabpanel">
+              <pre
+                id="code-output"
+                className="code-output"
+                role="tabpanel"
+                aria-labelledby={`tab-${tab}`}
+              >
                 {codeText}
               </pre>
             ) : null}
