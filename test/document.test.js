@@ -18,6 +18,7 @@ import {
   MARGIN_SIDES,
   BIBLIOGRAPHY_TYPES
 } from "../src/document/build.js";
+import { DEFAULT_PAGE } from "../src/document/templates.js";
 import {
   FIELD_DOCS,
   FIELD_SCOPE_ORDER,
@@ -597,6 +598,43 @@ test("enumerated field values list every available option", () => {
   assert.deepEqual(byName.get("align").values, ["left", "center", "right"]);
   assert.deepEqual(byName.get("columns").values, ["1", "2", "3"]);
   assert.deepEqual(byName.get("number").values, ["true", "false"]);
+});
+
+test("field defaults name one of their own options and match the engine", () => {
+  const byName = new Map(FIELD_DOCS.map((field) => [field.name, field]));
+
+  for (const field of FIELD_DOCS) {
+    const groups = field.valueGroups ?? (field.values ? [{ label: "Values", values: field.values }] : []);
+    for (const group of groups) {
+      if (group.defaultValue === undefined) continue;
+      assert.ok(
+        group.values.includes(group.defaultValue),
+        `'${field.name}' default '${group.defaultValue}' is not one of its options`
+      );
+    }
+    if (field.defaultValue === undefined) continue;
+    const options = groups.flatMap((group) => group.values);
+    if (options.length === 0) continue; // A free-form field lists no options.
+    assert.ok(
+      options.includes(field.defaultValue),
+      `'${field.name}' default '${field.defaultValue}' is not one of its options`
+    );
+  }
+
+  assert.equal(byName.get("size").defaultValue, DEFAULT_PAGE.size);
+  assert.equal(byName.get("orientation").defaultValue, DEFAULT_PAGE.orientation);
+  assert.equal(byName.get("columns").defaultValue, String(DEFAULT_PAGE.columns));
+  for (const side of ["top", "right", "bottom", "left"]) {
+    assert.equal(byName.get(side).defaultValue, DEFAULT_PAGE.margins[side]);
+  }
+  assert.equal(byName.get("align").defaultValue, "left");
+  assert.equal(byName.get("number").defaultValue, "false");
+
+  const typeGroups = Object.fromEntries(
+    byName.get("type").valueGroups.map((group) => [group.label, group])
+  );
+  assert.equal(typeGroups["Document templates"].defaultValue, "article");
+  assert.equal(typeGroups["Reference types"].defaultValue, "misc");
 });
 
 test("every bibliography type documents its required and optional fields", () => {

@@ -9,6 +9,34 @@ function matchesPrefix(name, prefix) {
   return !prefix || name.toLowerCase().startsWith(prefix.toLowerCase());
 }
 
+// The text a suggestion inserts, and where the caret lands afterwards. The
+// rules differ per kind: a field name may already have its separator, a value
+// may need quotes, and a component expands to a starter snippet. Keeping this
+// pure makes the acceptance rules unit-testable.
+export function completionInsertion(doc, options = {}) {
+  const source = options.source ?? "";
+  const tokenStart = options.tokenStart ?? 0;
+  const tokenEnd = options.tokenEnd ?? 0;
+
+  if (doc.kind === "field") {
+    const nextChar = source[tokenEnd] ?? "";
+    const inserted = nextChar === ":" || nextChar === "=" ? doc.name : `${doc.name}: `;
+    return { inserted, caretOffset: inserted.length };
+  }
+  if (doc.kind === "value") {
+    const inserted = doc.quote ? `"${doc.value}"` : doc.value;
+    return { inserted, caretOffset: inserted.length };
+  }
+  if (doc.snippet) {
+    const prepared = prepareSnippet(doc.snippet, lineIndent(source, tokenStart));
+    return { inserted: prepared.text, caretOffset: prepared.caret };
+  }
+
+  const isFunction = doc.kind === "function" || doc.kind === "component";
+  const inserted = isFunction ? `${doc.name}()` : doc.name;
+  return { inserted, caretOffset: isFunction ? doc.name.length + 1 : inserted.length };
+}
+
 export function createAutocomplete({
   textarea,
   container,
@@ -256,24 +284,11 @@ export function createAutocomplete({
       close();
       return;
     }
-    const isFunction = doc.kind === "function" || doc.kind === "component";
-    let inserted;
-    let caretOffset;
-    if (doc.kind === "field") {
-      const nextChar = textarea.value[tokenEnd] ?? "";
-      inserted = nextChar === ":" || nextChar === "=" ? doc.name : `${doc.name}: `;
-      caretOffset = inserted.length;
-    } else if (doc.kind === "value") {
-      inserted = doc.quote ? `"${doc.value}"` : doc.value;
-      caretOffset = inserted.length;
-    } else if (doc.snippet) {
-      const prepared = prepareSnippet(doc.snippet, lineIndent(textarea.value, tokenStart));
-      inserted = prepared.text;
-      caretOffset = prepared.caret;
-    } else {
-      inserted = isFunction ? `${doc.name}()` : doc.name;
-      caretOffset = isFunction ? doc.name.length + 1 : inserted.length;
-    }
+    const { inserted, caretOffset } = completionInsertion(doc, {
+      source: textarea.value,
+      tokenStart,
+      tokenEnd
+    });
     textarea.setRangeText(inserted, tokenStart, tokenEnd, "end");
     const caret = tokenStart + caretOffset;
     textarea.setSelectionRange(caret, caret);

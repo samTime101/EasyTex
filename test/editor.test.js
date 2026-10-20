@@ -55,6 +55,24 @@ test("the scanner reads numbers the way the lexer does", () => {
   assert.deepEqual(kinds("2x"), ["number:2", "identifier:x"]);
 });
 
+test("scanner tokens carry the offsets of their source text", () => {
+  const source = "sum(i, 1) // note\n\"text\"";
+  const tokens = scanSource(source);
+  let offset = 0;
+  for (const token of tokens) {
+    assert.equal(token.start, offset, "tokens are contiguous");
+    assert.equal(token.end, token.start + token.text.length);
+    assert.equal(source.slice(token.start, token.end), token.text);
+    offset = token.end;
+  }
+  assert.equal(offset, source.length, "the tokens cover the whole source");
+
+  const comment = tokens.find((token) => token.type === "comment");
+  assert.equal(source.slice(comment.start, comment.end), "// note");
+  const string = tokens.find((token) => token.type === "string");
+  assert.equal(source.slice(string.start, string.end), '"text"');
+});
+
 // --------------------------------------------------------------- highlighting
 
 test("highlightSource marks functions, constants, numbers, and operators", () => {

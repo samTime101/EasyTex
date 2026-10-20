@@ -126,10 +126,10 @@ parsed into data and validated before rendering.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
   help, including document components, object field scopes, defaults, and allowed values.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 85 conformance tests cover the language, the expression pipeline, the document layer, the
-  documentation catalog, the writer examples, the authoring snippets, the field catalog and
-  context-aware completion, the syntax highlighter, the editing/formatting helpers, and the LaTeX
-  mapping catalog.
+- 111 conformance tests cover the language, the expression pipeline, the document layer, the
+  documentation catalog, the writer examples, the authoring snippets, the field catalog, the
+  context-aware completion and its insertion rules, the syntax highlighter, the editing/formatting
+  helpers, and the LaTeX mapping catalog.
 
 ## Architecture
 
@@ -181,6 +181,17 @@ Node 18 or newer is required; there are no runtime dependencies. The dev server 
 static file server (`tools/serve.mjs`).
 
 ## Updates
+
+### 2026-10-20 — completion test coverage
+
+- Extracted the suggestion insertion rules into a pure `completionInsertion()` helper and covered
+  field names, quoted and unquoted values, function calls, constants, and component snippets.
+- Added completion-context tests for nested objects, bibliography entries inside document
+  metadata, reference-type narrowing, unknown types, strings and comments that contain object
+  punctuation, unknown objects and fields, named arguments, and value metadata.
+- Added field-default invariants (every default is one of its own options and matches the engine's
+  page defaults) and scanner-offset coverage.
+- The suite grew from 85 to 111 tests.
 
 ### 2026-10-20 — focused editor layout
 

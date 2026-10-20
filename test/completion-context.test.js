@@ -139,3 +139,186 @@ test("named-argument lookup ignores inherited object properties", () => {
   assert.equal(value, null);
   assert.equal(insideQuotes('constructor(number=""').type, "blocked");
 });
+
+// ------------------------------------------------------------------ nesting
+
+test("nested objects use the nearest object context", () => {
+  const pageFields = completionContextAt("document({ content: [page({ ", 31);
+  assert.equal(pageFields.type, "field");
+  assert.deepEqual(names(pageFields), ["size", "orientation", "margins", "columns"]);
+
+  const marginFields = completionContextAt("document({ content: [page({ margins: { ", 40);
+  assert.equal(marginFields.type, "field");
+  assert.deepEqual(names(marginFields), ["top", "right", "bottom", "left"]);
+
+  const pageValue = insideQuotes('document({ content: [page({ size: ""');
+  assert.equal(pageValue.type, "value");
+  assert.equal(pageValue.candidates[0].name, "A4");
+});
+
+test("a bibliography inside document metadata still lists reference fields", () => {
+  const source = 'document({ bibliography: [{ key: "k", ';
+  const result = completionContextAt(source, source.length);
+  assert.equal(result.type, "field");
+  assert.ok(names(result).includes("type"));
+  assert.ok(names(result).includes("journal"));
+  assert.ok(names(result).includes("title"));
+  assert.ok(!names(result).includes("key"));
+  assert.ok(!names(result).includes("size"));
+});
+
+test("reference completion narrows by type and drops used fields", () => {
+  const source = 'bibliography([{ type: "article", journal: "J", ';
+  const result = completionContextAt(source, source.length);
+  assert.equal(result.type, "field");
+  assert.ok(names(result).includes("volume"));
+  assert.ok(names(result).includes("pages"));
+  assert.ok(!names(result).includes("journal"));
+  assert.ok(!names(result).includes("publisher"));
+  assert.ok(!names(result).includes("type"));
+});
+
+test("an unknown reference type keeps every possible field", () => {
+  const source = 'bibliography([{ type: "dataset", ';
+  const result = completionContextAt(source, source.length);
+  assert.equal(result.type, "field");
+  assert.ok(names(result).includes("journal"));
+  assert.ok(names(result).includes("publisher"));
+  assert.ok(names(result).includes("institution"));
+});
+
+test("reference field docs keep the required fields first", () => {
+  const book = contextFieldDocs("reference", "book").map((field) => field.name);
+  assert.deepEqual(book, [
+    "key",
+    "type",
+    "author",
+    "title",
+    "year",
+    "publisher",
+    "edition",
+    "address",
+    "doi",
+    "url"
+  ]);
+});
+
+// ------------------------------------------------------------------ parsing
+
+test("commas and braces inside strings do not split object entries", () => {
+  const source = 'document({ title: "a, b }", content: [], ';
+  const result = completionContextAt(source, source.length);
+  assert.equal(result.type, "field");
+  assert.ok(!names(result).includes("title"));
+  assert.ok(!names(result).includes("content"));
+  assert.ok(names(result).includes("subtitle"));
+});
+
+test("comments inside an object do not change the field context", () => {
+  const lineSource = 'document({ title: "x", // }\n  ';
+  const line = completionContextAt(lineSource, lineSource.length);
+  assert.equal(line.type, "field");
+  assert.ok(names(line).includes("subtitle"));
+
+  const blockSource = "document({ /* x */ ";
+  const block = completionContextAt(blockSource, blockSource.length);
+  assert.equal(block.type, "field");
+  assert.ok(names(block).includes("title"));
+});
+
+test("a comment suppresses completion while the caret is inside it", () => {
+  const lineSource = "document({ // ti";
+  const blockSource = "document({ /* ti";
+  assert.equal(completionContextAt(lineSource, lineSource.length)?.type, "blocked");
+  assert.equal(completionContextAt(blockSource, blockSource.length)?.type, "blocked");
+});
+
+test("a partially typed field replaces only the current key", () => {
+  const source = "document({ au";
+  const result = completionContextAt(source, source.length);
+  assert.equal(result.type, "field");
+  assert.equal(result.prefix, "au");
+  assert.equal(result.tokenStart, 11);
+  assert.equal(result.tokenEnd, 13);
+  assert.ok(names(result).includes("author"));
+});
+
+test("a field name followed by spaces still points at that key", () => {
+  const source = "document({ au ";
+  const result = completionContextAt(source, source.length);
+  assert.equal(result.type, "field");
+  assert.equal(result.prefix, "au");
+  assert.equal(result.tokenStart, 11);
+  assert.equal(result.tokenEnd, 14);
+});
+
+// -------------------------------------------------------------------- limits
+
+test("unknown objects and unknown fields receive no suggestions", () => {
+  assert.equal(completionContextAt("figure({ ", 8), null);
+  assert.equal(insideQuotes('figure({ size: ""').type, "blocked");
+  assert.equal(insideQuotes('page({ title: ""').type, "blocked");
+  assert.equal(insideQuotes('document({ language: ""').type, "blocked");
+});
+
+test("a finished value does not reopen the value list", () => {
+  assert.equal(completionContextAt('page({ size: "A4"', 17), null);
+  assert.equal(completionContextAt("page({ columns: 1", 17), null);
+  const typed = 'document({ type: "article"';
+  assert.equal(completionContextAt(typed, typed.length), null);
+});
+
+test("named arguments offer their own values", () => {
+  const align = insideQuotes('table([[]], align=""');
+  assert.equal(align.type, "value");
+  assert.deepEqual(names(align), ["left", "center", "right"]);
+  assert.equal(align.candidates[0].isDefault, true);
+  assert.equal(align.candidates[0].quote, true);
+
+  const numbering = completionContextAt("equation(x, number = ", 21);
+  assert.equal(numbering.type, "value");
+  assert.deepEqual(names(numbering), ["false", "true"]);
+  assert.equal(numbering.candidates[0].quote, false);
+
+  const label = insideQuotes('section("S", label=""');
+  assert.equal(label.type, "blocked");
+});
+
+test("a table cell string is not mistaken for a named argument", () => {
+  const cell = insideQuotes('table([["a", ""');
+  assert.equal(cell.type, "blocked");
+});
+
+// ------------------------------------------------------------------ metadata
+
+test("value candidates carry consistent insertion metadata", () => {
+  const sizes = insideQuotes('page({ size: ""');
+  for (const candidate of sizes.candidates) {
+    assert.equal(candidate.kind, "value");
+    assert.equal(candidate.name, candidate.value);
+    assert.equal(candidate.quote, true);
+    assert.equal(typeof candidate.signature, "string");
+    assert.equal(typeof candidate.summary, "string");
+  }
+  assert.equal(sizes.candidates.filter((candidate) => candidate.isDefault).length, 1);
+  assert.equal(sizes.candidates[0].isDefault, true);
+});
+
+test("field signatures expose the value type and the default", () => {
+  const signature = (result, name) =>
+    result.candidates.find((candidate) => candidate.name === name)?.signature;
+
+  const page = completionContextAt("page({ ", 7);
+  assert.equal(signature(page, "size"), "string · default A4");
+  assert.equal(signature(page, "orientation"), "string · default portrait");
+  assert.equal(signature(page, "columns"), "number · default 1");
+
+  const margins = completionContextAt("page({ margins: { ", 17);
+  assert.equal(signature(margins, "top"), "string · default 25mm");
+
+  const documentFields = completionContextAt("document({ ", 11);
+  assert.equal(signature(documentFields, "type"), "string · default article");
+
+  const reference = completionContextAt("bibliography([{ ", 16);
+  assert.equal(signature(reference, "type"), "string · default misc");
+});
