@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { compileDocument } from "../src/engine.js";
+import { compileDocument, engineManifest } from "../src/engine.js";
 import { parseProgram } from "../src/parser.js";
+import { tokenize } from "../src/lexer.js";
 import { COMPONENTS } from "../src/document/components.js";
 
 function messages(result) {
@@ -55,6 +56,18 @@ test("a trailing comma is allowed", () => {
   const { statements, diagnostics } = parseProgram(`main.paragraph("one",)`);
   assert.deepEqual(diagnostics, []);
   assert.equal(statements[0].arguments.length, 1);
+});
+
+test("a dot is a member access only before a name", () => {
+  const { tokens, diagnostics } = tokenize("main.paragraph");
+  assert.deepEqual(diagnostics, []);
+  assert.deepEqual(
+    tokens.map((token) => `${token.type}:${token.value}`),
+    ["identifier:main", "punct:.", "identifier:paragraph", "eof:"]
+  );
+
+  const stray = tokenize(".5");
+  assert.ok(stray.diagnostics.some((entry) => entry.message.includes("Unexpected character '.'")));
 });
 
 test("an expression on its own is not a document", () => {
@@ -282,6 +295,19 @@ test("a method may not be used on the wrong container", () => {
   assert.deepEqual(messages(result), []);
   const wrong = compileDocument(documentWith('main = document.section("S")', 'main.image("x.svg")'));
   assert.match(messages(wrong).join(" "), /cannot be used on a section/);
+});
+
+test("the manifest lists the containers of every method", () => {
+  const manifest = engineManifest();
+  for (const entry of manifest.components) {
+    assert.ok(Array.isArray(entry.containers), `${entry.name} lists its containers`);
+    assert.ok(Array.isArray(entry.positional), `${entry.name} lists its positional arguments`);
+  }
+  const paragraph = manifest.components.find((entry) => entry.name === "paragraph");
+  assert.ok(paragraph.containers.includes("document"));
+  assert.ok(paragraph.containers.includes("section"));
+  assert.equal(paragraph.variadic, true);
+  assert.deepEqual(paragraph.named, []);
 });
 
 test("every method declares its containers, its arity, and its names", () => {
