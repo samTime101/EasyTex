@@ -8,7 +8,8 @@ import {
   deletePairEdit,
   indentEdit,
   formatSource,
-  formatEdit
+  formatEdit,
+  attachEditing
 } from "../web/editing.js";
 import { compileDocument, compile } from "../src/index.js";
 import { DOCUMENT_EXAMPLES, DEFAULT_DOCUMENT_SOURCE } from "../web/document-examples.js";
@@ -181,6 +182,72 @@ test("Backspace removes an empty pair", () => {
   assert.equal(deletePairEdit("( x )", 3, 3), null);
   assert.equal(deletePairEdit("()", 0, 1), null, "Backspace with a selection deletes it normally");
   assert.equal(deletePairEdit("x)", 0, 0), null);
+});
+
+test("Backspace key handling deletes an empty pair", () => {
+  const previousDocument = globalThis.document;
+  globalThis.document = { execCommand: () => false };
+  try {
+    function fakeTextarea(value, start, end) {
+      return {
+        value,
+        selectionStart: start,
+        selectionEnd: end,
+        handlers: new Map(),
+        events: [],
+        addEventListener(type, handler) {
+          this.handlers.set(type, handler);
+        },
+        setSelectionRange(nextStart, nextEnd) {
+          this.selectionStart = nextStart;
+          this.selectionEnd = nextEnd;
+        },
+        setRangeText(text, rangeStart, rangeEnd) {
+          this.value = this.value.slice(0, rangeStart) + text + this.value.slice(rangeEnd);
+          this.selectionStart = rangeStart + text.length;
+          this.selectionEnd = rangeStart + text.length;
+        },
+        dispatchEvent(event) {
+          this.events.push(event.type);
+          return true;
+        }
+      };
+    }
+    function keydown(key) {
+      return {
+        key,
+        isComposing: false,
+        ctrlKey: false,
+        metaKey: false,
+        altKey: false,
+        defaultPrevented: false,
+        preventDefault() {
+          this.defaultPrevented = true;
+        }
+      };
+    }
+
+    const deleting = fakeTextarea("()", 1, 1);
+    attachEditing({ textarea: deleting });
+    const backspace = keydown("Backspace");
+    deleting.handlers.get("keydown")(backspace);
+    assert.equal(backspace.defaultPrevented, true);
+    assert.equal(deleting.value, "");
+    assert.equal(deleting.selectionStart, 0);
+    assert.deepEqual(deleting.events, ["input"]);
+
+    const skipping = fakeTextarea("()", 1, 1);
+    attachEditing({ textarea: skipping });
+    const closer = keydown(")");
+    skipping.handlers.get("keydown")(closer);
+    assert.equal(closer.defaultPrevented, true);
+    assert.equal(skipping.value, "()");
+    assert.equal(skipping.selectionStart, 2);
+    assert.deepEqual(skipping.events, []);
+  } finally {
+    if (previousDocument === undefined) delete globalThis.document;
+    else globalThis.document = previousDocument;
+  }
 });
 
 // ------------------------------------------------------------ smart newlines

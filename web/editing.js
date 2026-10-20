@@ -267,14 +267,25 @@ function insertText(textarea, text) {
   }
 }
 
+function deleteSelection() {
+  try {
+    return document.execCommand("delete", false) === true;
+  } catch {
+    return false;
+  }
+}
+
 function applyEdit(textarea, edit) {
   if (!edit) return false;
-  if (edit.text === "") {
+  // A zero-width empty edit is a caret move (typing over an existing closer).
+  // A non-empty range with empty text is a deletion (Backspace on an empty pair).
+  if (edit.text === "" && edit.start === edit.end) {
     textarea.setSelectionRange(edit.selectionStart, edit.selectionEnd);
     return true;
   }
   textarea.setSelectionRange(edit.start, edit.end);
-  if (insertText(textarea, edit.text)) {
+  const applied = edit.text === "" ? deleteSelection() : insertText(textarea, edit.text);
+  if (applied) {
     textarea.setSelectionRange(edit.selectionStart, edit.selectionEnd);
     return true;
   }
