@@ -1,4 +1,4 @@
-import { compile, compileDocument, SHEET_CSS } from "../src/index.js";
+import { compile, compileDocument, SHEET_CSS } from "../src/engine.js";
 import {
   SYNTAX_NOTES,
   PRECEDENCE_EXAMPLES,
@@ -18,7 +18,7 @@ import {
   TEMPLATES,
   TEMPLATE_NAMES,
   PAGE_SIZES
-} from "../src/document/index.js";
+} from "../src/engine.js";
 import { initTheme } from "./theme.js";
 import { highlightSource } from "./highlight.js";
 

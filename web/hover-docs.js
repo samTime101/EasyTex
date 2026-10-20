@@ -1,4 +1,4 @@
-import { compile, parse, validate, NAMED_ARGUMENTS } from "../src/index.js";
+import { compile, parse, validate, NAMED_ARGUMENTS } from "../src/engine.js";
 import { docsFor, fieldDocsFor, FIELD_SCOPE_LABELS } from "../src/docs/index.js";
 import { TextareaMirror } from "./textarea-geometry.js";
 import { highlightSource } from "./highlight.js";

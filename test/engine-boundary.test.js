@@ -88,6 +88,19 @@ test("the web UI never imports the command line tools", () => {
   }
 });
 
+test("the web UI reaches the engine through its public surface", () => {
+  for (const file of filesIn(path.join(root, "web"))) {
+    const source = readFileSync(file, "utf8");
+    for (const internal of ["../src/index.js", "../src/document/index.js"]) {
+      assert.equal(
+        source.includes(`"${internal}"`),
+        false,
+        `${path.relative(root, file)} imports ${internal} instead of src/engine.js`
+      );
+    }
+  }
+});
+
 test("the engine surface exposes the documented entry points", async () => {
   const engine = await import("../src/engine.js");
   for (const name of [

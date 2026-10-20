@@ -126,7 +126,7 @@ parsed into data and validated before rendering.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
   help, including document components, object field scopes, defaults, and allowed values.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 121 conformance tests cover the language, the expression pipeline, the document layer, the
+- 122 conformance tests cover the language, the expression pipeline, the document layer, the
   documentation catalog, the writer examples, the authoring snippets, the field catalog, the
   context-aware completion and its insertion rules, the syntax highlighter, the editing/formatting
   helpers, the LaTeX mapping catalog, and the engine boundary.
@@ -233,7 +233,7 @@ standard input and standard output.
 - The hover card is rebuilt: a named header with a kind chip, the signature in its own code block,
   a two-column argument list, value chips with the default marked, and a highlighted example with
   the rendered preview below it.
-- The suite grew from 111 to 121 tests.
+- The suite grew from 111 to 122 tests.
 
 ### 2026-10-20 — completion test coverage
 

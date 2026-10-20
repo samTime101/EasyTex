@@ -1,4 +1,4 @@
-import { compile } from "../src/index.js";
+import { compile } from "../src/engine.js";
 import { initTheme } from "./theme.js";
 import { createAutocomplete } from "./autocomplete.js";
 import { createHoverDocs } from "./hover-docs.js";

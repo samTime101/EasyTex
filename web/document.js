@@ -1,7 +1,7 @@
 // Document Writer: compile MathScript documents, preview the rendered sheet,
 // inspect the LaTeX and standalone HTML exports, and print or download them.
 
-import { compileDocument, renderStandaloneHTML, parseLength, SHEET_CSS } from "../src/index.js";
+import { compileDocument, renderStandaloneHTML, parseLength, SHEET_CSS } from "../src/engine.js";
 import { initTheme } from "./theme.js";
 import { createAutocomplete } from "./autocomplete.js";
 import { createHoverDocs } from "./hover-docs.js";

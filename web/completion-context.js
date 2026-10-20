@@ -6,7 +6,7 @@
 // frames, then reports the fields for the current object or the enumerated
 // values for the current field. All functions are DOM-free and unit-tested.
 
-import { NAMED_ARGUMENTS } from "../src/index.js";
+import { NAMED_ARGUMENTS } from "../src/engine.js";
 import { fieldDocsFor } from "../src/docs/index.js";
 import {
   contextFieldDocs,

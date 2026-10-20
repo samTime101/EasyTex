@@ -31,6 +31,9 @@ export {
   TEMPLATES,
   TEMPLATE_NAMES,
   PAGE_SIZES,
+  resolvePage,
+  parseLength,
+  parseDimension,
   NAMED_ARGUMENTS,
   BIBLIOGRAPHY_TYPES
 } from "./document/index.js";
