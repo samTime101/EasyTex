@@ -126,15 +126,35 @@ parsed into data and validated before rendering.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
   help, including document components, object field scopes, defaults, and allowed values.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 111 conformance tests cover the language, the expression pipeline, the document layer, the
+- 121 conformance tests cover the language, the expression pipeline, the document layer, the
   documentation catalog, the writer examples, the authoring snippets, the field catalog, the
   context-aware completion and its insertion rules, the syntax highlighter, the editing/formatting
-  helpers, and the LaTeX mapping catalog.
+  helpers, the LaTeX mapping catalog, and the engine boundary.
+
+### Engine and hosts
+
+- The language lives in `src/` as a platform-independent engine: no DOM, no `window`, no
+  `localStorage`, no `process`, no filesystem, no network. It maps strings to results and nothing
+  else. A boundary test enforces this mechanically.
+- `src/engine.js` is the single public surface. Every host — the browser UI, the command line
+  tool, a desktop or mobile application — reaches the language through it.
+- `src/manifest.js` returns the whole language surface as plain JSON: functions and arities,
+  constants, Greek names, named symbols, operators, components, fields with their allowed values
+  and defaults, metadata names, page options, margin sides, named arguments, bibliography types,
+  templates, page sizes, and the 743-row LaTeX catalog. A second implementation can be written
+  against the manifest and the specification alone.
+- `tools/easytex-engine.mjs` is the reference command line host. It speaks a JSON contract over
+  standard input and standard output — one request per line — so the same engine can be driven from
+  Windows, Linux, a language server, or a program written in any language.
+- `ENGINE.md` specifies the contract: request and response shapes, the diagnostic format, the
+  transports, and the manifest.
 
 ## Architecture
 
 ```text
 src/
+  engine.js                              public engine surface for every host
+  manifest.js                            portable JSON description of the language
   lexer.js, parser.js, validate.js      shared front end
   builtins.js, diagnostics.js            language surface and error model
   render-mathml.js, render-latex.js      expression renderers
@@ -156,6 +176,9 @@ web/
   autocomplete.js, completion-context.js        suggestions and object/value context
   snippets.js, hover-docs.js                    editor assistance (filterable by kind)
   highlight.js, editing.js               syntax highlighting and editing helpers
+tools/
+  serve.mjs                              development static server
+  easytex-engine.mjs                     command line host speaking the JSON contract
 ```
 
 Design rules:
@@ -169,18 +192,48 @@ Design rules:
    render and are reported alongside errors.
 4. **One catalog.** Components and their arguments are declared once and consumed by the builder,
    validators, reference page, autocomplete, and hover help; drift tests enforce the link.
+5. **The engine knows nothing about its host.** The language in `src/` uses no browser and no
+   operating-system API. Hosts reach it through `src/engine.js` or through the JSON contract in
+   `ENGINE.md`, so the same engine can back a web page, a command line tool, or a desktop
+   application written in another language.
 
 ## Running
 
 ```bash
 npm run dev     # http://localhost:5173
 npm test        # conformance and documentation tests
+npm run engine -- compile --source "x = frac(1, 2)"   # the engine from a terminal
 ```
 
 Node 18 or newer is required; there are no runtime dependencies. The dev server is a dependency-free
-static file server (`tools/serve.mjs`).
+static file server (`tools/serve.mjs`). The engine host (`tools/easytex-engine.mjs`) speaks JSON on
+standard input and standard output.
 
 ## Updates
+
+### 2026-10-20 — engine, hosts, and highlighted reference
+
+- Separated the engine from its hosts. The language in `src/` is platform independent: no browser
+  API, no operating-system API, no I/O. `src/engine.js` is the public surface, and a boundary test
+  fails the build if a browser or Node API ever appears in the engine.
+- Added `src/manifest.js`, a portable JSON description of the whole language — functions and
+  arities, constants, Greek names, symbols, operators, components, fields with allowed values and
+  defaults, metadata names, page options, margin sides, named arguments, bibliography types,
+  templates, page sizes, and the 743-row LaTeX catalog. Another implementation of the engine can
+  be written against the manifest and the specification alone.
+- Added `tools/easytex-engine.mjs`, the reference command line host. It speaks a JSON contract over
+  standard input and standard output, one request per line, so the engine can be driven from
+  Windows, Linux, a language server, or any language. `npm run engine -- compile|document|manifest|
+  version|serve` covers the commands.
+- Added `ENGINE.md`: the contract, the response shapes, the diagnostic format, the transports, the
+  manifest, and how to write a host.
+- The reference page now highlights every MathScript sample with the same scanner the editors
+  use: example blocks, syntax notes, precedence sources, the LaTeX table's MathScript column, and
+  field examples.
+- The hover card is rebuilt: a named header with a kind chip, the signature in its own code block,
+  a two-column argument list, value chips with the default marked, and a highlighted example with
+  the rendered preview below it.
+- The suite grew from 111 to 121 tests.
 
 ### 2026-10-20 — completion test coverage
 

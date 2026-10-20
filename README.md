@@ -46,8 +46,8 @@ npm test
 - **Expanded symbol vocabulary**: lowercase, variant, and uppercase Greek names, plus named ordinary symbols such as `aleph`, `hbar`, `emptyset`, `forall`, and `ell`. These stay ordinary free variables and add no new syntax or dependency.
 - **Diagnostics** with source positions and categories. Click a diagnostic to select the offending range in the editor.
 - **Function suggestions** while typing: an autocomplete list with signatures, keyboard navigation, and correct insertion of calls and constants. In the writer, document components are suggested too, and structured components insert starter snippets — `document` expands to a complete scaffold. Inside document objects, completion offers only the fields for that object (`document`, `page`, `margins`, or a bibliography entry); typing `""` for a field with allowed values or a default opens the value list, with the default marked.
-- **Hover documentation** in the editor: signatures, argument descriptions, and a rendered example for the function or documented symbol under the pointer, with scope-aware handling of bound variables. The writer also explains components and fields (metadata keys, named arguments, and bibliography entries).
-- **Syntax highlighting** in both editors: comments, strings, numbers, booleans, functions, constants, operators, document components, and field names each get their own color, in light and dark themes.
+- **Hover documentation** in the editor: signatures, argument descriptions, and a rendered example for the function or documented symbol under the pointer, with scope-aware handling of bound variables. The writer also explains components and fields (metadata keys, named arguments, and bibliography entries). The card is highlighted like the editor and shows allowed values with the default marked.
+- **Syntax highlighting** in both editors: comments, strings, numbers, booleans, functions, constants, operators, document components, and field names each get their own color, in light and dark themes. The reference page uses the same highlighter, so every sample on it is colored too.
 - **Editing assistance**: brackets and quotes auto-close around a selection or step over their partner, `Backspace` removes an empty pair, `Enter` keeps indentation and expands bracket pairs into a block, and `Tab` / `Shift` + `Tab` indent lines. `Shift` + `Alt` + `F` or the **Format** button re-indents source from bracket depth.
 - **Maximize** button in both editors hides the output pane so the source gets the full page width.
 - **Documentation page** at `/web/docs.html` covering every function, constant, Greek letter name, named symbol, operator, syntax rule, component, template, and document field — with allowed values, defaults, bibliography reference types, live previews, search, and links into both editors. A searchable **LaTeX → MathScript** reference maps standard LaTeX/AMS notation and marks every construct that has no native equivalent.
@@ -56,6 +56,7 @@ npm test
 - **Complex mode** toggle for the imaginary unit `i`.
 - **Paper-and-ink light theme and a black-and-white dark interface**, persisted in `localStorage`.
 - **Plain-language onboarding**: the expression editor and reference explain the difference between EasyTeX and MathScript.
+- **Platform-independent engine**: the language lives in `src/` with no browser or operating-system API, behind a documented JSON contract. The web app, the command line host, and any future desktop or mobile app are separate hosts on top of the same engine. See [`ENGINE.md`](./ENGINE.md).
 - **Zero runtime dependencies.** Everything is plain ES modules.
 
 ## Project layout
@@ -63,9 +64,12 @@ npm test
 ```text
 easytex/
 ├── SPECIFICATION.md      Language specification (v0.1-draft)
+├── ENGINE.md             Engine contract: hosts, JSON protocol, manifest
 ├── APPLICATION.md        Application features and update log
 ├── package.json
-├── src/                  Parser, validator, renderers, and document layer
+├── src/                  The engine: parser, validator, renderers, document layer
+│   ├── engine.js         Public engine surface used by every host
+│   ├── manifest.js       Portable JSON description of the whole language
 │   ├── docs/             Function, constant, Greek, symbol, operator, LaTeX, and component documentation data
 │   ├── document/         Document builder, templates, sheet and LaTeX renderers
 │   ├── lexer.js
@@ -80,11 +84,13 @@ easytex/
 │   └── index.js
 ├── test/                 Node test-runner conformance tests
 ├── tools/serve.mjs       Dependency-free static dev server
+├── tools/easytex-engine.mjs  Command line host speaking the JSON contract
 └── web/                  EasyTeX web app
     ├── index.html        Expression editor
     ├── styles.css
     ├── app.js
     ├── autocomplete.js
+    ├── completion-context.js
     ├── snippets.js
     ├── hover-docs.js
     ├── highlight.js
@@ -117,10 +123,12 @@ These work in both editors; in the document writer, `Ctrl` + `Space` also lists 
 
 ## Library usage
 
-The parser, renderers, and document layer are ordinary ES modules and can be used outside the web app:
+The engine is a library, not a program. It performs no I/O and uses no browser or operating-system
+API, so the same code runs in a browser, on a server, on Windows, on Linux, or inside a desktop
+application. `src/engine.js` is the only module a host needs:
 
 ```js
-import { compile, compileDocument } from "./src/index.js";
+import { compile, compileDocument } from "./src/engine.js";
 
 const result = compile("sum(i, 1, n, i^2)");
 
@@ -146,6 +154,23 @@ console.log(document.latex); // complete LaTeX file
 `compile()` and `compileDocument()` return diagnostics and no rendered output when the source is
 invalid. Lower-level entry points (`parse`, `validate`, `buildDocument`, `renderDocumentHTML`,
 `renderStandaloneHTML`, `renderLaTeX`, `renderMathML`, `tokenize`) are exported as well.
+
+## Command line host
+
+`tools/easytex-engine.mjs` is the reference host for the engine contract. It speaks JSON over
+standard input and standard output, so it runs the same on Windows, Linux, and macOS and can be
+driven from any language:
+
+```bash
+npm run engine -- compile --source "x = frac(1, 2)" --pretty
+npm run engine -- document --file note.math
+npm run engine -- manifest --pretty
+npm run engine -- serve            # newline-delimited JSON, one request per line
+```
+
+The contract, the response shapes, the diagnostic format, and the portable language manifest are
+specified in [`ENGINE.md`](./ENGINE.md). A second implementation of the engine in another language
+can be written against that document and the manifest alone.
 
 ## Status
 
