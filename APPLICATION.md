@@ -89,11 +89,19 @@ parsed into data and validated before rendering.
 - Seven built-in examples, including a deliberately broken document that demonstrates diagnostics.
 - Missing images degrade to a readable placeholder instead of a broken icon.
 - Autocomplete and hover documentation cover document components as well as functions and constants.
+- Context-aware field completion in the writer: inside `document({ ... })`, `page({ ... })`,
+  `margins: { ... }`, and bibliography entry objects, the list contains only fields that belong in
+  that object. Fields already present are omitted, and a reference entry narrows to the fields of its
+  declared `type`.
+- Typing an empty string (`""`) for a field with allowed values or a default opens its value list.
+  Enumerated fields mark the default, and the default is offered first. Non-string options such as
+  `columns` and `number=` are suggested without quotes.
 - Starter snippets: accepting `document` expands a complete, valid article scaffold; `section`,
   `table`, `figure`, `theorem`, `bibliography`, and friends expand to matching templates. Multi-line
   snippets are indented to the insertion point and the caret lands in the first empty placeholder.
 - Field hover help: metadata keys, page options, margin sides, named arguments (`label=`, `number=`,
-  `caption=`, …), and bibliography fields show their scope, value type, allowed values, and an example.
+  `caption=`, …), and bibliography fields show their scope, value type, allowed values, defaults, and
+  an example.
 - The same syntax highlighting, auto-closing, smart indentation, formatting, and maximize controls as
   the expression editor, with document components and field names highlighted too.
 
@@ -110,19 +118,20 @@ parsed into data and validated before rendering.
 - New **Document authoring** section with a rendered document preview, authoring notes, the template
   table, page geometry, component catalog, and a field reference for metadata, page options, named
   arguments, and bibliography entries.
-- The field reference lists each field's allowed values, and a **Reference types** table names the
-  required and optional fields for every bibliography entry type.
+- The field reference lists each field's allowed values and defaults, and a **Reference types** table
+  names the required and optional fields for every bibliography entry type.
 
 ### Shared implementation
 
 - One lexer and parser serve both layers. Document literals add strings, booleans, objects, and
   `//` / `/* */` comments; mathematical expressions reject those literals.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
-  help, including document components.
+  help, including document components, object field scopes, defaults, and allowed values.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 77 conformance tests cover the language, the expression pipeline, the document layer, the
-  documentation catalog, the writer examples, the authoring snippets, the field catalog, the syntax
-  highlighter, the editing/formatting helpers, and the LaTeX mapping catalog.
+- 85 conformance tests cover the language, the expression pipeline, the document layer, the
+  documentation catalog, the writer examples, the authoring snippets, the field catalog and
+  context-aware completion, the syntax highlighter, the editing/formatting helpers, and the LaTeX
+  mapping catalog.
 
 ## Architecture
 
@@ -131,7 +140,8 @@ src/
   lexer.js, parser.js, validate.js      shared front end
   builtins.js, diagnostics.js            language surface and error model
   render-mathml.js, render-latex.js      expression renderers
-  docs/                                  function, constant, Greek, symbol, operator, LaTeX, field metadata
+  docs/                                  function, constant, Greek, symbol, operator, LaTeX, field
+                                         metadata, and object-field/value completion metadata
   document/
     components.js                        component catalog and authoring notes
     templates.js                         templates, page sizes, length parsing
@@ -145,7 +155,8 @@ web/
   document.html, document.js, css        document writer
   document-examples.js                   writer examples (tested in CI)
   docs.html, docs.js, docs.css           reference page
-  autocomplete.js, snippets.js, hover-docs.js   editor assistance (filterable by kind)
+  autocomplete.js, completion-context.js        suggestions and object/value context
+  snippets.js, hover-docs.js                    editor assistance (filterable by kind)
   highlight.js, editing.js               syntax highlighting and editing helpers
 ```
 
@@ -173,6 +184,23 @@ static file server (`tools/serve.mjs`).
 
 ## Updates
 
+### 2026-10-20 — object-field completion and enumerated values
+
+- Added context-aware completion for document objects. Inside `document({ ... })`, `page({ ... })`,
+  `margins: { ... }`, and bibliography entry objects, the writer lists only that object's fields,
+  omits fields already present, and narrows a reference entry to its declared `type`.
+- Added value completion. Typing `""` in a field with allowed values or a default opens a filtered,
+  case-insensitive list. The default appears first and is marked **DEFAULT**; other entries are
+  marked **OPTION**. Non-string fields such as `columns` and `number=` offer their values without
+  quotes, and quoted numeric values are replaced with valid unquoted numbers.
+- Field suggestions show their type and default in the signature column, and accepted field names
+  insert `name: ` with the caret ready for a value. Mouse and keyboard selection both work.
+- The reference and hover cards now show field defaults alongside allowed value groups.
+- Deferred autocomplete refresh by one microtask so it sees the final caret position after
+  auto-closing quotes; previously an input event fired before the caret moved inside the new pair.
+- Added field, reference-type, value/default, blocked-string, and non-string option tests. The suite
+  grew from 77 to 85 tests.
+
 ### 2026-10-20 — visual system, onboarding, and monochrome dark mode
 
 - Reworked the interface palette around warm paper, ink, rust, and pine in the light theme; the dark
@@ -188,7 +216,7 @@ static file server (`tools/serve.mjs`).
 - Strengthened the UI hierarchy with restrained borders and shadows, accessible focus states, clearer
   status indicators, and disabled export actions when output is unavailable.
 - Updated the default document sheet accents and sample chart to match the light palette.
-- The full suite remains at 77 passing tests.
+- The full suite was at 77 passing tests after this change.
 
 ### 2026-10-20 — arbitrary-base logarithms
 

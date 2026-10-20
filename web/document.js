@@ -465,7 +465,9 @@ function populateExamples() {
 const autocomplete = createAutocomplete({
   textarea: editor,
   container: editorShell,
-  kinds: WRITER_KINDS
+  kinds: WRITER_KINDS,
+  maxItems: 20,
+  contextual: true
 });
 const hoverDocs = createHoverDocs({
   textarea: editor,

@@ -693,8 +693,13 @@ function fieldsTable(fields) {
       field.type,
       field.summary,
       field.description,
+      field.defaultValue,
       ...(field.values ?? []),
-      ...(field.valueGroups ?? []).flatMap((group) => [group.label, ...group.values])
+      ...(field.valueGroups ?? []).flatMap((group) => [
+        group.label,
+        group.defaultValue,
+        ...group.values
+      ])
     ]
       .filter(Boolean)
       .join(" ")
@@ -712,7 +717,13 @@ function fieldsTable(fields) {
         ? [{ label: "Values", values: field.values }]
         : [];
     for (const group of groups) {
-      description.append(document.createTextNode(` ${group.label}: ${group.values.join(", ")}.`));
+      const suffix = group.defaultValue ? ` (default ${group.defaultValue})` : "";
+      description.append(
+        document.createTextNode(` ${group.label}${suffix}: ${group.values.join(", ")}.`)
+      );
+    }
+    if (field.defaultValue) {
+      description.append(document.createTextNode(` Default: ${field.defaultValue}.`));
     }
     if (field.example) description.append(el("code", "field-example", field.example));
     row.append(description);
@@ -753,7 +764,7 @@ function renderDocumentFields() {
     el(
       "p",
       "docs-lede",
-      "The names that appear inside objects and named arguments: document metadata, page(...) options, per-side margins, component named arguments, and bibliography entry fields. Hovering one of these names in the writer shows the same notes."
+      "The names that appear inside objects and named arguments: document metadata, page(...) options, per-side margins, component named arguments, and bibliography entry fields. The writer offers the relevant fields inside each object, and typing \"\" in a field with allowed values or a default opens the value list with the default marked. Hovering a field name shows the same notes."
     )
   );
 

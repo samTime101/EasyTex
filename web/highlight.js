@@ -55,7 +55,7 @@ export function scanSource(source) {
   let index = 0;
 
   function push(type, end) {
-    tokens.push({ type, text: text.slice(index, end) });
+    tokens.push({ type, text: text.slice(index, end), start: index, end });
     index = end;
   }
 

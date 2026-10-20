@@ -8,7 +8,7 @@
 // that every metadata key, page option, named argument, and bibliography
 // field is documented here, and that no stale names remain.
 
-import { PAGE_SIZES, TEMPLATE_NAMES } from "../document/templates.js";
+import { PAGE_SIZES, TEMPLATE_NAMES, TEMPLATES, DEFAULT_PAGE } from "../document/templates.js";
 import { BIBLIOGRAPHY_TYPES } from "../document/build.js";
 
 // PAGE_SIZES keys are normalized to upper case; sources write "Letter" and
@@ -45,8 +45,12 @@ export const FIELD_DOCS = [
     description:
       'In a bibliography entry, type instead selects the reference type (default "misc"): "article", "book", "inproceedings", "website", "techreport", or "misc".',
     valueGroups: [
-      { label: "Document templates", values: TEMPLATE_NAMES },
-      { label: "Reference types", values: BIBLIOGRAPHY_TYPE_NAMES }
+      {
+        label: "Document templates",
+        values: TEMPLATE_NAMES,
+        defaultValue: TEMPLATES.article.name
+      },
+      { label: "Reference types", values: BIBLIOGRAPHY_TYPE_NAMES, defaultValue: "misc" }
     ],
     example: 'type: "article"'
   },
@@ -141,6 +145,7 @@ export const FIELD_DOCS = [
     summary: "Paper size.",
     description: "Default A4.",
     values: PAGE_SIZE_VALUES,
+    defaultValue: DEFAULT_PAGE.size,
     example: 'page({ size: "A4" })'
   },
   {
@@ -150,6 +155,7 @@ export const FIELD_DOCS = [
     summary: "Orientation of the page.",
     description: "Default portrait.",
     values: ["portrait", "landscape"],
+    defaultValue: DEFAULT_PAGE.orientation,
     example: 'orientation: "landscape"'
   },
   {
@@ -168,6 +174,7 @@ export const FIELD_DOCS = [
     summary: "Number of text columns.",
     description: "A whole number from 1 to 3. Default 1.",
     values: ["1", "2", "3"],
+    defaultValue: String(DEFAULT_PAGE.columns),
     example: "columns: 2"
   },
 
@@ -177,6 +184,7 @@ export const FIELD_DOCS = [
     scope: "margin",
     type: "string",
     summary: 'Top margin as a length such as "25mm".',
+    defaultValue: DEFAULT_PAGE.margins.top,
     example: 'top: "20mm"'
   },
   {
@@ -184,6 +192,7 @@ export const FIELD_DOCS = [
     scope: "margin",
     type: "string",
     summary: 'Right margin as a length such as "25mm".',
+    defaultValue: DEFAULT_PAGE.margins.right,
     example: 'right: "20mm"'
   },
   {
@@ -191,6 +200,7 @@ export const FIELD_DOCS = [
     scope: "margin",
     type: "string",
     summary: 'Bottom margin as a length such as "25mm".',
+    defaultValue: DEFAULT_PAGE.margins.bottom,
     example: 'bottom: "20mm"'
   },
   {
@@ -198,6 +208,7 @@ export const FIELD_DOCS = [
     scope: "margin",
     type: "string",
     summary: 'Left margin as a length such as "25mm".',
+    defaultValue: DEFAULT_PAGE.margins.left,
     example: 'left: "20mm"'
   },
 
@@ -219,6 +230,7 @@ export const FIELD_DOCS = [
     description:
       "true or false (default false). A label without number=true is an error, because an unnumbered target cannot be referenced. In a techreport bibliography entry, number is the report number instead.",
     values: ["true", "false"],
+    defaultValue: "false",
     example: "number=true"
   },
   {
@@ -235,8 +247,9 @@ export const FIELD_DOCS = [
     type: "string or list",
     summary: "Column alignment for a table.",
     description:
-      'One of "left", "center", "right" for every column, or a list with one value per column.',
+      'One of "left", "center", "right" for every column, or a list with one value per column. Default "left".',
     values: ["left", "center", "right"],
+    defaultValue: "left",
     example: 'align="center"'
   },
   {

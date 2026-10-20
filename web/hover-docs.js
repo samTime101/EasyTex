@@ -219,13 +219,27 @@ function buildFieldContent(doc) {
     values.className = "hover-values";
     const label = document.createElement("span");
     label.className = "hover-values-label";
-    label.textContent = group.label;
+    label.textContent = group.defaultValue
+      ? `${group.label} · default ${group.defaultValue}`
+      : group.label;
     values.append(label);
     for (const value of group.values) {
       const code = document.createElement("code");
       code.textContent = value;
       values.append(code);
     }
+    wrapper.append(values);
+  }
+
+  if (doc.defaultValue) {
+    const values = document.createElement("p");
+    values.className = "hover-values";
+    const label = document.createElement("span");
+    label.className = "hover-values-label";
+    label.textContent = "Default";
+    const code = document.createElement("code");
+    code.textContent = doc.defaultValue;
+    values.append(label, code);
     wrapper.append(values);
   }
 

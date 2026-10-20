@@ -1,15 +1,26 @@
 import { matchDocumentation } from "../src/docs/index.js";
 import { prepareSnippet, lineIndent } from "./snippets.js";
+import { completionContextAt } from "./completion-context.js";
 import { TextareaMirror } from "./textarea-geometry.js";
 
 const WORD_BEFORE_CARET = /[A-Za-z][A-Za-z0-9_]*$/;
 
-export function createAutocomplete({ textarea, container, maxItems = 12, kinds = ["function", "constant"] }) {
+function matchesPrefix(name, prefix) {
+  return !prefix || name.toLowerCase().startsWith(prefix.toLowerCase());
+}
+
+export function createAutocomplete({
+  textarea,
+  container,
+  maxItems = 12,
+  kinds = ["function", "constant"],
+  contextual = false
+}) {
   const mirror = new TextareaMirror(textarea);
   const list = document.createElement("div");
   list.className = "autocomplete hidden";
   list.setAttribute("role", "listbox");
-  list.setAttribute("aria-label", "Function and constant suggestions");
+  list.setAttribute("aria-label", "Editor suggestions");
   container.append(list);
 
   let items = [];
@@ -20,6 +31,8 @@ export function createAutocomplete({ textarea, container, maxItems = 12, kinds =
   let isOpen = false;
   let forcedOpen = false;
 
+  let inputScheduled = false;
+
   function close() {
     if (!isOpen) return;
     isOpen = false;
@@ -28,6 +41,18 @@ export function createAutocomplete({ textarea, container, maxItems = 12, kinds =
     list.replaceChildren();
     items = [];
     selected = 0;
+  }
+
+  // Auto-pair edits dispatch their input event from inside execCommand, before
+  // attachEditing() moves the caret between the inserted quotes. Deferring the
+  // update by one microtask lets completion see the final caret position.
+  function scheduleInput() {
+    if (inputScheduled) return;
+    inputScheduled = true;
+    queueMicrotask(() => {
+      inputScheduled = false;
+      update({ allowOpen: true });
+    });
   }
 
   function tokenAt(caret) {
@@ -47,12 +72,42 @@ export function createAutocomplete({ textarea, container, maxItems = 12, kinds =
     const allowOpen = options.allowOpen !== false;
     const caret = textarea.selectionStart;
 
+    if (document.activeElement !== textarea) {
+      close();
+      return;
+    }
     if (caret !== textarea.selectionEnd) {
       close();
       return;
     }
     if (inComment(caret)) {
       close();
+      return;
+    }
+
+    const context = contextual ? completionContextAt(textarea.value, caret) : null;
+    if (context?.type === "blocked") {
+      close();
+      return;
+    }
+    if (context?.type === "field" || context?.type === "value") {
+      if (!allowOpen && !isOpen) return;
+      const currentPrefix = force ? "" : context.prefix;
+      const contextItems = context.candidates.filter((doc) => matchesPrefix(doc.name, currentPrefix));
+      if (contextItems.length === 0) {
+        close();
+        return;
+      }
+      items = contextItems.slice(0, maxItems);
+      selected = 0;
+      tokenStart = context.tokenStart;
+      tokenEnd = context.tokenEnd;
+      prefix = currentPrefix;
+      forcedOpen = force;
+      render();
+      list.classList.remove("hidden");
+      isOpen = true;
+      position();
       return;
     }
 
@@ -134,7 +189,13 @@ export function createAutocomplete({ textarea, container, maxItems = 12, kinds =
             ? "doc"
             : doc.kind === "symbol"
               ? "sym"
-              : "fn";
+              : doc.kind === "field"
+                ? "field"
+                : doc.kind === "value"
+                  ? doc.isDefault
+                    ? "default"
+                    : "option"
+                  : "fn";
 
       item.append(name, signature, kind);
       item.addEventListener("mousedown", (event) => {
@@ -198,7 +259,14 @@ export function createAutocomplete({ textarea, container, maxItems = 12, kinds =
     const isFunction = doc.kind === "function" || doc.kind === "component";
     let inserted;
     let caretOffset;
-    if (doc.snippet) {
+    if (doc.kind === "field") {
+      const nextChar = textarea.value[tokenEnd] ?? "";
+      inserted = nextChar === ":" || nextChar === "=" ? doc.name : `${doc.name}: `;
+      caretOffset = inserted.length;
+    } else if (doc.kind === "value") {
+      inserted = doc.quote ? `"${doc.value}"` : doc.value;
+      caretOffset = inserted.length;
+    } else if (doc.snippet) {
       const prepared = prepareSnippet(doc.snippet, lineIndent(textarea.value, tokenStart));
       inserted = prepared.text;
       caretOffset = prepared.caret;
@@ -254,7 +322,7 @@ export function createAutocomplete({ textarea, container, maxItems = 12, kinds =
       if (isOpen) position();
     },
     handleKey,
-    handleInput: () => update({ allowOpen: true }),
+    handleInput: scheduleInput,
     handleSelectionChange: () => {
       if (isOpen) update({ allowOpen: false });
     },
