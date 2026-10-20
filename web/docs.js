@@ -203,7 +203,7 @@ function renderHero() {
     el(
       "p",
       null,
-      "Every function, constant, Greek letter name, and operator — with arguments and worked examples — plus the experimental document layer: templates, page layout, every block and inline component, and every document(...) metadata and option field. MathScript is a function-based mathematical language: calls are name(arg1, arg2, …), ordinary arithmetic stays ordinary, and source is separate from rendering."
+      "Every function, constant, Greek letter name, and operator — with arguments and worked examples — plus the experimental document layer: templates, page layout, every block and inline component, and every document(...) metadata and option field. MathScript is a function-based mathematical language: calls are name(arg1, arg2, …), any other identifier can be applied as a free function such as f(x), ordinary arithmetic stays ordinary, and source is separate from rendering."
     )
   );
 
@@ -322,6 +322,7 @@ function renderSyntax() {
   const grid = el("div", "syntax-grid");
   for (const note of SYNTAX_NOTES) {
     const card = el("div", "syntax-note");
+    card.dataset.haystack = `${note.title} ${note.body} ${note.example}`.toLowerCase();
     card.append(el("h3", null, note.title));
     card.append(el("p", null, note.body));
     card.append(el("code", null, note.example));
@@ -671,7 +672,7 @@ function renderComponents() {
 function setupSearch() {
   const empty = el("div", "search-empty");
   empty.textContent =
-    "No functions, constants, Greek letters, fields, or document components match that search.";
+    "No functions, constants, Greek letters, fields, components, or syntax notes match that search.";
   empty.hidden = true;
   const anchor = content.children[0];
   if (anchor) anchor.after(empty);

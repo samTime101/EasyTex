@@ -16,12 +16,17 @@ export const OPERATOR_DOCS = [
 export const SYNTAX_NOTES = [
   {
     title: "Function calls",
-    body: "Every operation is a call with parenthesized, comma-separated arguments. Calls nest, and explicit parentheses define argument boundaries. The callee is always an identifier; (f)(x) and f(x)(y) are not valid calls.",
+    body: "Every built-in operation is a call with parenthesized, comma-separated arguments. Calls nest, and explicit parentheses define argument boundaries. The callee is always an identifier; (f)(x) and f(x)(y) are not valid calls.",
     example: "frac(a, sum(i, 1, n, i))"
   },
   {
+    title: "Function application",
+    body: "An identifier that is not a built-in function is a free function variable. It can be applied to any number of scalar arguments: f(x), f(x - a), and g(x, y) are valid. Applying a constant, such as pi(x), is an error.",
+    example: "f(x) + f(x - a)"
+  },
+  {
     title: "No implicit multiplication",
-    body: "Write every multiplication with an explicit *. Juxtaposition such as 2x, 2pi, or (x + 1)(x - 1) is not valid, and x(y) is always a call to x.",
+    body: "Write every multiplication with an explicit *. Juxtaposition such as 2x, 2pi, or (x + 1)(x - 1) is not valid, and x(y) is always a function application, never a product.",
     example: "2*x + 3*y"
   },
   {

@@ -194,13 +194,23 @@ export function validate(ast, options = {}) {
     const def = FUNCTIONS[name];
 
     if (!def) {
-      node.type = "unknown";
+      if (isBound(name)) {
+        // A bound variable may be applied as a function, just like a free one.
+        visitApplication(node, name);
+        return;
+      }
       if (RESERVED.has(name)) {
+        node.type = "unknown";
         report(CATEGORY.RESERVED, `The name '${name}' is reserved for a future version`, node.callee);
-      } else if (CONSTANTS.has(name)) {
+      } else if (CONSTANTS.has(name) && !(name === "i" && !complex)) {
+        node.type = "unknown";
         report(CATEGORY.NAME, `'${name}' is a constant, not a function`, node.callee);
       } else {
-        report(CATEGORY.NAME, `Unknown function '${name}'`, node.callee);
+        // Any other identifier in call position is a free function application:
+        // f(x), g(x - a), and higher-order uses are all valid. The language has
+        // no implicit multiplication, so x(y) is unambiguously an application.
+        visitApplication(node, name);
+        return;
       }
       for (const arg of node.args) visit(arg, { infinityAllowed: false });
       return;
@@ -228,6 +238,17 @@ export function validate(ast, options = {}) {
       return;
     }
 
+    for (const arg of node.args) {
+      requireScalar(arg, `Function '${name}'`);
+      visit(arg, { infinityAllowed: false });
+    }
+  }
+
+  function visitApplication(node, name) {
+    node.type = "scalar";
+    node.application = true;
+    node.callee.type = "function";
+    node.callee.binding = isBound(name) ? "bound" : "free";
     for (const arg of node.args) {
       requireScalar(arg, `Function '${name}'`);
       visit(arg, { infinityAllowed: false });

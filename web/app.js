@@ -20,6 +20,7 @@ const EXAMPLES = [
   { label: "Matrix", source: "matrix([[1, 2], [3, 4]])" },
   { label: "Column vector", source: "vector([x, y, z])" },
   { label: "Root and absolute value", source: "root(abs(x - 3), 3)" },
+  { label: "Function application", source: "f(x) + f(x - a)" },
   { label: "Error: implicit multiplication", source: "2x" }
 ];
 

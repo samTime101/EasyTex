@@ -216,7 +216,7 @@ pi*r^2
 sin(x)*cos(x)
 ```
 
-There is no ambiguity between a function call and multiplication: an identifier followed by `(` is always a call, even if whitespace separates them. Thus `x(y)` is a call to `x`, not the product of `x` and `y`. If `x` is not a known function, that is an unknown-function error.
+There is no ambiguity between a function call and multiplication: an identifier followed by `(` is always a call, even if whitespace separates them. Thus `x(y)` is a call to `x`, not the product of `x` and `y`. When `x` is a built-in function, that function's signature applies. Otherwise the call is a function application of the free (or bound) variable `x`; see section 4.1.
 
 Implicit multiplication is a compatibility-sensitive open decision; see Appendix A, decision D1.
 
@@ -362,9 +362,9 @@ MathScript distinguishes two namespaces:
 - The **value namespace** contains constants, free variables, and bound variables.
 - The **function namespace** contains built-in functions and, in a future version, user-defined functions.
 
-An identifier in call position, as in `sin(x)`, resolves in the function namespace. An identifier in value position, as in `pi` or `x`, resolves in the value namespace. This separation makes it possible to use `i` as a summation index while `i` also denotes the imaginary unit in another context.
+An identifier in call position, as in `sin(x)`, resolves first in the function namespace. If it names a built-in function, that function's signature and semantics apply. If it does not, the identifier is a free or bound variable and the call is a **function application**: `f(x)`, `f(x - a)`, and `f(g(x))` are valid symbolic expressions. An identifier in value position, as in `pi` or `x`, resolves in the value namespace. This separation makes it possible to use `i` as a summation index while `i` also denotes the imaginary unit in another context.
 
-A function name used as a value, such as `sin + 1`, is an error unless a value with that name exists. A constant used as a function, such as `pi(2)`, is an unknown-function error.
+A function name used as a value, such as `sin + 1`, is an error unless a value with that name exists. A constant used as a function, such as `pi(2)`, is an error: constants and reserved names cannot be applied.
 
 ### 4.2 Free variables
 
@@ -372,7 +372,7 @@ An identifier that is not bound by an enclosing operation is a **free variable**
 
 An implementation MAY offer a closed environment in which every free variable must be declared, but that is an environment policy, not a requirement of the language.
 
-Unknown function names are different from free variables. A bare identifier is a variable; an identifier in call position must resolve to a function.
+Free function application is different from a bare free variable. A bare identifier is a variable; an identifier in call position is an application. Both are permitted. For example, `f(x) + f(x - a)` is valid without declaring `f`, and every argument must be a scalar expression.
 
 ### 4.3 Built-in constants
 
@@ -431,7 +431,7 @@ User-defined functions and constants are not part of this version. The syntax:
 f(x) = x^2 + 1
 ```
 
-is therefore not a definition in MathScript 0.1. It parses as an equality relation whose left side is a call to `f`; validation then reports that `f` is an unknown function. Function-definition syntax will be specified separately before it becomes part of the language.
+is therefore not a definition in MathScript 0.1. It parses as an equality relation whose left side is a free function application, `f(x)`; it does not bind `f`. Function-definition syntax will be specified separately before it becomes part of the language.
 
 A future definition mechanism MUST keep definitions distinguishable from built-ins and MUST preserve the scoping rules in this document. It MUST NOT allow a definition to change the meaning of an expression outside its declared scope.
 
@@ -472,19 +472,19 @@ frac(a, , b)      // syntax error
 
 Every built-in function has a fixed arity. A call MUST supply exactly that number of arguments. Implementations MUST reject a call with too few or too many arguments, and the diagnostic SHOULD state both the expected and received counts.
 
-There is no overloading and no variadic built-in function in this version. Optional arguments are not part of the grammar.
+There is no overloading and no variadic built-in function in this version. Optional arguments are not part of the grammar. A free function application is not a built-in and accepts any number of arguments.
 
-### 5.3 Function names and unknown functions
+### 5.3 Function names and free applications
 
-A call whose name does not resolve to a function in the current environment is an error:
+A call whose name resolves to a built-in function uses that function's signature and arity. A call whose name is any other identifier — except a constant or reserved word — is a **function application**:
 
 ```text
 unknownop(x)
 ```
 
-The function is not defined in the current environment.
+is valid: `unknownop` is a free function variable, and the expression renders as function notation. Free applications accept any number of arguments, including none, and nest: `f(g(x))`. Every argument must be a scalar expression.
 
-Unknown bare identifiers are not errors; they are free variables, as described in section 4.2. An implementation MUST NOT silently treat an unknown function call as multiplication, as a variable, or as text.
+Unknown bare identifiers are not errors; they are free variables, as described in section 4.2. An implementation MUST NOT silently treat a function application as multiplication, as a variable, or as text. Applying a built-in constant, such as `pi(2)`, or a reserved word is an error.
 
 ### 5.4 Arguments that are not ordinary expressions
 
@@ -502,7 +502,7 @@ These constraints are checked after parsing. A call that violates them is struct
 
 Validation has two levels:
 
-1. **Structural validity** — the expression parses, function names resolve, arities match, bound-variable positions are identifiers, and matrices and vectors have valid shapes. A renderer can operate on any structurally valid expression.
+1. **Structural validity** — the expression parses, built-in function names resolve, arities match, bound-variable positions are identifiers, and matrices and vectors have valid shapes. A renderer can operate on any structurally valid expression.
 2. **Mathematical validity** — domains, types, and evaluation conditions. Examples include division by zero, an even root of a negative real number in a real-only environment, or a non-integer bound of a sum when an evaluator is asked to expand it.
 
 An implementation that only parses and renders is not required to decide mathematical validity. An implementation that evaluates MUST report domain errors rather than silently producing a value outside the defined semantics.
@@ -746,7 +746,7 @@ A conforming implementation processes source in these stages:
 
 1. **Lexing** — split the source into tokens, ignoring whitespace and comments.
 2. **Parsing** — build an expression tree according to the grammar in section 3.
-3. **Structural validation** — resolve function names, check arity, check bound-variable positions, and validate matrix and vector shapes.
+3. **Structural validation** — resolve built-in function names, check arity, check bound-variable positions, and validate matrix and vector shapes.
 4. **Semantic analysis or evaluation** — optional; check domains and compute values if the implementation provides an evaluator.
 5. **Rendering or export** — produce output from the validated tree.
 
@@ -760,7 +760,7 @@ Implementations MUST:
 - Require balanced parentheses and brackets.
 - Require every function name to be followed by a parenthesized argument list.
 - Separate arguments by commas at the correct nesting depth.
-- Validate function names and argument counts.
+- Validate built-in function names and argument counts.
 - Check that the first argument of each operation that introduces a variable is an identifier.
 - Check that matrices are rectangular and non-empty, and that vectors are non-empty.
 - Report errors with source locations where possible.
@@ -771,7 +771,7 @@ Implementations MUST:
 Implementations MUST NOT:
 
 - Automatically close missing parentheses.
-- Treat an unknown function call as multiplication.
+- Treat a free function application as multiplication.
 - Treat implicit multiplication as valid in this version.
 - Split arguments by counting commas without respecting nesting.
 - Accept a relation where a scalar operand is required.
@@ -804,13 +804,13 @@ sqrt(x + 1
 
 Expected a closing parenthesis for the call to `sqrt`.
 
-#### Unknown function
+#### Applied constant
 
 ```text
-unknownop(x)
+pi(2)
 ```
 
-The function `unknownop` is not defined in the current environment.
+The name `pi` is a constant and cannot be applied as a function.
 
 #### Invalid bound variable
 
@@ -886,7 +886,7 @@ A conforming parser MUST produce a tree containing at least the following node k
 | --- | --- | --- |
 | `Number` | `value`, optional `lexeme`, `span` | numeric literal |
 | `Identifier` | `name`, `span`, optional binding annotation | variable or constant reference |
-| `Call` | `callee` (identifier), `arguments`, `span` | function call |
+| `Call` | `callee` (identifier), `arguments`, `span` | function call or free application |
 | `Unary` | `operator`, `operand`, `span` | prefix `+` or `-` |
 | `Binary` | `operator`, `left`, `right`, `span` | arithmetic operator |
 | `Relation` | `operator`, `left`, `right`, `span` | equality or comparison |
@@ -1179,6 +1179,7 @@ The following expressions MUST parse and validate:
 | `frac(a, sum(i, 1, n, i))` | nested call with commas |
 | `a + b = c + d` | equality relation |
 | `x < 5` | comparison relation |
+| `f(x) + f(x - a)` | free function application |
 
 ### 12.3 Invalid conformance examples
 
@@ -1189,7 +1190,7 @@ The following MUST be rejected:
 | `2x` | implicit multiplication is not defined |
 | `sum(i, 1, n)` | wrong arity |
 | `sqrt(x + 1` | missing closing parenthesis |
-| `unknownop(x)` | unknown function |
+| `pi(2)` | constant applied as a function |
 | `a < b < c` | chained relation |
 | `matrix([[1, 2], [3]])` | inconsistent row lengths |
 | `matrix([])` | empty matrix |
@@ -1223,11 +1224,11 @@ error[syntax]: expected ')' to close call to 'sqrt'
 ```
 
 ```text
-error[name]: unknown function 'unknownop'
+error[name]: 'pi' is a constant, not a function
   --> example.ms:1:1
    |
- 1 | unknownop(x)
-   | ^^^^^^^^^^^^
+ 1 | pi(2)
+   | ^^
 ```
 
 The file extension `.ms` is illustrative; this specification does not mandate one.
@@ -1319,7 +1320,7 @@ For quick reference, this draft fixes the following behavior:
 - Implicit multiplication is not allowed.
 - Relations are non-associative and do not chain.
 - `=` is equality, never assignment.
-- Free variables are allowed; unknown functions are errors.
+- Free variables and free function applications are allowed; applying a constant is an error.
 - Bounded operations use `operation(variable, start, end, expression)`.
 - The bound variable is local to the expression argument; bounds resolve in the enclosing scope.
 - `sum` and `product` bounds are inclusive.

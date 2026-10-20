@@ -33,8 +33,9 @@ parsed into data and validated before rendering.
 - Structures: `matrix([[1, 2], [3, 4]])` and `vector([x, y, z])`, with shape validation.
 - Constants include `pi`, `e`, `i`, and `infinity`; `log` is base 10 and `ln` is natural.
 - **No implicit multiplication**: `2x` is an error with a diagnostic that suggests `2*x`.
-- Unknown functions are errors; bare identifiers are free variables; bound variables are scoped to
-  their operation.
+- Free function application: `f(x) + f(x - a)` is valid without declaring `f`; bare identifiers are
+  free variables; bound variables are scoped to their operation. Applying a constant such as `pi(x)`
+  is an error.
 - Diagnostics carry source spans and are classified by category (`syntax`, `name`, `arity`,
   `binding`, `structure`, `relation`, `reference`, `document`, …). Invalid input never produces
   rendered output.
@@ -108,7 +109,7 @@ parsed into data and validated before rendering.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
   help, including document components.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 71 conformance tests cover the language, the expression pipeline, the document layer, the
+- 72 conformance tests cover the language, the expression pipeline, the document layer, the
   documentation catalog, the writer examples, the authoring snippets, the field catalog, the syntax
   highlighter, and the editing/formatting helpers.
 
@@ -160,6 +161,16 @@ Node 18 or newer is required; there are no runtime dependencies. The dev server 
 static file server (`tools/serve.mjs`).
 
 ## Updates
+
+### 2026-10-20 — free function application
+
+- Calls to identifiers that are not built-in functions are now function applications: `f(x) + f(x - a)`,
+  `g(x, y)`, `phi(t)`, and nested forms such as `f(g(x))` all compile without declarations.
+- Applying a constant (`pi(2)`) or a reserved name remains an error, and every application argument
+  must still be a scalar expression. Bound and higher-order uses such as `sum(f, 1, n, f(x))` work.
+- Free applications render as ordinary function notation in MathML and LaTeX. The reference page has
+  a new **Function application** syntax note, and the specification updates its name-resolution, call,
+  diagnostics, and conformance sections.
 
 ### 2026-10-19 — syntax highlighting, editing assistance, and complete reference
 

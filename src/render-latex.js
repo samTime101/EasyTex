@@ -158,8 +158,11 @@ function renderCall(node, ctx) {
       return renderMatrix(node, ctx);
     case "vector":
       return renderVector(node, ctx);
-    default:
-      return `\\mathrm{${esc(name)}}${paren(args.map((arg) => renderNode(arg, ctx)).join(", "))}`;
+    default: {
+      const binding = ctx.scope.has(name) ? "bound" : "free";
+      const callee = identifier(name, binding);
+      return `${callee}${paren(args.map((arg) => renderNode(arg, ctx)).join(", "))}`;
+    }
   }
 }
 

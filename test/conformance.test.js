@@ -25,7 +25,9 @@ const valid = [
   "integral(x, -infinity, infinity, exp(-x^2))",
   "sum(pi, 1, n, pi)",
   "root(abs(x - 3), 3)",
-  "a % b"
+  "a % b",
+  "f(x) + f(x - a)",
+  "foo(x, y)"
 ];
 
 test("valid conformance examples compile", () => {
@@ -48,7 +50,6 @@ const invalid = [
   ["(x + 1)(x - 1)", "syntax"],
   ["sum(i, 1, n)", "arity"],
   ["sqrt(x + 1", "syntax"],
-  ["unknownop(x)", "name"],
   ["a < b < c", "syntax"],
   ["matrix([[1, 2], [3]])", "structure"],
   ["matrix([])", "structure"],
@@ -170,7 +171,50 @@ test("rendering uses fractions for division and preserves grouping", () => {
   assert.equal(compile("(a + b)*c").latex, "\\left(a+b\\right)\\cdot c");
 });
 
-test("function application requires known functions", () => {
-  const result = compile("f(x) = x^2 + 1");
-  assert.ok(result.diagnostics.some((diag) => diag.message.includes("Unknown function 'f'")));
+test("free identifiers are applied as functions", () => {
+  const result = compile("f(x) + f(x - a)");
+  assert.equal(result.diagnostics.length, 0);
+  assert.equal(result.latex, "f\\left(x\\right)+f\\left(x-a\\right)");
+  assert.ok(result.mathml.includes("<mi>f</mi>"));
+
+  const multi = compile("g(x, y)");
+  assert.equal(multi.diagnostics.length, 0);
+  assert.equal(multi.latex, "g\\left(x, y\\right)");
+
+  const named = compile("foo(x)");
+  assert.equal(named.diagnostics.length, 0);
+  assert.equal(named.latex, "\\mathrm{foo}\\left(x\\right)");
+
+  const greek = compile("phi(x)");
+  assert.equal(greek.diagnostics.length, 0);
+  assert.ok(greek.latex.startsWith("\\phi"));
+
+  const nested = compile("f(g(x))");
+  assert.equal(nested.diagnostics.length, 0);
+  assert.equal(nested.latex, "f\\left(g\\left(x\\right)\\right)");
+});
+
+test("free function application still checks arguments and names", () => {
+  const relation = compile("f(x = y)");
+  assert.ok(relation.diagnostics.some((diag) => diag.message.includes("requires a scalar")));
+
+  const stringArg = compile('f("s")');
+  assert.ok(stringArg.diagnostics.some((diag) => diag.message.includes("requires a scalar")));
+
+  const constant = compile("pi(x)");
+  assert.ok(constant.diagnostics.some((diag) => diag.message.includes("constant, not a function")));
+
+  const imaginary = compile("i(x)");
+  assert.ok(imaginary.diagnostics.some((diag) => diag.message.includes("constant, not a function")));
+  const realOnly = compile("i(x)", { complex: false });
+  assert.equal(realOnly.diagnostics.length, 0);
+
+  const bound = compile("sum(f, 1, n, f(x))");
+  assert.equal(bound.diagnostics.length, 0);
+  assert.equal(bound.latex, "\\sum_{f = 1}^{n} f\\left(x\\right)");
+
+  const multiplication = compile("f(x)g(x)");
+  assert.ok(
+    multiplication.diagnostics.some((diag) => diag.message.includes("Implicit multiplication"))
+  );
 });

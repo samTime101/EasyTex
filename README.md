@@ -41,7 +41,7 @@ npm test
 - **LaTeX and standalone HTML export** of documents, plus Print/PDF with the document's page size and
   margins. The last valid preview stays visible while diagnostics are fixed.
 - **Structured parser** with a full lexer, recursive-descent parser, and AST.
-- **Validation** for arity, unknown functions, bound variables, matrix shapes, relation nesting, list placement, document structure, labels, references, and bibliography entries.
+- **Validation** for built-in arity, free function application, bound variables, matrix shapes, relation nesting, list placement, document structure, labels, references, and bibliography entries.
 - **Diagnostics** with source positions and categories. Click a diagnostic to select the offending range in the editor.
 - **Function suggestions** while typing: an autocomplete list with signatures, keyboard navigation, and correct insertion of calls and constants. In the writer, document components are suggested too, and structured components insert starter snippets — `document` expands to a complete scaffold.
 - **Hover documentation** in the editor: signatures, argument descriptions, and a rendered example for the function under the pointer, with scope-aware handling of bound variables. The writer also explains components and fields (metadata keys, named arguments, and bibliography entries).

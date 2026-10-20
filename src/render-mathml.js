@@ -152,8 +152,12 @@ function renderCall(node, ctx) {
       return renderMatrix(node, ctx);
     case "vector":
       return renderVector(node, ctx);
-    default:
-      return `<mrow>${mi(name, false)}${paren(args.map((arg) => renderNode(arg, ctx)).join(mo(",")))}</mrow>`;
+    default: {
+      const binding = identifierBinding(name, ctx.scope, ctx);
+      const display = identifierDisplay(name, binding);
+      const argsHtml = args.map((arg) => renderNode(arg, ctx)).join(mo(","));
+      return `<mrow>${mi(display.text, display.italic)}${paren(argsHtml)}</mrow>`;
+    }
   }
 }
 
