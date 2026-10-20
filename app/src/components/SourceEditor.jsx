@@ -8,10 +8,12 @@ import {
 } from "react";
 import {
   autoCloseEdit,
+  callEnd,
   deletePairEdit,
   formatEdit,
   highlightSource,
   indentEdit,
+  nextPlaceholder,
   smartEnterEdit,
   TEXTAREA_STYLE_PROPS
 } from "../lib/engine.js";
@@ -204,6 +206,22 @@ export const SourceEditor = forwardRef(function SourceEditor(
       }
       if (key === "Tab") {
         event.preventDefault();
+        // Tab walks the placeholders of a call that is being written:
+        // integral(variable, start, end, expression).
+        const placeholder = nextPlaceholder(value, start);
+        if (placeholder) {
+          // The source does not change, so the selection is set directly.
+          textarea.focus();
+          textarea.setSelectionRange(placeholder.start, placeholder.end);
+          return;
+        }
+        const end = callEnd(value, start);
+        if (end !== null) {
+          // The last placeholder is written: the caret leaves the call.
+          textarea.focus();
+          textarea.setSelectionRange(end, end);
+          return;
+        }
         applyEdit(indentEdit(value, start, end, { unindent: event.shiftKey, indent: INDENT }));
         return;
       }

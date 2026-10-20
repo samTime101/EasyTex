@@ -63,6 +63,7 @@ export {
 } from "@ui/editing.js";
 export { completionContextAt } from "@ui/completion-context.js";
 export { completionInsertion } from "@ui/completion-insertion.js";
+export { callEnd, nextPlaceholder, placeholderPositions } from "@ui/placeholders.js";
 export { prepareSnippet, lineIndent } from "@ui/snippets.js";
 export { TEXTAREA_STYLE_PROPS } from "@ui/textarea-geometry.js";
 export { resolveImageSources } from "@ui/asset-paths.js";

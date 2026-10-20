@@ -63,6 +63,13 @@ parsed into data and validated before rendering.
 - Copy output and download a complete `.tex` document.
 - Source can be shared with `#src=<url-encoded source>`.
 
+### Expression editor
+
+- Accepting a function suggestion writes the call **expanded**, with the names of the parameters as
+  placeholders: `integral(variable, start, end, expression)`. The first placeholder is selected, so
+  typing replaces it, and **Tab** moves to the next one and, after the last, out of the call.
+- The suggestion list shows the whole signature, so the argument order is readable without hovering.
+
 ### Document writer
 
 - A document is a **program of statements**. `document = Document(type="article", title="…")` creates

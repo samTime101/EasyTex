@@ -174,16 +174,28 @@ export function useAutocomplete({
         close();
         return;
       }
-      const { inserted, caretOffset } = completionInsertion(doc, {
+      const { inserted, caretOffset, selectionStart, selectionEnd } = completionInsertion(doc, {
         source: textarea.value,
         tokenStart: tokenRef.current.start,
         tokenEnd: tokenRef.current.end
       });
       textarea.setRangeText(inserted, tokenRef.current.start, tokenRef.current.end, "end");
       const caret = tokenRef.current.start + caretOffset;
-      textarea.setSelectionRange(caret, caret);
+      if (selectionStart !== undefined) {
+        // An expanded call selects its first placeholder, so typing replaces
+        // the name of the parameter.
+        textarea.setSelectionRange(
+          tokenRef.current.start + selectionStart,
+          tokenRef.current.start + selectionEnd
+        );
+      } else {
+        textarea.setSelectionRange(caret, caret);
+      }
       textarea.focus();
-      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      // The event comes from the window the textarea lives in, so a host
+      // that runs the editor in another document still sees the change.
+      const view = textarea.ownerDocument?.defaultView ?? globalThis;
+      textarea.dispatchEvent(new view.Event("input", { bubbles: true }));
       close();
     },
     [close, textareaRef]

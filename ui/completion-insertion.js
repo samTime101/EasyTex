@@ -31,6 +31,21 @@ export function completionInsertion(doc, options = {}) {
     return { inserted: prepared.text, caretOffset: prepared.caret };
   }
 
+  // A function with arguments is inserted expanded, with the names of the
+  // parameters as placeholders: integral(variable, start, end, expression).
+  // The first placeholder is selected, so typing replaces it.
+  if (doc.kind === "function" && doc.args?.length) {
+    const names = doc.args.map((argument) => argument.name);
+    const inserted = `${doc.name}(${names.join(", ")})`;
+    const from = doc.name.length + 1;
+    return {
+      inserted,
+      caretOffset: inserted.length,
+      selectionStart: from,
+      selectionEnd: from + names[0].length
+    };
+  }
+
   const isFunction = doc.kind === "function" || doc.kind === "component";
   const inserted = isFunction ? `${doc.name}()` : doc.name;
   return { inserted, caretOffset: isFunction ? doc.name.length + 1 : inserted.length };

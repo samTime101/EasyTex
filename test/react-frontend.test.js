@@ -208,6 +208,47 @@ test("the writer suggests the methods of the container around the caret", async 
   view.unmount();
 });
 
+test("the editor inserts an expanded call and Tab walks the placeholders", async () => {
+  const view = mount(EditorPage);
+  await wait(COMPILE_DELAY);
+  const editor = view.container.querySelector("#editor");
+  act(() => {
+    editor.focus();
+  });
+  editor.value = "";
+  type(editor, "integral");
+  await wait(150);
+
+  // Accepting the suggestion writes the call with the names of the
+  // parameters, and the first one is selected.
+  act(() => {
+    editor.dispatchEvent(
+      new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true })
+    );
+  });
+  await wait(150);
+  assert.equal(editor.value, "integral(variable, start, end, expression)");
+  assert.equal(editor.value.slice(editor.selectionStart, editor.selectionEnd), "variable");
+
+  // Tab moves to the next placeholder.
+  act(() => {
+    editor.dispatchEvent(
+      new dom.window.KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true })
+    );
+  });
+  await wait(120);
+  assert.equal(editor.value.slice(editor.selectionStart, editor.selectionEnd), "start");
+
+  act(() => {
+    editor.dispatchEvent(
+      new dom.window.KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true })
+    );
+  });
+  await wait(120);
+  assert.equal(editor.value.slice(editor.selectionStart, editor.selectionEnd), "end");
+  view.unmount();
+});
+
 test("the reference page lists every section and filters them", () => {
   const view = mount(DocsPage);
   const sections = view.container.querySelectorAll(".docs-section");

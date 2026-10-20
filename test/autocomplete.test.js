@@ -53,12 +53,32 @@ test("an unquoted value is inserted as written", () => {
 
 // ------------------------------------------------------------- expressions
 
-test("a function suggestion inserts a call and leaves the caret inside it", () => {
+test("a function suggestion is inserted expanded, with the names of its parameters", () => {
   const insertion = completionInsertion(
-    { kind: "function", name: "sum" },
+    {
+      kind: "function",
+      name: "sum",
+      args: [
+        { name: "variable" },
+        { name: "start" },
+        { name: "end" },
+        { name: "expression" }
+      ]
+    },
     { source: "su", tokenStart: 0, tokenEnd: 2 }
   );
-  assert.equal(insertion.inserted, "sum()");
+  assert.equal(insertion.inserted, "sum(variable, start, end, expression)");
+  assert.equal(insertion.caretOffset, insertion.inserted.length);
+  assert.equal(insertion.selectionStart, 4, "the first parameter is selected");
+  assert.equal(insertion.selectionEnd, 12);
+});
+
+test("a function without arguments is inserted as an empty call", () => {
+  const insertion = completionInsertion(
+    { kind: "function", name: "sin" },
+    { source: "si", tokenStart: 0, tokenEnd: 2 }
+  );
+  assert.equal(insertion.inserted, "sin()");
   assert.equal(insertion.caretOffset, 4);
 });
 
