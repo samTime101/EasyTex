@@ -18,6 +18,14 @@ export default function App() {
     document.title = TITLES[route] ?? TITLES.editor;
   }, [route]);
 
+  // The document writer fills the window: the header and the footer stay
+  // put, and the workspace takes the rest. On a narrow screen the stylesheet
+  // turns the body back into an ordinary block, so the page scrolls as usual.
+  useEffect(() => {
+    document.body.classList.toggle("writer-body", route === "document");
+    return () => document.body.classList.remove("writer-body");
+  }, [route]);
+
   if (route === "document") return <WriterPage />;
   if (route === "docs") return <DocsPage />;
   return <EditorPage />;

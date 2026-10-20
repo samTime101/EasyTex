@@ -47,6 +47,7 @@ test.after(() => vite.close());
 const { EditorPage } = await vite.ssrLoadModule("/src/pages/EditorPage.jsx");
 const { WriterPage } = await vite.ssrLoadModule("/src/pages/WriterPage.jsx");
 const { DocsPage } = await vite.ssrLoadModule("/src/pages/DocsPage.jsx");
+const { default: App } = await vite.ssrLoadModule("/src/App.jsx");
 const { printDocument, pageGeometryCss } = await import("../ui/print-document.js");
 
 // The editor compiles after a short delay, so the tests wait for it.
@@ -196,6 +197,32 @@ test("every page offers a way to the other pages", () => {
   assert.ok(writerLinks.includes("/"), "the writer links to the expression editor");
   assert.ok(!writerLinks.includes("/document"), "and not to itself");
   writer.unmount();
+});
+
+test("the writer fills the window and the maximize button toggles the layout", async () => {
+  window.history.pushState(null, "", "/document");
+  const view = mount(App);
+  await wait(COMPILE_DELAY);
+
+  assert.equal(
+    document.body.classList.contains("writer-body"),
+    true,
+    "the writer body fills the window"
+  );
+
+  const button = view.container.querySelector("#editor-size");
+  act(() => button.click());
+  const workspace = view.container.querySelector(".workspace");
+  assert.ok(workspace.classList.contains("editor-expanded"), "the editor takes the whole width");
+  assert.equal(button.getAttribute("aria-pressed"), "true");
+  assert.equal(button.textContent, "Restore");
+
+  act(() => button.click());
+  assert.ok(!workspace.classList.contains("editor-expanded"), "and back again");
+  assert.equal(button.getAttribute("aria-pressed"), "false");
+
+  view.unmount();
+  window.history.pushState(null, "", "/");
 });
 
 test("the print helper sends the sheet and the page geometry to print-js", () => {

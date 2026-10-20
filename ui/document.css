@@ -6,6 +6,16 @@ body.writer-body {
   height: 100vh;
 }
 
+/* The React app renders into a root element, so the workspace lives one level
+   deeper than it did in the static pages: the root takes the height and
+   holds the header, the workspace, and the footer. */
+body.writer-body #root {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
 body.writer-body .app-header,
 body.writer-body .app-footer,
 body.writer-body .writer-workspace {

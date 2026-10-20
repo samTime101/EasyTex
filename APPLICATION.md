@@ -126,7 +126,7 @@ parsed into data and validated before rendering.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
   help, including document components, object field scopes, defaults, and allowed values.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 141 conformance tests cover the language, the expression pipeline, the document layer, the
+- 142 conformance tests cover the language, the expression pipeline, the document layer, the
   documentation catalog, the writer examples, the authoring snippets, the field catalog, the
   context-aware completion and its insertion rules, the syntax highlighter, the editing/formatting
   helpers, the LaTeX mapping catalog, and the engine boundary.
@@ -224,6 +224,17 @@ dependencies at all, and the engine host (`tools/easytex-engine.mjs`) speaks JSO
 and standard output.
 
 ## Updates
+
+### 2026-10-20 — the writer fills the window
+
+- Fixed the document writer collapsing to the height of its content. The writer's layout expects
+  the header, the workspace, and the footer to be direct children of the body, but the React app
+  renders them into a root element, so the workspace never received the free space. The writer now
+  marks the body, and the root element carries the column, so the workspace takes the height
+  between the header and the footer.
+- **Maximize** now really maximizes: the editor panel fills the window instead of sitting in a
+  short box with a large empty area under it.
+- The suite grew from 141 to 142 tests.
 
 ### 2026-10-20 — the React app is the app
 
