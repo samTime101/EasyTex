@@ -126,7 +126,7 @@ parsed into data and validated before rendering.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
   help, including document components, object field scopes, defaults, and allowed values.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 122 conformance tests cover the language, the expression pipeline, the document layer, the
+- 127 conformance tests cover the language, the expression pipeline, the document layer, the
   documentation catalog, the writer examples, the authoring snippets, the field catalog, the
   context-aware completion and its insertion rules, the syntax highlighter, the editing/formatting
   helpers, the LaTeX mapping catalog, and the engine boundary.
@@ -210,6 +210,17 @@ static file server (`tools/serve.mjs`). The engine host (`tools/easytex-engine.m
 standard input and standard output.
 
 ## Updates
+
+### 2026-10-20 — static hosting on Vercel and everywhere else
+
+- Added `vercel.json`. The repository root is the site, so Vercel served the files but had no
+  page at `/`. The configuration now maps `/` to the expression editor and adds the friendly
+  paths `/editor`, `/document`, and `/docs`.
+- Made every internal link absolute, in the pages and in the scripts that build them, so the app
+  works at whatever URL a host maps it to and never breaks on a rewritten path.
+- Added tests that keep the links absolute, that every local link points at a file that exists,
+  that the scripts build no relative links, and that the Vercel configuration agrees with the
+  development server. The suite grew from 122 to 127 tests.
 
 ### 2026-10-20 — engine, hosts, and highlighted reference
 

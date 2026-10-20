@@ -33,6 +33,23 @@ Run the conformance tests with:
 npm test
 ```
 
+## Deploying
+
+EasyTeX is a static site: no build step, no dependencies, no server. Any static host can serve the
+repository as it is. The included `vercel.json` maps the friendly paths on Vercel:
+
+| Path | Page |
+| --- | --- |
+| `/` | Expression editor |
+| `/editor` | Expression editor |
+| `/document` | Document writer |
+| `/docs` | Reference |
+| `/SPECIFICATION.md` | Language specification |
+
+Connect the repository to Vercel and deploy; nothing else is needed. On another host, serve the
+repository root and map `/` to `/web/index.html`, exactly as the development server does. Every
+link inside the app is absolute, so the pages keep working at whatever URL the host maps them to.
+
 ## Features
 
 - **Live preview** using native MathML, with no third-party rendering library.

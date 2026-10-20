@@ -121,7 +121,7 @@ function renderExample(example) {
   actions.append(copyButton);
 
   const tryLink = el("a", "mini-button", "Try it");
-  tryLink.href = `./index.html#src=${encodeURIComponent(example.source)}`;
+  tryLink.href = `/web/index.html#src=${encodeURIComponent(example.source)}`;
   actions.append(tryLink);
 
   head.append(actions);
@@ -562,7 +562,7 @@ function renderDocumentAuthoring() {
 
   const actions = el("div", "docs-doc-actions");
   const writerLink = el("a", "mini-button", "Open this document in the writer");
-  writerLink.href = `./document.html#src=${encodeURIComponent(DOCUMENT_SAMPLE)}`;
+  writerLink.href = `/web/document.html#src=${encodeURIComponent(DOCUMENT_SAMPLE)}`;
   const copyButton = el("button", "mini-button", "Copy the source");
   copyButton.type = "button";
   copyButton.addEventListener("click", () => copyText(DOCUMENT_SAMPLE, "Document copied"));
@@ -812,7 +812,7 @@ function renderDocumentExample(example) {
   actions.append(copyButton);
 
   const tryLink = el("a", "mini-button", "Open in writer");
-  tryLink.href = `./document.html#src=${encodeURIComponent(example.source)}`;
+  tryLink.href = `/web/document.html#src=${encodeURIComponent(example.source)}`;
   actions.append(tryLink);
 
   head.append(actions);
