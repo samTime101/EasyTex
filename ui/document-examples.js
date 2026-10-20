@@ -146,6 +146,114 @@ export const DOCUMENT_EXAMPLES = [
 })`
   },
   {
+    label: "Book: a chapter and a quotation",
+    valid: true,
+    source: `document({
+  type: "book",
+  title: "Notes on the Summation of Series",
+  author: "Ada Lovelace",
+  date: "1843",
+  content: [
+    section("Chapter I: On partial sums", [
+      text("Let ", inline(S(n) = sum(i, 1, n, i^2)), " denote the partial sum of the squares. The difference of two consecutive partial sums is"),
+      equation(S(n) - S(n - 1) = n^2, number=true, label="eq:difference"),
+      text("Equation ", ref("eq:difference"), " is the whole of the recurrence."),
+      quote([text("The purpose of computing is insight, not numbers.")])
+    ]),
+    section("Chapter II: The closed form", [
+      text("Summing the recurrence gives"),
+      equation(S(n) = frac(n*(n + 1)*(2*n + 1), 6), number=true, label="eq:closed"),
+      numbered([
+        text("The identity holds for ", inline(n = 1), "."),
+        text("The right-hand side is a polynomial of degree three."),
+        text("The formula is used in least-squares fitting.")
+      ])
+    ])
+  ]
+})`
+  },
+  {
+    label: "Thesis: an abstract and a long structure",
+    valid: true,
+    source: `document({
+  type: "thesis",
+  title: "Bounds for Partial Sums of Reciprocal Squares",
+  author: "Emmy Noether",
+  date: "2026",
+  abstract: "We show that the partial sums of the reciprocal squares are bounded above by two, and that the bound is approached slowly.",
+  keywords: ["series", "bounds", "analysis"],
+  content: [
+    section("Introduction", [
+      text("The partial sums ", inline(S(n) = sum(i, 1, n, frac(1, i^2))), " grow without bound but very slowly."),
+      subsection("The statement", [
+        text("There is a constant ", inline(c), " such that ", inline(S(n) < c), " for every ", inline(n), ".")
+      ])
+    ]),
+    section("Proof of the bound", [
+      lemma("Termwise comparison", [text("For every ", inline(i >= 1), ", ", inline(frac(1, i^2) < frac(1, i*(i - 1))), ".")]),
+      theorem("The bound", [text("The partial sums are bounded by two.")], label="thm:bound"),
+      proof([text("Compare the series with the telescoping series ", inline(sum(i, 2, n, frac(1, i*(i - 1)))), ".")])
+    ])
+  ]
+})`
+  },
+  {
+    label: "Presentation: a landscape page",
+    valid: true,
+    source: `document({
+  type: "presentation",
+  title: "Writing Mathematics Without Backslashes",
+  author: "The EasyTeX Team",
+  content: [
+    page({ size: "A4", orientation: "landscape", margins: { top: "18mm", right: "18mm", bottom: "18mm", left: "18mm" } }),
+    section("The idea", [
+      text("MathScript writes ", inline(frac(a, b)), " where LaTeX writes a command with a backslash."),
+      bullets(["Calls instead of commands", "Objects for metadata", "One parser for both layers"])
+    ]),
+    section("The pipeline", [
+      aligned([x = frac(-b + sqrt(b^2 - 4*a*c), 2*a)], number=true, label="eq:roots"),
+      text("The preview and the export come from the same tree.")
+    ])
+  ]
+})`
+  },
+  {
+    label: "Handout: a small page with a table",
+    valid: true,
+    source: `document({
+  type: "article",
+  title: "A One-Page Handout",
+  author: "The EasyTeX Team",
+  content: [
+    page({ size: "A5", margins: { top: "15mm", right: "15mm", bottom: "15mm", left: "15mm" } }),
+    section("Reference", [
+      table(["Name", "Meaning"], [["frac(a, b)", "A fraction"], ["sum(i, 1, n, i^2)", "A sum of squares"]], caption="The most used calls", label="tab:calls", align=["left", "left"]),
+      text("Every call takes its arguments in parentheses.")
+    ])
+  ]
+})`
+  },
+  {
+    label: "Article: inline styles and mathematical symbols",
+    valid: true,
+    source: `document({
+  type: "article",
+  title: "Symbols in Running Text",
+  author: "The EasyTeX Team",
+  abstract: "Greek names, named symbols, and inline styles all read naturally in the source.",
+  content: [
+    section("Styles", [
+      text("Prose can be ", bold("bold"), ", ", italic("italic"), ", ", underline("underlined"), ", ", emphasis("emphasised"), ", or ", code_text("monospaced"), "."),
+      text("Mathematics sits inline, as in ", inline(alpha + beta = gamma), ", and symbols such as ", inline(forall), ", ", inline(emptyset), ", and ", inline(aleph), " keep their glyphs.")
+    ]),
+    section("A short display", [
+      equation(integral(x, 0, infinity, exp(-x^2)*dx) = frac(sqrt(pi), 2), number=true, label="eq:gauss"),
+      text("Equation ", ref("eq:gauss"), " is the Gaussian integral.")
+    ])
+  ]
+})`
+  },
+  {
     label: "Errors: what diagnostics look like",
     valid: false,
     source: `document({

@@ -6,28 +6,12 @@ import { SourceEditor } from "../components/SourceEditor.jsx";
 import { OutputTabs } from "../components/OutputTabs.jsx";
 import { Diagnostics } from "../components/Diagnostics.jsx";
 import { useToast } from "../hooks/useToast.jsx";
+import { useEditorZoom } from "../hooks/useEditorZoom.js";
+import { ZoomControl } from "../components/ZoomControl.jsx";
+import { EXPRESSION_EXAMPLES, DEFAULT_EXPRESSION_SOURCE } from "@ui/expression-examples.js";
 
-const EXAMPLES = [
-  { label: "Sum of squares", source: "sum(i, 1, n, i^2)" },
-  { label: "Nested sum and product", source: "sum(i, 1, n, product(j, 1, i, j))" },
-  { label: "Quadratic formula", source: "x = frac(-b + sqrt(b^2 - 4*a*c), 2*a)" },
-  {
-    label: "Gaussian density",
-    source: "frac(1, sqrt(2*pi*sigma^2)) * exp(frac(-(x - mu)^2, 2*sigma^2))"
-  },
-  { label: "Definite integral", source: "integral(x, 0, 1, x^2)" },
-  { label: "Base-2 logarithm", source: "logbase(x, 2)" },
-  { label: "Limit", source: "limit(x, 0, sin(x)/x)" },
-  { label: "Derivative", source: "derivative(x, x^2 + 1)" },
-  { label: "Partial derivative", source: "partial(x, x^2 + y^2)" },
-  { label: "Matrix", source: "matrix([[1, 2], [3, 4]])" },
-  { label: "Column vector", source: "vector([x, y, z])" },
-  { label: "Root and absolute value", source: "root(abs(x - 3), 3)" },
-  { label: "Function application", source: "f(x) + f(x - a)" },
-  { label: "Error: implicit multiplication", source: "2x" }
-];
 
-const DEFAULT_SOURCE = "sum(i, 1, n, i^2)";
+
 
 const TABS = [
   { id: "preview", label: "Preview", controls: "preview" },
@@ -58,7 +42,7 @@ function astForDisplay(ast) {
 }
 
 export function EditorPage() {
-  const [source, setSource] = useState(() => loadSource("easytex.source", DEFAULT_SOURCE));
+  const [source, setSource] = useState(() => loadSource("easytex.source", DEFAULT_EXPRESSION_SOURCE));
   const [complex, setComplex] = useState(true);
   const [tab, setTab] = useState("preview");
   const [result, setResult] = useState(null);
@@ -66,6 +50,7 @@ export function EditorPage() {
   const [maximized, setMaximized] = useState(false);
   const editorRef = useRef(null);
   const toast = useToast();
+  const { zoom, zoomIn, zoomOut, reset: resetZoom } = useEditorZoom();
 
   const compileNow = useCallback(() => {
     if (!source.trim()) {
@@ -167,7 +152,7 @@ ${result.latex}
             }}
           >
             <option value="">Choose an example…</option>
-            {EXAMPLES.map((example) => (
+            {EXPRESSION_EXAMPLES.map((example) => (
               <option key={example.source} value={example.source}>
                 {example.label}
               </option>
@@ -213,6 +198,7 @@ ${result.latex}
               >
                 Format
               </button>
+              <ZoomControl zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onReset={resetZoom} />
               <button
                 id="editor-size"
                 className="panel-button"
@@ -232,6 +218,12 @@ ${result.latex}
             ariaLabel="MathScript source"
             placeholder="sum(i, 1, n, i^2)"
             onRenderNow={compileNow}
+            onZoom={(action) => {
+              if (action === "in") zoomIn();
+              if (action === "out") zoomOut();
+              if (action === "reset") resetZoom();
+            }}
+            fontSize={zoom}
           />
           <Diagnostics diagnostics={diagnostics} onSelect={selectDiagnostic} />
         </section>

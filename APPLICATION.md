@@ -53,8 +53,11 @@ parsed into data and validated before rendering.
 - Auto-closing brackets and quotes, smart `Enter`, line indent/unindent, pair deletion, and a
   **Format** action (`Shift` + `Alt` + `F`) that re-indents the source from bracket depth.
 - A **Maximize** toggle that hides the output pane so the source fills the workspace.
-- Examples library, complex-mode toggle for `i`, and a paper-and-ink light theme with a monochrome
-  dark theme, persisted in `localStorage`.
+- Examples library: 33 expressions for the expression editor and 12 documents for the writer,
+  covering the arithmetic, the bounded operations, the calculus, the structures, the symbols, and
+  the document components — plus a few examples that show what the diagnostics look like. A
+  complex-mode toggle for `i`, and a paper-and-ink light theme with a monochrome dark theme, are
+  persisted in `localStorage`.
 - Keyboard-accessible output tabs (arrow keys, Home, and End); copy and download actions are disabled
   when there is no valid output.
 - Copy output and download a complete `.tex` document.
@@ -126,7 +129,7 @@ parsed into data and validated before rendering.
 - Shared documentation metadata in `src/docs/` drives the reference page, autocomplete, and hover
   help, including document components, object field scopes, defaults, and allowed values.
 - Deterministic validation and rendering; no network access is required to build or preview.
-- 142 conformance tests cover the language, the expression pipeline, the document layer, the
+- 144 conformance tests cover the language, the expression pipeline, the document layer, the
   documentation catalog, the writer examples, the authoring snippets, the field catalog, the
   context-aware completion and its insertion rules, the syntax highlighter, the editing/formatting
   helpers, the LaTeX mapping catalog, and the engine boundary.
@@ -224,6 +227,22 @@ dependencies at all, and the engine host (`tools/easytex-engine.mjs`) speaks JSO
 and standard output.
 
 ## Updates
+
+### 2026-10-20 — more examples and a text size control
+
+- The example library grew: **33 expressions** for the expression editor and **12 documents** for
+  the writer. The new expressions cover the product, the double sum, the harmonic series, the
+  improper integral, the limit at infinity, the second and mixed derivatives, the matrix of
+  symbols, the nested fraction, Euler's identity, the square root of a negative number, the
+  trigonometric identity, and the Greek letters — plus four examples that show the diagnostics.
+  The new documents cover a book, a thesis, a landscape presentation, a small handout, and the
+  inline styles and symbols.
+- Both editors can now be zoomed: an `A−` / `A+` control with the current size, a reset, and the
+  shortcuts `Ctrl` + `-`, `Ctrl` + `=`, and `Ctrl` + `0`. The size is remembered, and the
+  highlight layer follows it so the code and the colours stay in step.
+- The examples are checked by the test suite: every expression either compiles or reports the
+  diagnostic it advertises, and every document example still builds. The suite grew from 142 to
+  144 tests.
 
 ### 2026-10-20 — the writer fills the window
 

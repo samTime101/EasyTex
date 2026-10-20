@@ -13,6 +13,7 @@ import {
 } from "../ui/editing.js";
 import { compileDocument, compile } from "../src/index.js";
 import { DOCUMENT_EXAMPLES, DEFAULT_DOCUMENT_SOURCE } from "../ui/document-examples.js";
+import { EXPRESSION_EXAMPLES } from "../ui/expression-examples.js";
 
 function kinds(source) {
   return scanSource(source).map((token) => `${token.type}:${token.text}`);
@@ -48,6 +49,25 @@ test("the highlighter scanner is tolerant of incomplete input", () => {
   assert.deepEqual(kinds("/* note"), ["comment:/* note"]);
   assert.deepEqual(kinds("a // note\nb"), ["identifier:a", "space: ", "comment:// note", "space:\n", "identifier:b"]);
   assert.deepEqual(kinds('"a\\"b" c'), ['string:"a\\"b"', "space: ", "identifier:c"]);
+});
+
+test("every expression example behaves as advertised", () => {
+  for (const example of EXPRESSION_EXAMPLES) {
+    const result = compile(example.source, { complex: true });
+    const errors = result.diagnostics.filter((entry) => entry.severity !== "warning");
+    if (example.error) {
+      assert.ok(
+        errors.length > 0,
+        `the example '${example.label}' should report a problem`
+      );
+    } else {
+      assert.deepEqual(
+        errors.map((entry) => entry.message),
+        [],
+        `the example '${example.label}' should compile`
+      );
+    }
+  }
 });
 
 test("the scanner reads numbers the way the lexer does", () => {

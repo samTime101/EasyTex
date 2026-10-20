@@ -37,7 +37,9 @@ export const SourceEditor = forwardRef(function SourceEditor(
     hoverKinds = ["function", "constant", "symbol"],
     contextual = false,
     maxItems = 12,
-    onRenderNow
+    onRenderNow,
+    onZoom,
+    fontSize
   },
   ref
 ) {
@@ -90,7 +92,7 @@ export const SourceEditor = forwardRef(function SourceEditor(
       return () => observer.disconnect();
     }
     return undefined;
-  }, [value]);
+  }, [value, fontSize]);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -170,6 +172,23 @@ export const SourceEditor = forwardRef(function SourceEditor(
         format();
         return;
       }
+      if (event.ctrlKey || event.metaKey) {
+        if (event.key === "=" || event.key === "+") {
+          event.preventDefault();
+          onZoom?.("in");
+          return;
+        }
+        if (event.key === "-") {
+          event.preventDefault();
+          onZoom?.("out");
+          return;
+        }
+        if (event.key === "0") {
+          event.preventDefault();
+          onZoom?.("reset");
+          return;
+        }
+      }
       if (event.ctrlKey || event.metaKey || event.altKey) return;
       if (autocomplete.handleKey(event)) return;
 
@@ -204,7 +223,7 @@ export const SourceEditor = forwardRef(function SourceEditor(
         applyEdit(edit);
       }
     },
-    [applyEdit, autocomplete, format, onRenderNow, value]
+    [applyEdit, autocomplete, format, onRenderNow, onZoom, value]
   );
 
   const onInput = useCallback(
@@ -231,6 +250,7 @@ export const SourceEditor = forwardRef(function SourceEditor(
         value={value}
         onChange={onInput}
         onKeyDown={onKeyDown}
+        style={fontSize ? { fontSize: `${fontSize}px` } : undefined}
         ref={textareaRef}
       />
       <pre

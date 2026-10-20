@@ -8,6 +8,8 @@ import { SourceEditor } from "../components/SourceEditor.jsx";
 import { OutputTabs } from "../components/OutputTabs.jsx";
 import { Diagnostics } from "../components/Diagnostics.jsx";
 import { useToast } from "../hooks/useToast.jsx";
+import { useEditorZoom } from "../hooks/useEditorZoom.js";
+import { ZoomControl } from "../components/ZoomControl.jsx";
 import { DEFAULT_DOCUMENT_SOURCE, DOCUMENT_EXAMPLES } from "@ui/document-examples.js";
 
 const STORAGE_KEY = "easytex.document";
@@ -81,6 +83,7 @@ export function WriterPage() {
   const sheetRef = useRef(null);
   const shellRef = useRef(null);
   const toast = useToast();
+  const { zoom, zoomIn, zoomOut, reset: resetZoom } = useEditorZoom();
 
   const compileNow = useCallback(() => {
     if (!source.trim()) {
@@ -337,6 +340,7 @@ export function WriterPage() {
               >
                 Format
               </button>
+              <ZoomControl zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onReset={resetZoom} />
               <button
                 id="editor-size"
                 className="panel-button"
@@ -360,6 +364,12 @@ export function WriterPage() {
             contextual
             maxItems={20}
             onRenderNow={compileNow}
+            onZoom={(action) => {
+              if (action === "in") zoomIn();
+              if (action === "out") zoomOut();
+              if (action === "reset") resetZoom();
+            }}
+            fontSize={zoom}
           />
           <Diagnostics diagnostics={diagnostics} onSelect={selectDiagnostic} />
         </section>

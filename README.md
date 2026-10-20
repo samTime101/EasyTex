@@ -71,7 +71,8 @@ them to.
 - **Maximize** button in both editors hides the output pane so the source gets the full page width.
 - **Documentation page** at `/docs` covering every function, constant, Greek letter name, named symbol, operator, syntax rule, component, template, and document field — with allowed values, defaults, bibliography reference types, live previews, search, and links into both editors. A searchable **LaTeX → MathScript** reference maps standard LaTeX/AMS notation and marks every construct that has no native equivalent.
 - **Export** to LaTeX, MathML, or the raw AST. Download a complete `.tex` document with one click.
-- **Examples** for sums, products, fractions, logarithms, integrals, limits, derivatives, matrices, vectors, and documents.
+- **Examples**: 33 expressions — sums, products, fractions, logarithms, integrals, limits, derivatives, matrices, vectors, Greek letters, and the symbols — and 12 documents, from a one-page article to a book, a thesis, and a landscape presentation.
+- **Text size control** in both editors (`A−` / `A+`, or `Ctrl` + `-` / `Ctrl` + `=`), remembered between visits.
 - **Complex mode** toggle for the imaginary unit `i`.
 - **Paper-and-ink light theme and a black-and-white dark interface**, persisted in `localStorage`.
 - **Plain-language onboarding**: the expression editor and reference explain the difference between EasyTeX and MathScript.

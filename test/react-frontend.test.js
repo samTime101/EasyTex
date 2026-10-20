@@ -225,6 +225,52 @@ test("the writer fills the window and the maximize button toggles the layout", a
   window.history.pushState(null, "", "/");
 });
 
+test("the text size of the editor can be changed", async () => {
+  dom.window.localStorage.removeItem("easytex.zoom");
+  const view = mount(EditorPage);
+  await wait(COMPILE_DELAY);
+
+  const editor = view.container.querySelector("#editor");
+  const smaller = view.container.querySelector('[aria-label="Smaller text"]');
+  const larger = view.container.querySelector('[aria-label="Larger text"]');
+  const reset = view.container.querySelector('[aria-label="Reset the text size"]');
+  assert.ok(smaller && larger && reset, "the size control is there");
+  assert.equal(editor.style.fontSize, "14.5px", "the default size");
+
+  act(() => larger.click());
+  assert.equal(editor.style.fontSize, "15.5px", "the text grows");
+
+  act(() => smaller.click());
+  assert.equal(editor.style.fontSize, "14.5px", "and shrinks again");
+
+  act(() => {
+    editor.dispatchEvent(
+      new dom.window.KeyboardEvent("keydown", {
+        key: "=",
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true
+      })
+    );
+  });
+  assert.equal(editor.style.fontSize, "15.5px", "Ctrl + = grows the text");
+
+  act(() => {
+    editor.dispatchEvent(
+      new dom.window.KeyboardEvent("keydown", {
+        key: "0",
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true
+      })
+    );
+  });
+  assert.equal(editor.style.fontSize, "14.5px", "Ctrl + 0 resets it");
+
+  view.unmount();
+  dom.window.localStorage.removeItem("easytex.zoom");
+});
+
 test("the print helper sends the sheet and the page geometry to print-js", () => {
   const calls = [];
   dom.window.printJS = (options) => calls.push(options);

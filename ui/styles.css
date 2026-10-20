@@ -522,6 +522,39 @@ button:disabled {
   background: var(--accent-soft);
 }
 
+/* The text size control of the editor. */
+.zoom-control {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1px;
+  background: var(--panel);
+}
+
+.zoom-button {
+  border: 0;
+  background: transparent;
+  padding: 3px 6px;
+  font-size: 11.5px;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+.zoom-button:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.zoom-size {
+  min-width: 20px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+}
+
 /* Maximized editor: the output pane steps aside so the source gets the
    full workspace width. */
 .workspace.editor-expanded {
