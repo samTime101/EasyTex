@@ -285,10 +285,8 @@ export function WriterPage() {
     <>
       <Header
         subtitle="Document writer"
-        nav={[
-          { label: "Expression editor", href: "/" },
-          { label: "Reference", href: "/docs" }
-        ]}
+        mode="document"
+        nav={[{ label: "Reference", href: "/docs" }]}
       >
         <ZoomControl zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onReset={resetZoom} />
         <label className="example-picker">

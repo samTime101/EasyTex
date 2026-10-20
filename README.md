@@ -53,6 +53,7 @@ them to.
 ## Features
 
 - **Live preview** using native MathML, with no third-party rendering library.
+- **A mode switch in the header** moves between the expression editor and the document writer, so both are one click away.
 - **Document writer** for `document({ ... })` sources: templates, page geometry, sections, numbered
   equations, tables, figures, listings, theorems, cross-references, citations, and bibliographies.
 - **LaTeX and standalone HTML export** of documents, plus Print/PDF that prints the document

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useTheme } from "../lib/theme.js";
+import { ModeTabs } from "./ModeTabs.jsx";
 
-export function Header({ subtitle, nav = [], children }) {
+export function Header({ subtitle, nav = [], mode = null, children }) {
   const [theme, toggleTheme] = useTheme();
   const headerRef = useRef(null);
   const next = theme === "dark" ? "light" : "dark";
@@ -29,6 +30,7 @@ export function Header({ subtitle, nav = [], children }) {
       </a>
       <div className="header-actions">
         {children}
+        {mode ? <ModeTabs mode={mode} /> : null}
         {nav.map((item) => (
           <a className="ghost-button" href={item.href} key={item.href}>
             {item.label}

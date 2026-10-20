@@ -181,21 +181,28 @@ test("the reference page lists every section and filters them", () => {
   view.unmount();
 });
 
-test("every page offers a way to the other pages", () => {
+test("the mode switch takes you from either editor to the other", () => {
   const editor = mount(EditorPage);
-  const editorLinks = [...editor.container.querySelectorAll(".header-actions a")].map((link) =>
-    link.getAttribute("href")
+  const editorTabs = [...editor.container.querySelectorAll(".mode-tabs a")];
+  assert.deepEqual(
+    editorTabs.map((tab) => tab.textContent),
+    ["Expression", "Document"]
   );
-  assert.ok(editorLinks.includes("/document"), "the editor links to the writer");
-  assert.ok(editorLinks.includes("/docs"), "and to the reference");
+  assert.equal(editorTabs[0].getAttribute("aria-current"), "page", "the current mode is marked");
+  assert.equal(editorTabs[1].getAttribute("aria-current"), null);
+  assert.equal(editorTabs[1].getAttribute("href"), "/document", "the other mode is one click away");
+  assert.ok(
+    [...editor.container.querySelectorAll(".header-actions a")].some(
+      (link) => link.getAttribute("href") === "/docs"
+    ),
+    "and the reference is still a link"
+  );
   editor.unmount();
 
   const writer = mount(WriterPage);
-  const writerLinks = [...writer.container.querySelectorAll(".header-actions a")].map((link) =>
-    link.getAttribute("href")
-  );
-  assert.ok(writerLinks.includes("/"), "the writer links to the expression editor");
-  assert.ok(!writerLinks.includes("/document"), "and not to itself");
+  const writerTabs = [...writer.container.querySelectorAll(".mode-tabs a")];
+  assert.equal(writerTabs[0].getAttribute("href"), "/");
+  assert.equal(writerTabs[1].getAttribute("aria-current"), "page", "the current mode is marked");
   writer.unmount();
 });
 

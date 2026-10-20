@@ -642,6 +642,41 @@ button:disabled {
   background: var(--accent-soft);
 }
 
+/* The mode switch. The two editors are the same app in two modes, so the
+   switch sits in the header of both and reads as one control. */
+.mode-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel);
+}
+
+.mode-tabs a {
+  padding: 5px 12px;
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: var(--text-ui);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.mode-tabs a:hover {
+  color: var(--ink);
+  background: var(--panel-2);
+  text-decoration: none;
+}
+
+.mode-tabs a.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
 /* The text size control of the editor. It sits in the header with the other
    view settings, so the panel head keeps its title and its actions. */
 .zoom-control {

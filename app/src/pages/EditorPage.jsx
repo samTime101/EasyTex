@@ -134,10 +134,8 @@ ${result.latex}
     <>
       <Header
         subtitle="MathScript editor"
-        nav={[
-          { label: "Document writer", href: "/document" },
-          { label: "Reference", href: "/docs" }
-        ]}
+        mode="editor"
+        nav={[{ label: "Reference", href: "/docs" }]}
       >
         <ZoomControl zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onReset={resetZoom} />
         <label className="example-picker">
