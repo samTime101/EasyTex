@@ -157,26 +157,39 @@ test("the writer suggests the named arguments around the caret", async () => {
   view.unmount();
 });
 
-test("the writer suggests the values of an argument after the closing quote", async () => {
-  const view = mount(WriterPage);
-  const editor = view.container.querySelector("#editor");
-  act(() => {
-    editor.focus();
-  });
-  editor.value = "";
-  type(editor, 'document = Document(type="article", title="T")\nmain = document.section("S")\nmain.page(size="")');
-  // The caret lands after the closing quote, where the values belong.
-  act(() => {
-    editor.setSelectionRange(editor.value.length - 1, editor.value.length - 1);
-  });
-  await wait(150);
+test("the writer suggests the values of an argument wherever the caret is", async () => {
+  const source =
+    'document = Document(type="article", title="T")\nmain = document.section("S")\nmain.page(size="")';
 
-  const items = [...view.container.querySelectorAll(".autocomplete-item")];
-  assert.ok(items.length >= 3, "the values are offered");
-  assert.match(items[0].textContent, /^A4/);
-  assert.match(items[0].textContent, /default/i, "the default is marked");
-  assert.match(items[1].textContent, /option/i, "the other values are marked as options");
-  view.unmount();
+  // The values must appear for every caret position of the argument: inside
+  // the quotes, on the closing quote, after it, and after the closing
+  // bracket of the call. Each position gets its own editor, so a list that
+  // was already open cannot hide a missing one.
+  for (const offset of [-3, -2, -1, 0]) {
+    const view = mount(WriterPage);
+    const editor = view.container.querySelector("#editor");
+    act(() => {
+      editor.focus();
+    });
+    editor.value = "";
+    type(editor, source);
+    await wait(COMPILE_DELAY);
+
+    act(() => {
+      editor.setSelectionRange(source.length + offset, source.length + offset);
+      // A browser fires the select event when the caret moves; jsdom does
+      // not, so the editor is told about it.
+      editor.dispatchEvent(new dom.window.Event("select", { bubbles: true }));
+    });
+    await wait(150);
+
+    const items = [...view.container.querySelectorAll(".autocomplete-item")];
+    assert.ok(items.length >= 3, `the values are offered at offset ${offset}`);
+    assert.match(items[0].textContent, /^A4/);
+    assert.match(items[0].textContent, /default/i, "the default is marked");
+    assert.match(items[1].textContent, /option/i, "the other values are marked as options");
+    view.unmount();
+  }
 });
 
 test("the writer suggests the methods of the container around the caret", async () => {

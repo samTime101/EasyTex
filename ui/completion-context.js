@@ -135,30 +135,120 @@ function argumentContext(methodName, argumentText, lineStart, argumentOffset) {
   };
 }
 
+// The call the caret is in: the innermost call that is still open, or the
+// call that the closing bracket right before the caret closes. The second case
+// matters because the user often finishes the call before reaching for the
+// value: page(size="") with the caret after the bracket is still an argument
+// being edited.
+function callAt(tokens, caret) {
+  const stack = [];
+  let lastClosed = null;
+  let previous = null;
+
+  for (const token of tokens) {
+    if (token.start >= caret) break;
+    if (token.type === "space" || token.type === "comment") continue;
+    previous = token;
+    if (token.type !== "punct") continue;
+    if (token.text === "(" || token.text === "[" || token.text === "{") {
+      stack.push(token);
+    } else if (token.text === ")" || token.text === "]" || token.text === "}") {
+      const open = stack.pop();
+      if (open && open.text === "(") lastClosed = { open, close: token };
+    }
+  }
+
+  const top = stack[stack.length - 1];
+  if (top?.text === "(") return { open: top, close: null };
+  // The caret may sit directly after the bracket that closes the call.
+  if (
+    previous?.type === "punct" &&
+    previous.text === ")" &&
+    previous.end === caret &&
+    lastClosed?.close === previous
+  ) {
+    return lastClosed;
+  }
+  return null;
+}
+
+// The name of the method a call belongs to.
+function methodOfCall(tokens, call) {
+  let previous = null;
+  for (const token of tokens) {
+    if (token.start >= call.open.start) break;
+    if (token.type === "space" || token.type === "comment") continue;
+    previous = token;
+  }
+  return previous?.type === "identifier" ? previous.text : null;
+}
+
+// The argument the caret is in: the text after the last comma of the call.
+function argumentOfCall(source, tokens, call) {
+  const start = call.open.end;
+  const end = call.close ? call.close.start : source.length;
+  let depth = 0;
+  let comma = -1;
+  for (const token of tokens) {
+    if (token.start < start) continue;
+    if (token.start >= end) break;
+    if (token.type !== "punct") continue;
+    if (token.text === "(" || token.text === "[" || token.text === "{") depth += 1;
+    else if (token.text === ")" || token.text === "]" || token.text === "}") depth -= 1;
+    else if (token.text === "," && depth === 0) comma = token.start;
+  }
+  const from = comma === -1 ? start : comma + 1;
+  return { text: source.slice(from, end), from, to: end };
+}
+
 // The values a named argument allows, as in main.page(size="A4.
 function valueContext(source, tokens, caret) {
   const token = tokenAt(tokens, caret);
-  if (!token || token.type !== "string") return null;
-  const text = token.text;
-  const closed = text.length > 1 && text.endsWith('"');
-  const inner = closed ? text.slice(1, -1) : text.slice(1);
-  const prefix = source.slice(token.start + 1, Math.min(caret, token.end - (closed ? 1 : 0)));
+  const inString = token?.type === "string";
+  const call = callAt(tokens, caret);
+  if (!call) return inString ? { type: "blocked" } : null;
 
-  const before = source.slice(0, token.start);
-  const name = /([A-Za-z_][A-Za-z0-9_]*)\s*=\s*$/.exec(before);
-  if (!name) return { type: "blocked" };
+  const argument = argumentOfCall(source, tokens, call);
+  const match = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([\s\S]*)$/.exec(argument.text);
+  if (!match) return inString ? { type: "blocked" } : null;
 
-  const field = fieldDocsFor(name[1]);
-  if (!field) return { type: "blocked" };
+  const method = methodOfCall(tokens, call);
+  const declared = method ? COMPONENTS[method]?.named ?? [] : [];
+  if (!declared.some((entry) => entry.name === match[1])) {
+    return inString ? { type: "blocked" } : null;
+  }
+
+  const field = fieldDocsFor(match[1]);
+  if (!field) return inString ? { type: "blocked" } : null;
   const quote = field.type !== "number" && field.type !== "boolean";
   const candidates = optionCandidates(field, quote);
-  if (candidates.length === 0) return { type: "blocked" };
+  if (candidates.length === 0) return inString ? { type: "blocked" } : null;
 
+  // The value of the argument: the string it holds, if it holds one.
+  let value = null;
+  for (const item of tokens) {
+    if (item.start < argument.from) continue;
+    if (item.start >= argument.to) break;
+    if (item.type === "string") value = item;
+  }
+  if (!value) {
+    return {
+      type: "value",
+      prefix: "",
+      tokenStart: caret,
+      tokenEnd: caret,
+      candidates
+    };
+  }
+
+  const closed = source[value.end - 1] === '"';
+  const contentEnd = closed ? value.end - 1 : value.end;
+  const prefix = source.slice(value.start + 1, Math.min(caret, contentEnd));
   return {
     type: "value",
     prefix,
-    tokenStart: token.start,
-    tokenEnd: token.end,
+    tokenStart: value.start,
+    tokenEnd: value.end,
     candidates
   };
 }

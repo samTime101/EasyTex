@@ -154,24 +154,34 @@ test("the values are offered when the caret sits after the empty string", () => 
   assert.equal(result.prefix, "");
 });
 
-test("the values are offered when the caret sits after the closing quote", () => {
-  // The user types size="" and the caret lands on the closing quote; the list
-  // must open for them.
+test("the values are offered at every caret position of the argument", () => {
+  // The user types size="" and reaches for the value at every point of the
+  // argument: inside the quotes, on the closing quote, after it, and even
+  // after the closing bracket of the call.
   const source = `${PREAMBLE}main.page(size="")`;
   const quote = source.length - 1;
-  const end = completionContextAt(source, quote);
-  assert.equal(end.type, "value");
-  assert.deepEqual(names(end).slice(0, 5), ["A4", "A3", "A5", "Letter", "Legal"]);
-  assert.equal(end.prefix, "");
-  assert.equal(end.tokenStart, quote - 2, "the whole string is replaced");
-  assert.equal(end.tokenEnd, quote);
+  for (const caret of [quote - 1, quote, quote + 1, source.length]) {
+    const result = completionContextAt(source, caret);
+    assert.equal(result.type, "value", `the values are offered at ${caret}`);
+    assert.deepEqual(
+      names(result).slice(0, 5),
+      ["A4", "A3", "A5", "Letter", "Legal"],
+      `the values are offered at ${caret}`
+    );
+    assert.equal(result.prefix, "");
+    assert.equal(result.tokenStart, quote - 2, "the whole string is replaced");
+    assert.equal(result.tokenEnd, quote);
+  }
+});
 
-  const inside = completionContextAt(source, quote - 1);
-  assert.equal(inside.type, "value");
-  assert.deepEqual(names(inside).slice(0, 5), ["A4", "A3", "A5", "Letter", "Legal"]);
+test("the values stop when the caret leaves the argument", () => {
+  const source = `${PREAMBLE}main.page(size="A4")`;
+  const moved = completionContextAt(`${source} `, source.length + 1);
+  assert.equal(moved, null, "the caret has moved past the call");
 
-  const past = completionContextAt(source, source.length);
-  assert.equal(past, null, "the caret has left the string");
+  const proseSource = `${PREAMBLE}main.paragraph("Hello")`;
+  const prose = completionContextAt(proseSource, proseSource.length);
+  assert.equal(prose, null, "a string that is not an argument offers nothing");
 });
 
 test("a value that is already written keeps its text as the prefix", () => {
