@@ -7,6 +7,7 @@ import {
   useRef
 } from "react";
 import {
+  applyTextEdit,
   autoCloseEdit,
   callEnd,
   deletePairEdit,
@@ -14,9 +15,9 @@ import {
   highlightSource,
   indentEdit,
   nextPlaceholder,
-  smartEnterEdit,
-  TEXTAREA_STYLE_PROPS
+  smartEnterEdit
 } from "../lib/engine.js";
+import { syncLayerBox } from "@ui/textarea-geometry.js";
 import { useAutocomplete } from "../hooks/useAutocomplete.js";
 import { useHoverDocs } from "../hooks/useHoverDocs.js";
 import { HoverCard } from "./HoverCard.jsx";
@@ -48,7 +49,6 @@ export const SourceEditor = forwardRef(function SourceEditor(
   const textareaRef = useRef(null);
   const shellRef = useRef(null);
   const layerRef = useRef(null);
-  const pendingSelection = useRef(null);
 
   const autocomplete = useAutocomplete({
     textareaRef,
@@ -77,14 +77,7 @@ export const SourceEditor = forwardRef(function SourceEditor(
     if (!textarea || !layer) return undefined;
 
     function syncBox() {
-      const style = getComputedStyle(textarea);
-      layer.style.left = `${textarea.offsetLeft}px`;
-      layer.style.top = `${textarea.offsetTop}px`;
-      layer.style.width = `${textarea.offsetWidth}px`;
-      layer.style.height = `${textarea.offsetHeight}px`;
-      for (const prop of TEXTAREA_STYLE_PROPS) layer.style[prop] = style[prop];
-      layer.scrollTop = textarea.scrollTop;
-      layer.scrollLeft = textarea.scrollLeft;
+      syncLayerBox(textarea, layer);
     }
 
     syncBox();
@@ -112,39 +105,51 @@ export const SourceEditor = forwardRef(function SourceEditor(
     };
   }, []);
 
-  // After an edit the caret has to move to the position the editing rules
-  // asked for, which only exists once the new value is in the DOM.
+  // The textarea owns its text. React is not allowed to write it, so a
+  // re-render — the preview compiling, the hover card opening — can never
+  // take a letter away from the reader in the middle of an edit. The source
+  // in the state follows the textarea, and a source that changes from the
+  // outside (an example, the format button) is written into the textarea.
   useLayoutEffect(() => {
     const textarea = textareaRef.current;
-    const selection = pendingSelection.current;
-    if (!textarea || !selection) return;
-    pendingSelection.current = null;
-    textarea.setSelectionRange(selection.start, selection.end);
+    if (!textarea) return;
+    if (textarea.value === value) return;
+    textarea.value = value;
+    textarea.setSelectionRange(value.length, value.length);
   }, [value]);
 
-  const applyEdit = useCallback(
-    (edit) => {
-      if (!edit) return;
-      const next = value.slice(0, edit.start) + edit.text + value.slice(edit.end);
-      pendingSelection.current = { start: edit.selectionStart, end: edit.selectionEnd };
-      onChange(next);
-    },
-    [onChange, value]
-  );
+  // The suggestion list follows the caret: a browser fires the select event
+  // when the selection of a textarea changes, and the list is told about it.
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return undefined;
+    const onSelect = () => autocomplete.handleSelectionChange();
+    textarea.addEventListener("select", onSelect);
+    return () => textarea.removeEventListener("select", onSelect);
+  }, [autocomplete]);
+
+  // The edit is written into the textarea itself. The browser keeps its undo
+  // stack that way, and the caret lands where the editing rules wanted it.
+  const applyEdit = useCallback((edit) => {
+    if (!edit) return;
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    applyTextEdit(textarea, edit);
+  }, []);
 
   const format = useCallback(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-    const edit = formatEdit(value, textarea.selectionStart, textarea.selectionEnd);
-    if (edit.source === value) return;
+    const edit = formatEdit(textarea.value, textarea.selectionStart, textarea.selectionEnd);
+    if (edit.source === textarea.value) return;
     applyEdit({
       start: 0,
-      end: value.length,
+      end: textarea.value.length,
       text: edit.source,
       selectionStart: edit.selectionStart,
       selectionEnd: edit.selectionEnd
     });
-  }, [applyEdit, value]);
+  }, [applyEdit]);
 
   useImperativeHandle(
     ref,
@@ -197,36 +202,39 @@ export const SourceEditor = forwardRef(function SourceEditor(
       const textarea = textareaRef.current;
       if (!textarea) return;
       const { selectionStart: start, selectionEnd: end } = textarea;
+      // The text of the textarea is the ground truth: the source held in the
+      // state may still be one keystroke behind it.
+      const source = textarea.value;
       const key = event.key;
 
       if (key === "Enter") {
         event.preventDefault();
-        applyEdit(smartEnterEdit(value, start, end));
+        applyEdit(smartEnterEdit(source, start, end));
         return;
       }
       if (key === "Tab") {
         event.preventDefault();
         // Tab walks the placeholders of a call that is being written:
         // integral(variable, start, end, expression).
-        const placeholder = nextPlaceholder(value, start);
+        const placeholder = nextPlaceholder(source, start);
         if (placeholder) {
           // The source does not change, so the selection is set directly.
           textarea.focus();
           textarea.setSelectionRange(placeholder.start, placeholder.end);
           return;
         }
-        const end = callEnd(value, start);
+        const end = callEnd(source, start);
         if (end !== null) {
           // The last placeholder is written: the caret leaves the call.
           textarea.focus();
           textarea.setSelectionRange(end, end);
           return;
         }
-        applyEdit(indentEdit(value, start, end, { unindent: event.shiftKey, indent: INDENT }));
+        applyEdit(indentEdit(source, start, end, { unindent: event.shiftKey, indent: INDENT }));
         return;
       }
       if (key === "Backspace") {
-        const edit = deletePairEdit(value, start, end);
+        const edit = deletePairEdit(source, start, end);
         if (edit) {
           event.preventDefault();
           applyEdit(edit);
@@ -235,13 +243,13 @@ export const SourceEditor = forwardRef(function SourceEditor(
       }
       if (key.length !== 1) return;
 
-      const edit = autoCloseEdit(value, start, end, key);
+      const edit = autoCloseEdit(source, start, end, key);
       if (edit) {
         event.preventDefault();
         applyEdit(edit);
       }
     },
-    [applyEdit, autocomplete, format, onRenderNow, onZoom, value]
+    [applyEdit, autocomplete, format, onRenderNow, onZoom]
   );
 
   const onInput = useCallback(
@@ -265,7 +273,7 @@ export const SourceEditor = forwardRef(function SourceEditor(
         autoCorrect="off"
         aria-label={ariaLabel}
         placeholder={placeholder}
-        value={value}
+        defaultValue={value}
         onChange={onInput}
         onKeyDown={onKeyDown}
         style={fontSize ? { fontSize: `${fontSize}px` } : undefined}

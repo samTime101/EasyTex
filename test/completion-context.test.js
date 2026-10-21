@@ -174,8 +174,40 @@ test("the values are offered at every caret position of the argument", () => {
   }
 });
 
-test("the values stop when the caret leaves the argument", () => {
-  const source = `${PREAMBLE}main.page(size="A4")`;
+// The values belong to the argument the caret stands in, not to the last
+// argument of the call.
+test("the values are offered in every argument of a call", () => {
+  const source = 'document = Document(type="", title="T")';
+  const inside = source.indexOf('""') + 1;
+  for (const caret of [inside, inside + 1]) {
+    const result = completionContextAt(source, caret);
+    assert.equal(result.type, "value", `the values are offered at ${caret}`);
+    assert.equal(result.candidates[0].name, "article");
+    assert.equal(result.prefix, "");
+  }
+
+  // The caret has left the argument: the named arguments are offered again.
+  const next = completionContextAt(source, inside + 2);
+  assert.equal(next.type, "field");
+
+  // The last argument has its own values.
+  const title = source.indexOf('"T"') + 1;
+  const blocked = completionContextAt(source, title);
+  assert.equal(blocked.type, "blocked", "a title has no list of values");
+});
+
+// The whole string is replaced when a value is accepted, so an empty string
+// does not keep its quotes.
+test("the value in the quotes is replaced as a whole", () => {
+  const source = 'document = Document(type="", author="A")';
+  const quotes = source.indexOf('""');
+  const result = completionContextAt(source, quotes + 1);
+  assert.equal(result.type, "value");
+  assert.equal(result.tokenStart, quotes, "the string is replaced as a whole");
+  assert.equal(result.tokenEnd, quotes + 2);
+});
+
+test("the values stop when the caret leaves the argument", () => {  const source = `${PREAMBLE}main.page(size="A4")`;
   const moved = completionContextAt(`${source} `, source.length + 1);
   assert.equal(moved, null, "the caret has moved past the call");
 

@@ -15,7 +15,7 @@ import {
   COMPONENT_DOCS,
   FIELD_DOCS
 } from "../src/docs/index.js";
-import { TEXTAREA_STYLE_PROPS } from "./textarea-geometry.js";
+import { syncLayerBox } from "./textarea-geometry.js";
 
 const FUNCTION_NAMES = new Set(FUNCTION_DOCS.map((doc) => doc.name));
 const CONSTANT_NAMES = new Set(CONSTANT_DOCS.map((doc) => doc.name));
@@ -229,12 +229,9 @@ export function attachHighlighter({ textarea, components = false, fields = false
   let frame = 0;
 
   function syncBox() {
-    const style = getComputedStyle(textarea);
-    layer.style.left = `${textarea.offsetLeft}px`;
-    layer.style.top = `${textarea.offsetTop}px`;
-    layer.style.width = `${textarea.offsetWidth}px`;
-    layer.style.height = `${textarea.offsetHeight}px`;
-    for (const prop of TEXTAREA_STYLE_PROPS) layer.style[prop] = style[prop];
+    // The layer copies the box of the textarea, so both lay the text out in
+    // the same way and the caret sits on the letters the reader sees.
+    syncLayerBox(textarea, layer);
   }
 
   function syncAll() {

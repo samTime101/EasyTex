@@ -11,6 +11,7 @@ import {
   formatEdit,
   attachEditing
 } from "../ui/editing.js";
+import { syncLayerBox } from "../ui/textarea-geometry.js";
 import { compileDocument, compile } from "../src/index.js";
 import { DOCUMENT_EXAMPLES, DEFAULT_DOCUMENT_SOURCE } from "../ui/document-examples.js";
 import { EXPRESSION_EXAMPLES } from "../ui/expression-examples.js";
@@ -240,8 +241,12 @@ test("Backspace key handling deletes an empty pair", () => {
         selectionEnd: end,
         handlers: new Map(),
         events: [],
+        focused: false,
         addEventListener(type, handler) {
           this.handlers.set(type, handler);
+        },
+        focus() {
+          this.focused = true;
         },
         setSelectionRange(nextStart, nextEnd) {
           this.selectionStart = nextStart;
@@ -432,4 +437,66 @@ test("formatting keeps expressions valid", () => {
   const result = compile(formatSource("sum(i,\n1,\nn,\ni^2)"));
   assert.deepEqual(result.diagnostics, []);
   assert.ok(result.mathml);
+});
+
+// ------------------------------------------------------------------ geometry
+
+// The layer painted under the textarea must lay its text out exactly like the
+// textarea, or the caret no longer sits on the letters the reader sees. The
+// textarea keeps a stable gutter for its scrollbar, so the layer has to give
+// the same space back.
+test("the highlight layer keeps the text area of the textarea", () => {
+  // A browser that draws a scrollbar ten pixels wide.
+  const fakeDocument = {
+    createElement() {
+      return {
+        style: { cssText: "" },
+        offsetWidth: 100,
+        clientWidth: 90,
+        remove() {}
+      };
+    },
+    body: { append() {} }
+  };
+
+  const style = {
+    fontFamily: "monospace",
+    fontSize: "14px",
+    lineHeight: "24px",
+    boxSizing: "border-box",
+    paddingLeft: "22px",
+    paddingRight: "22px",
+    paddingTop: "20px",
+    paddingBottom: "24px",
+    borderLeftWidth: "0px",
+    borderRightWidth: "0px",
+    borderTopWidth: "0px",
+    borderBottomWidth: "0px",
+    whiteSpace: "pre-wrap"
+  };
+  const previousComputed = globalThis.getComputedStyle;
+  globalThis.getComputedStyle = () => style;
+  try {
+    const textarea = {
+      ownerDocument: fakeDocument,
+      offsetLeft: 0,
+      offsetTop: 0,
+      offsetWidth: 568,
+      clientWidth: 557,
+      scrollTop: 0,
+      scrollLeft: 0,
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 567.7, height: 400 })
+    };
+    const layer = { style: {}, offsetParent: null };
+
+    syncLayerBox(textarea, layer);
+
+    // The width of the layer leaves the gutter of the scrollbar empty, so
+    // both texts break at the same place.
+    assert.equal(layer.style.width, `${567.7 - 10}px`);
+    assert.equal(layer.style.height, "400px");
+    assert.equal(layer.style.whiteSpace, "pre-wrap");
+  } finally {
+    globalThis.getComputedStyle = previousComputed;
+  }
 });

@@ -4,6 +4,7 @@ import {
   completionInsertion,
   matchDocumentation
 } from "../lib/engine.js";
+import { applyTextEdit } from "@ui/editing.js";
 import { TextareaMirror } from "@ui/textarea-geometry.js";
 
 const WORD_BEFORE_CARET = /[A-Za-z][A-Za-z0-9_]*$/;
@@ -39,6 +40,7 @@ export function useAutocomplete({
   const selectedRef = useRef(0);
   const openRef = useRef(false);
   const tokenRef = useRef({ start: 0, end: 0, prefix: "" });
+  const caretRef = useRef(-1);
 
   const [view, setView] = useState({ open: false, items: [], selected: 0, position: null });
 
@@ -68,6 +70,7 @@ export function useAutocomplete({
       const force = options.force === true;
       const allowOpen = options.allowOpen !== false;
       const caret = textarea.selectionStart;
+      caretRef.current = caret;
 
       if (document.activeElement !== textarea) {
         close();
@@ -88,13 +91,17 @@ export function useAutocomplete({
         if (!allowOpen && !openRef.current) return;
         const prefix = force ? "" : context.prefix;
         const candidates = context.candidates.filter((doc) => matchesPrefix(doc.name, prefix));
-        if (candidates.length === 0) {
+        if (candidates.length > 0) {
+          tokenRef.current = { start: context.tokenStart, end: context.tokenEnd, prefix };
+          show(candidates.slice(0, maxItems).map((doc) => ({ ...doc, badge: badgeFor(doc) })));
+          return;
+        }
+        if (context.type !== "field") {
           close();
           return;
         }
-        tokenRef.current = { start: context.tokenStart, end: context.tokenEnd, prefix };
-        show(candidates.slice(0, maxItems).map((doc) => ({ ...doc, badge: badgeFor(doc) })));
-        return;
+        // A named argument with no match: the word may be a call of its own,
+        // so the general list takes over below.
       }
 
       const before = textarea.value.slice(0, caret);
@@ -179,23 +186,19 @@ export function useAutocomplete({
         tokenStart: tokenRef.current.start,
         tokenEnd: tokenRef.current.end
       });
-      textarea.setRangeText(inserted, tokenRef.current.start, tokenRef.current.end, "end");
-      const caret = tokenRef.current.start + caretOffset;
-      if (selectionStart !== undefined) {
-        // An expanded call selects its first placeholder, so typing replaces
-        // the name of the parameter.
-        textarea.setSelectionRange(
-          tokenRef.current.start + selectionStart,
-          tokenRef.current.start + selectionEnd
-        );
-      } else {
-        textarea.setSelectionRange(caret, caret);
-      }
-      textarea.focus();
-      // The event comes from the window the textarea lives in, so a host
-      // that runs the editor in another document still sees the change.
-      const view = textarea.ownerDocument?.defaultView ?? globalThis;
-      textarea.dispatchEvent(new view.Event("input", { bubbles: true }));
+      const start = tokenRef.current.start;
+      const caret = start + caretOffset;
+      // An expanded call selects its first placeholder, so typing replaces
+      // the name of the parameter.
+      const from = selectionStart === undefined ? caret : start + selectionStart;
+      const to = selectionStart === undefined ? caret : start + selectionEnd;
+      applyTextEdit(textarea, {
+        start,
+        end: tokenRef.current.end,
+        text: inserted,
+        selectionStart: from,
+        selectionEnd: to
+      });
       close();
     },
     [close, textareaRef]
@@ -245,9 +248,15 @@ export function useAutocomplete({
     });
   }, [update]);
 
+  // The list follows the caret: a browser fires the select event when the
+  // selection of the textarea changes. The list is only worked out again when
+  // the caret has really moved, so a keystroke costs one pass, not two.
   const handleSelectionChange = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    if (textarea.selectionStart === caretRef.current) return;
     if (openRef.current) update({ allowOpen: false });
-  }, [update]);
+  }, [textareaRef, update]);
 
   const openAll = useCallback(() => update({ allowOpen: true, force: true }), [update]);
 

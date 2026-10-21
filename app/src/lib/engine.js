@@ -54,6 +54,7 @@ export {
 export { scanSource, highlightSource } from "@ui/highlight.js";
 export {
   INDENT,
+  applyTextEdit,
   autoCloseEdit,
   smartEnterEdit,
   deletePairEdit,

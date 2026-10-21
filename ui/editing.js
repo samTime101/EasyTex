@@ -260,39 +260,55 @@ export function formatEdit(source, start, end, options = {}) {
 // --------------------------------------------------------------- textarea glue
 
 function insertText(textarea, text) {
+  const doc = textarea.ownerDocument ?? document;
   try {
-    return document.execCommand("insertText", false, text) === true;
+    return doc.execCommand("insertText", false, text) === true;
   } catch {
     return false;
   }
 }
 
-function deleteSelection() {
+function deleteSelection(textarea) {
+  const doc = textarea.ownerDocument ?? document;
   try {
-    return document.execCommand("delete", false) === true;
+    return doc.execCommand("delete", false) === true;
   } catch {
     return false;
   }
 }
 
-function applyEdit(textarea, edit) {
-  if (!edit) return false;
+// Write an edit into a textarea.
+//
+// The text goes in with the browser's own command, so the undo stack of the
+// textarea stays intact: the reader can take back an inserted pair of
+// brackets as easily as a typed letter. The command needs the focus, so the
+// textarea takes it; when the command is not available, the text is written
+// directly and the change is announced with an input event.
+export function applyTextEdit(textarea, edit) {
+  if (!edit || !textarea) return false;
   // A zero-width empty edit is a caret move (typing over an existing closer).
   // A non-empty range with empty text is a deletion (Backspace on an empty pair).
   if (edit.text === "" && edit.start === edit.end) {
     textarea.setSelectionRange(edit.selectionStart, edit.selectionEnd);
     return true;
   }
+  textarea.focus();
   textarea.setSelectionRange(edit.start, edit.end);
-  const applied = edit.text === "" ? deleteSelection() : insertText(textarea, edit.text);
+  const applied = edit.text === "" ? deleteSelection(textarea) : insertText(textarea, edit.text);
   if (applied) {
     textarea.setSelectionRange(edit.selectionStart, edit.selectionEnd);
     return true;
   }
   textarea.setRangeText(edit.text, edit.start, edit.end, "end");
   textarea.setSelectionRange(edit.selectionStart, edit.selectionEnd);
-  textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  const view = textarea.ownerDocument?.defaultView ?? globalThis;
+  textarea.dispatchEvent(new view.Event("input", { bubbles: true }));
   return true;
+}
+
+function applyEdit(textarea, edit) {
+  if (!edit) return false;
+  return applyTextEdit(textarea, edit);
 }
 
 // Re-indent the whole textarea. Returns true when the source changed.

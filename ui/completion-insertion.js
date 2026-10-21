@@ -6,6 +6,17 @@
 
 import { prepareSnippet, lineIndent } from "./snippets.js";
 
+// A starter snippet may begin with a binding: "document = Document(...)".
+// When the reader has already written that binding, only the call goes in,
+// so the document does not get the binding twice.
+function withoutRepeatedBinding(snippet, source, tokenStart) {
+  const binding = /^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*/.exec(snippet);
+  if (!binding) return snippet;
+  const written = /([A-Za-z_][A-Za-z0-9_]*)\s*=\s*$/.exec(source.slice(0, tokenStart));
+  if (!written || written[1] !== binding[1]) return snippet;
+  return snippet.slice(binding[0].length);
+}
+
 export function completionInsertion(doc, options = {}) {
   const source = options.source ?? "";
   const tokenStart = options.tokenStart ?? 0;
@@ -27,7 +38,8 @@ export function completionInsertion(doc, options = {}) {
     return { inserted, caretOffset: inserted.length };
   }
   if (doc.snippet) {
-    const prepared = prepareSnippet(doc.snippet, lineIndent(source, tokenStart));
+    const snippet = withoutRepeatedBinding(doc.snippet, source, tokenStart);
+    const prepared = prepareSnippet(snippet, lineIndent(source, tokenStart));
     return { inserted: prepared.text, caretOffset: prepared.caret };
   }
 

@@ -108,3 +108,26 @@ test("a snippet without a caret marker keeps the caret after the text", () => {
   assert.equal(insertion.inserted, "proof([])");
   assert.equal(insertion.caretOffset, "proof([])".length);
 });
+
+test("a starter snippet does not repeat a binding the reader already wrote", () => {
+  const doc = {
+    kind: "component",
+    name: "Document",
+    snippet: 'document = Document(type="article", title="Untitled document")'
+  };
+
+  // The reader has written the binding: only the call goes in.
+  const written = completionInsertion(doc, {
+    source: "document = Doc",
+    tokenStart: 10,
+    tokenEnd: 13
+  });
+  assert.equal(written.inserted, 'Document(type="article", title="Untitled document")');
+
+  // Nothing is written yet: the whole statement goes in.
+  const empty = completionInsertion(doc, { source: "Doc", tokenStart: 0, tokenEnd: 3 });
+  assert.equal(
+    empty.inserted,
+    'document = Document(type="article", title="Untitled document")'
+  );
+});

@@ -208,6 +208,54 @@ test("the writer suggests the methods of the container around the caret", async 
   view.unmount();
 });
 
+// A word inside a call may be a function of its own, so the list of the named
+// arguments must not hide it.
+test("the writer suggests a function written as an argument", async () => {
+  const view = mount(WriterPage);
+  const editor = view.container.querySelector("#editor");
+  act(() => {
+    editor.focus();
+  });
+  editor.value = "";
+  type(
+    editor,
+    "document = Document(type=\"article\")\nmain = document.section(\"S\")\nmain.paragraph(\"x\", su"
+  );
+  await wait(150);
+
+  const items = [...view.container.querySelectorAll(".autocomplete-item")];
+  assert.ok(items.length >= 1, "the list opens for a word inside a call");
+  assert.match(items[0].textContent, /^sum/);
+  view.unmount();
+});
+
+test("the suggestion list follows the caret", async () => {
+  const view = mount(WriterPage);
+  const editor = view.container.querySelector("#editor");
+  act(() => {
+    editor.focus();
+  });
+  editor.value = "";
+  type(editor, "document = Document(type=\"article\")\nmain = document.section(\"S\")\nmain.para");
+  await wait(150);
+  assert.match(
+    view.container.querySelector(".autocomplete-item").textContent,
+    /^paragraph/,
+    "the method of the container is offered"
+  );
+
+  // The caret moves to another word, and the list follows it.
+  act(() => {
+    editor.setSelectionRange(15, 15);
+    editor.dispatchEvent(new dom.window.Event("select", { bubbles: true }));
+  });
+  await wait(150);
+  const items = [...view.container.querySelectorAll(".autocomplete-item")];
+  assert.ok(items.length >= 1, "the list is still open");
+  assert.match(items[0].textContent, /^Document/, "and it offers the word under the caret");
+  view.unmount();
+});
+
 test("the editor inserts an expanded call and Tab walks the placeholders", async () => {
   const view = mount(EditorPage);
   await wait(COMPILE_DELAY);
@@ -246,6 +294,78 @@ test("the editor inserts an expanded call and Tab walks the placeholders", async
   });
   await wait(120);
   assert.equal(editor.value.slice(editor.selectionStart, editor.selectionEnd), "end");
+  view.unmount();
+});
+
+test("the caret steps over the closing bracket and keeps its place", async () => {
+  const view = mount(EditorPage);
+  await wait(COMPILE_DELAY);
+  const editor = view.container.querySelector("#editor");
+  act(() => {
+    editor.focus();
+  });
+  editor.value = "";
+  type(editor, "sum(i, 1, n, ");
+
+  const press = (key) => {
+    act(() => {
+      editor.dispatchEvent(
+        new dom.window.KeyboardEvent("keydown", { key, bubbles: true, cancelable: true })
+      );
+    });
+  };
+
+  press("(");
+  await wait(50);
+  assert.equal(editor.value, "sum(i, 1, n, ()");
+  assert.equal(editor.selectionStart, 14, "the caret sits between the brackets");
+
+  press(")");
+  await wait(50);
+  assert.equal(editor.value, "sum(i, 1, n, ()");
+  assert.equal(editor.selectionStart, 15, "the caret steps over the closing bracket");
+
+  // The caret of the next letter is the one the reader sees: an edit that
+  // only moved the caret leaves nothing behind.
+  act(() => {
+    const setter = Object.getOwnPropertyDescriptor(
+      dom.window.HTMLTextAreaElement.prototype,
+      "value"
+    ).set;
+    setter.call(editor, "sum(x, 1, n, (");
+    editor.setSelectionRange(6, 6);
+    editor.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+  });
+  await wait(50);
+  assert.equal(editor.selectionStart, 6, "the caret does not jump to an old place");
+  view.unmount();
+});
+
+test("a selection is left to the browser, so Backspace removes it", async () => {
+  const view = mount(WriterPage);
+  const editor = view.container.querySelector("#editor");
+  act(() => {
+    editor.focus();
+  });
+  editor.value = "";
+  type(editor, 'document = Document(type="article")');
+  await wait(50);
+
+  // A word is selected, as a double click does. The editor must not swallow
+  // the Backspace: the browser removes the selection itself.
+  act(() => {
+    editor.setSelectionRange(25, 32);
+  });
+  let event = null;
+  act(() => {
+    event = new dom.window.KeyboardEvent("keydown", {
+      key: "Backspace",
+      bubbles: true,
+      cancelable: true
+    });
+    editor.dispatchEvent(event);
+  });
+  assert.equal(event.defaultPrevented, false, "the browser deletes the selection");
   view.unmount();
 });
 

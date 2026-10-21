@@ -244,6 +244,43 @@ and standard output.
 
 ## Updates
 
+### 2026-10-21 — the editor keeps the text of the reader
+
+- **The text of the reader is safe now.** The textarea was a controlled component, so React wrote the
+  source into it on every re-render. A re-render that landed between the browser's edit and the event
+  that reports it — the preview compiling, the hover card opening — wrote the *old* source back and
+  took the edit away: a word that was selected stayed selected, the Backspace did nothing, and the
+  caret jumped to the end of the text. The textarea owns its text now, and the source follows it.
+- **The hint comes in every argument.** The completion looked at the last argument of a call, so the
+  values of an earlier argument were never offered: the caret between the quotes of `type="|"`
+  showed nothing, while the caret at the closing quote showed the list. The argument the caret
+  stands in is the one that counts now.
+- **A starter snippet does not repeat a binding.** The `Document` snippet begins with `document = `,
+  so accepting it after `document = ` wrote the binding twice and the document was broken. The
+  binding is left out when the reader has already written it.
+- **A value replaces the whole string.** Accepting a value from the list inserted it *inside* the
+  quotes of the value, so `type=""` became `type="article"""`.
+- The suite grew from 217 to 221 tests.
+
+### 2026-10-20 — the caret sits on the letters it belongs to
+
+- Fixed the text and the caret drifting apart. The textarea keeps a stable gutter for its scrollbar,
+  so the text inside it is narrower than the box of the textarea. The painted highlight layer did not
+  keep that space empty, so it broke its lines ten pixels later than the textarea did: the reader saw
+  one text while the caret — and the selection — sat on another. The layer, and the mirror that
+  measures the caret, now take the text area of the textarea, gutter included.
+- The suggestion list no longer hides a word that is written inside a call. The list of named
+  arguments swallowed the word, so `main.paragraph("x", su` offered nothing at all; a word that is no
+  named argument of the call falls back to the general list now, which offers `sum`.
+- The suggestion list follows the caret. It was refreshed while typing only, so it kept offering the
+  word of the place the caret had left.
+- The caret no longer jumps. An edit that only moved the caret — typing the closing bracket of a pair
+  the editor had opened — left its place marked, and the next edit put the caret back there, so the
+  letters after it landed in the wrong place. The edits go into the textarea itself now, with the
+  browser's own command, so the undo stack of the editor survives them as well: `Ctrl` + `Z` takes
+  back an inserted bracket.
+- The suite grew from 213 to 217 tests.
+
 ### 2026-10-20 — a document is a program of statements
 
 - The document layer was rewritten. A document is no longer one `document({ ... })` object; it is a
